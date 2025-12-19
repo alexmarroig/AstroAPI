@@ -5,14 +5,16 @@ import json
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Literal, List
+from pathlib import Path
+import subprocess
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request, Depends, Header
+from fastapi import FastAPI, HTTPException, Request, Depends, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from openai import OpenAI
 
 from astro.ephemeris import compute_chart, compute_transits, compute_moon_only
@@ -166,6 +168,11 @@ class HouseSystem(str, Enum):
     REGIOMONTANUS = "R"
 
 
+class ZodiacType(str, Enum):
+    TROPICAL = "tropical"
+    SIDEREAL = "sidereal"
+
+
 class NatalChartRequest(BaseModel):
     year: int = Field(..., ge=1800, le=2100)
     month: int = Field(..., ge=1, le=12)
@@ -183,6 +190,19 @@ class NatalChartRequest(BaseModel):
         description="Timezone IANA (ex.: America/Sao_Paulo). Se preenchido, substitui tz_offset_minutes",
     )
     house_system: HouseSystem = Field(default=HouseSystem.PLACIDUS)
+    zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
+    ayanamsa: Optional[str] = Field(
+        default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
+    )
+
+    @model_validator(mode="after")
+    def validate_tz(self):
+        if self.tz_offset_minutes is None and not self.timezone:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe timezone IANA ou tz_offset_minutes para calcular o mapa.",
+            )
+        return self
 
 class TransitsRequest(BaseModel):
     natal_year: int = Field(..., ge=1800, le=2100)
@@ -201,6 +221,19 @@ class TransitsRequest(BaseModel):
         description="Timezone IANA (ex.: America/Sao_Paulo). Se preenchido, substitui tz_offset_minutes",
     )
     target_date: str = Field(..., description="YYYY-MM-DD")
+    zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
+    ayanamsa: Optional[str] = Field(
+        default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
+    )
+
+    @model_validator(mode="after")
+    def validate_tz(self):
+        if self.tz_offset_minutes is None and not self.timezone:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe timezone IANA ou tz_offset_minutes para calcular trânsitos.",
+            )
+        return self
 
 class CosmicChatRequest(BaseModel):
     user_question: str = Field(..., min_length=1)
@@ -232,6 +265,42 @@ class RenderDataRequest(BaseModel):
         description="Timezone IANA (ex.: America/Sao_Paulo). Se preenchido, substitui tz_offset_minutes",
     )
     house_system: HouseSystem = Field(default=HouseSystem.PLACIDUS)
+    zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
+    ayanamsa: Optional[str] = Field(
+        default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
+    )
+
+    @model_validator(mode="after")
+    def validate_tz(self):
+        if self.tz_offset_minutes is None and not self.timezone:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe timezone IANA ou tz_offset_minutes para renderização.",
+            )
+        return self
+
+
+class TimezoneResolveRequest(BaseModel):
+    datetime_local: datetime = Field(..., description="Data/hora local, ex.: 2025-12-19T14:30:00")
+    timezone: str = Field(..., description="Timezone IANA, ex.: America/Sao_Paulo")
+
+
+class SystemAlert(BaseModel):
+    id: str
+    severity: Literal["low", "medium", "high"]
+    title: str
+    body: str
+    technical: Dict[str, Any] = Field(default_factory=dict)
+
+
+class SystemAlertsResponse(BaseModel):
+    date: str
+    alerts: List[SystemAlert]
+
+
+class NotificationsDailyResponse(BaseModel):
+    date: str
+    items: List[Dict[str, Any]]
 
 # -----------------------------
 # Helpers
@@ -265,6 +334,69 @@ def _now_yyyy_mm_dd() -> str:
     return datetime.utcnow().strftime("%Y-%m-%d")
 
 
+def _git_commit_hash() -> Optional[str]:
+    try:
+        return (
+            subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=Path(__file__).parent)
+            .decode()
+            .strip()
+        )
+    except Exception:
+        return None
+
+
+def _mercury_alert_for(date: str, lat: float, lng: float, tz_offset_minutes: int) -> Optional[SystemAlert]:
+    chart = compute_transits(
+        target_year=int(date.split("-")[0]),
+        target_month=int(date.split("-")[1]),
+        target_day=int(date.split("-")[2]),
+        lat=lat,
+        lng=lng,
+        tz_offset_minutes=tz_offset_minutes,
+    )
+    mercury = chart.get("planets", {}).get("Mercury")
+    if not mercury or mercury.get("speed") is None:
+        return None
+
+    retro = mercury.get("retrograde")
+    if retro:
+        return SystemAlert(
+            id="mercury_retrograde",
+            severity="medium",
+            title="Mercúrio retrógrado",
+            body="Mercúrio está em retrogradação. Revise comunicações e contratos com atenção.",
+            technical={"mercury_speed": mercury.get("speed"), "mercury_lon": mercury.get("lon")},
+        )
+    return None
+
+
+def _daily_notifications_payload(date: str, lat: float, lng: float, tz_offset_minutes: int) -> NotificationsDailyResponse:
+    moon = compute_moon_only(date, tz_offset_minutes=tz_offset_minutes)
+    phase = _moon_phase_4(moon["phase_angle_deg"])
+    sign = moon["moon_sign"]
+
+    items: List[Dict[str, Any]] = [
+        {
+            "type": "cosmic_weather",
+            "title": f"Lua {phase} em {sign}",
+            "body": _cw_text(phase, sign),
+        }
+    ]
+
+    mercury_alert = _mercury_alert_for(date, lat, lng, tz_offset_minutes)
+    if mercury_alert:
+        items.append(
+            {
+                "type": "system_alert",
+                "title": mercury_alert.title,
+                "body": mercury_alert.body,
+                "technical": mercury_alert.technical,
+            }
+        )
+
+    return NotificationsDailyResponse(date=date, items=items)
+
+
 def _tz_offset_for(date_time: datetime, timezone: Optional[str], fallback_minutes: Optional[int]) -> int:
     """Resolve timezone: prefer IANA name; fallback to explicit offset or UTC."""
     if timezone:
@@ -292,13 +424,13 @@ TTL_RENDER_SECONDS = 30 * 24 * 3600
 TTL_COSMIC_WEATHER_SECONDS = 6 * 3600
 
 ROADMAP_FEATURES = {
-    "notifications": {"status": "planned", "notes": "push + smartwatch, aguardando provedor"},
+    "notifications": {"status": "beta", "notes": "feed diário via API; push aguardando provedor"},
     "mercury_retrograde_alert": {
-        "status": "planned",
+        "status": "beta",
         "notes": "alertas sistêmicos quando Mercúrio entrar/saír de retrogradação",
     },
     "life_cycles": {"status": "planned", "notes": "mapear ciclos de retorno e progressões"},
-    "auto_timezone": {"status": "beta", "notes": "usa timezone IANA no payload"},
+    "auto_timezone": {"status": "beta", "notes": "usa timezone IANA no payload ou resolver via endpoint"},
     "tests": {"status": "in_progress", "notes": "priorizar casos críticos de cálculo"},
 }
 
@@ -308,7 +440,13 @@ ROADMAP_FEATURES = {
 @app.get("/")
 async def root():
     """Lightweight root endpoint for uptime checks and Render probes."""
-    return {"ok": True, "service": "astroengine"}
+    return {
+        "ok": True,
+        "service": "astroengine",
+        "version": app.version,
+        "commit": _git_commit_hash(),
+        "env": {"openai": bool(os.getenv("OPENAI_API_KEY")), "log_level": LOG_LEVEL},
+    }
 
 
 @app.get("/health")
@@ -320,6 +458,19 @@ async def health_check():
 async def roadmap():
     """Visão rápida do andamento das próximas funcionalidades."""
     return {"features": ROADMAP_FEATURES}
+
+
+@app.post("/v1/time/resolve-tz")
+async def resolve_timezone(body: TimezoneResolveRequest):
+    try:
+        tz = ZoneInfo(body.timezone)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(status_code=400, detail=f"Timezone inválido: {body.timezone}")
+
+    offset = tz.utcoffset(body.datetime_local)
+    if offset is None:
+        raise HTTPException(status_code=400, detail="Offset não disponível para o timezone informado.")
+    return {"tz_offset_minutes": int(offset.total_seconds() // 60)}
 
 @app.post("/v1/chart/natal")
 async def natal(body: NatalChartRequest, request: Request, auth=Depends(get_auth)):
@@ -350,6 +501,8 @@ async def natal(body: NatalChartRequest, request: Request, auth=Depends(get_auth
             lng=body.lng,
             tz_offset_minutes=tz_offset_minutes,
             house_system=body.house_system.value,
+            zodiac_type=body.zodiac_type.value,
+            ayanamsa=body.ayanamsa,
         )
 
         cache.set(cache_key, chart, ttl_seconds=TTL_NATAL_SECONDS)
@@ -393,6 +546,8 @@ async def transits(body: TransitsRequest, request: Request, auth=Depends(get_aut
             lng=body.lng,
             tz_offset_minutes=tz_offset_minutes,
             house_system="P",
+            zodiac_type=body.zodiac_type.value,
+            ayanamsa=body.ayanamsa,
         )
 
         transit_chart = compute_transits(
@@ -402,6 +557,8 @@ async def transits(body: TransitsRequest, request: Request, auth=Depends(get_aut
             lat=body.lat,
             lng=body.lng,
             tz_offset_minutes=tz_offset_minutes,
+            zodiac_type=body.zodiac_type.value,
+            ayanamsa=body.ayanamsa,
         )
 
         aspects = compute_transit_aspects(
@@ -489,6 +646,8 @@ async def render_data(body: RenderDataRequest, request: Request, auth=Depends(ge
         lng=body.lng,
         tz_offset_minutes=tz_offset_minutes,
         house_system=body.house_system.value,
+        zodiac_type=body.zodiac_type.value,
+        ayanamsa=body.ayanamsa,
     )
 
     cusps = natal.get("houses", {}).get("cusps")
@@ -570,3 +729,41 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
             extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
         )
         raise HTTPException(status_code=500, detail=f"Erro no processamento de IA: {str(e)}")
+
+
+@app.get("/v1/alerts/system", response_model=SystemAlertsResponse)
+async def system_alerts(
+    date: str,
+    lat: float = Query(..., ge=-89.9999, le=89.9999),
+    lng: float = Query(..., ge=-180, le=180),
+    tz_offset_minutes: int = Query(0, ge=-840, le=840),
+    auth=Depends(get_auth),
+):
+    _parse_date_yyyy_mm_dd(date)
+    alerts: List[SystemAlert] = []
+
+    mercury = _mercury_alert_for(date, lat, lng, tz_offset_minutes)
+    if mercury:
+        alerts.append(mercury)
+
+    return SystemAlertsResponse(date=date, alerts=alerts)
+
+
+@app.get("/v1/notifications/daily", response_model=NotificationsDailyResponse)
+async def notifications_daily(
+    date: Optional[str] = None,
+    lat: float = Query(..., ge=-89.9999, le=89.9999),
+    lng: float = Query(..., ge=-180, le=180),
+    tz_offset_minutes: int = Query(0, ge=-840, le=840),
+    auth=Depends(get_auth),
+):
+    d = date or _now_yyyy_mm_dd()
+    _parse_date_yyyy_mm_dd(d)
+    cache_key = f"notif:{auth['user_id']}:{d}:{lat}:{lng}:{tz_offset_minutes}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    payload = _daily_notifications_payload(d, lat, lng, tz_offset_minutes)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_COSMIC_WEATHER_SECONDS)
+    return payload
