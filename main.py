@@ -27,13 +27,14 @@ from core.plans import is_trial_or_premium
 load_dotenv()
 
 # -----------------------------
-# Logging (structured-ish)
+# Logging (structured)
 # -----------------------------
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logger = logging.getLogger("astro-api")
 logger.setLevel(LOG_LEVEL)
 handler = logging.StreamHandler()
 handler.setLevel(LOG_LEVEL)
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -42,13 +43,13 @@ class JsonFormatter(logging.Formatter):
             "ts": datetime.utcnow().isoformat() + "Z",
             "msg": record.getMessage(),
         }
-        # extras
         for k in ("request_id", "path", "status", "latency_ms", "user_id"):
             if hasattr(record, k):
                 payload[k] = getattr(record, k)
         if record.exc_info:
             payload["exc"] = self.formatException(record.exc_info)
         return json.dumps(payload, ensure_ascii=False)
+
 
 handler.setFormatter(JsonFormatter())
 logger.handlers = [handler]
@@ -59,7 +60,7 @@ logger.handlers = [handler]
 app = FastAPI(
     title="Premium Astrology API",
     description="Accurate astrological calculations using Swiss Ephemeris with AI-powered cosmic insights",
-    version="1.1.0"
+    version="1.1.0",
 )
 
 # -----------------------------
@@ -82,16 +83,13 @@ app.add_middleware(
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
     request_id = request.headers.get("X-Request-Id") or str(uuid.uuid4())
-    start = time.time()
-
-    # attach to request state
     request.state.request_id = request_id
 
+    start = time.time()
     try:
         response = await call_next(request)
         latency_ms = int((time.time() - start) * 1000)
 
-        # don't log secrets; only safe fields
         extra = {
             "request_id": request_id,
             "path": request.url.path,
@@ -143,11 +141,10 @@ def get_auth(
     authorization: Optional[str] = Header(default=None),
     x_user_id: Optional[str] = Header(default=None),
 ):
-    # require_api_key_and_user already does plan+rate-limit
     auth = require_api_key_and_user(
         authorization=authorization,
         x_user_id=x_user_id,
-        request_path=request.url.path
+        request_path=request.url.path,
     )
     return auth
 
@@ -259,7 +256,7 @@ async def natal(body: NatalChartRequest, auth=Depends(get_auth)):
             lat=body.lat,
             lng=body.lng,
             tz_offset_minutes=body.tz_offset_minutes,
-            house_system=body.house_system
+            house_system=body.house_system,
         )
 
         cache.set(cache_key, chart, ttl_seconds=30 * 24 * 3600)
@@ -288,7 +285,7 @@ async def transits(body: TransitsRequest, auth=Depends(get_auth)):
             lat=body.lat,
             lng=body.lng,
             tz_offset_minutes=body.tz_offset_minutes,
-            house_system="P"
+            house_system="P",
         )
 
         transit_chart = compute_transits(
@@ -297,16 +294,15 @@ async def transits(body: TransitsRequest, auth=Depends(get_auth)):
             target_day=d,
             lat=body.lat,
             lng=body.lng,
-            tz_offset_minutes=body.tz_offset_minutes
+            tz_offset_minutes=body.tz_offset_minutes,
         )
 
         aspects = compute_transit_aspects(
             transit_planets=transit_chart["planets"],
-            natal_planets=natal_chart["planets"]
+            natal_planets=natal_chart["planets"],
         )
 
-        # Cosmic Weather embutido
-        moon = compute_moon_only(body.target_date)
+        moon = compute_moon_only(body.target_date, tz_offset_minutes=body.tz_offset_minutes)
         phase = _moon_phase_4(moon["phase_angle_deg"])
         sign = moon["moon_sign"]
 
@@ -371,7 +367,7 @@ async def render_data(body: RenderDataRequest, auth=Depends(get_auth)):
         lat=body.lat,
         lng=body.lng,
         tz_offset_minutes=body.tz_offset_minutes,
-        house_system=body.house_system
+        house_system=body.house_system,
     )
 
     cusps = natal.get("houses", {}).get("cusps")
@@ -387,12 +383,12 @@ async def render_data(body: RenderDataRequest, auth=Depends(get_auth)):
         houses.append({"house": i + 1, "start_deg": start, "end_deg": end})
 
     planets = []
-    for p in natal.get("planets", []):
+    # seu compute_chart retorna planets como dict -> converte em lista útil pro front
+    for name, p in natal.get("planets", {}).items():
         planets.append({
-            "name": p.get("name"),
+            "name": name,
             "sign": p.get("sign"),
             "deg_in_sign": p.get("deg_in_sign"),
-            "house": p.get("house"),
             "angle_deg": p.get("lon"),
         })
 
@@ -400,7 +396,7 @@ async def render_data(body: RenderDataRequest, auth=Depends(get_auth)):
         "zodiac": ["Áries","Touro","Gêmeos","Câncer","Leão","Virgem","Libra","Escorpião","Sagitário","Capricórnio","Aquário","Peixes"],
         "houses": houses,
         "planets": planets,
-        "premium_aspects": [] if is_trial_or_premium(auth["plan"]) else None
+        "premium_aspects": [] if is_trial_or_premium(auth["plan"]) else None,
     }
 
     cache.set(cache_key, resp, ttl_seconds=30 * 24 * 3600)
@@ -412,8 +408,7 @@ async def cosmic_chat(body: CosmicChatRequest, auth=Depends(get_auth)):
     if not api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY não configurada no servidor.")
 
-    # Força pt-BR sempre (produto)
-    language = "pt-BR"
+    language = "pt-BR"  # força pt-BR sempre
     tone = body.tone or "calmo, adulto, tecnológico"
 
     try:
@@ -423,7 +418,7 @@ async def cosmic_chat(body: CosmicChatRequest, auth=Depends(get_auth)):
             user_question=body.user_question,
             astro_payload=body.astro_payload,
             tone=tone,
-            language=language
+            language=language,
         )
 
         max_tokens = 600 if auth["plan"] == "free" else 1100
@@ -432,7 +427,7 @@ async def cosmic_chat(body: CosmicChatRequest, auth=Depends(get_auth)):
             model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             messages=messages,
             max_tokens=max_tokens,
-            temperature=0.7
+            temperature=0.7,
         )
 
         return {
@@ -441,8 +436,8 @@ async def cosmic_chat(body: CosmicChatRequest, auth=Depends(get_auth)):
             "usage": {
                 "prompt_tokens": response.usage.prompt_tokens,
                 "completion_tokens": response.usage.completion_tokens,
-                "total_tokens": response.usage.total_tokens
-            }
+                "total_tokens": response.usage.total_tokens,
+            },
         }
 
     except Exception as e:
