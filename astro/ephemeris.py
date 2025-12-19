@@ -3,6 +3,9 @@ import swisseph as swe
 
 from astro.utils import to_julian_day, deg_to_sign
 
+# garante funcionamento em cloud mesmo sem ephemeris externa
+swe.set_ephe_path(".")
+
 PLANETS = {
     "Sun": swe.SUN,
     "Moon": swe.MOON,
@@ -41,36 +44,50 @@ def compute_chart(
 ) -> dict:
     local_dt = datetime(year, month, day, hour, minute, second)
     utc_dt = local_dt - timedelta(minutes=tz_offset_minutes)
-    
+
     jd_ut = to_julian_day(utc_dt)
-    
-    house_system_bytes = house_system[0].upper().encode('ascii')
-    cusps, ascmc = swe.houses(jd_ut, lat, lng, house_system_bytes)
-    
+
+    # casas: fallback seguro
+    warning = None
+    house_system_code = house_system[0].upper() if house_system else "P"
+    house_system_bytes = house_system_code.encode("ascii")
+
+    try:
+        cusps, ascmc = swe.houses(jd_ut, lat, lng, house_system_bytes)
+    except Exception:
+        # fallback para Placidus
+        warning = "Sistema de casas ajustado automaticamente para Placidus por segurança."
+        cusps, ascmc = swe.houses(jd_ut, lat, lng, b'P')
+        house_system_code = "P"
+
     houses_data = {
-        "system": HOUSE_SYSTEMS.get(house_system, house_system),
-        "cusps": [round(c, 4) for c in cusps],
-        "asc": round(ascmc[0], 4),
-        "mc": round(ascmc[1], 4)
+        "system": HOUSE_SYSTEMS.get(house_system_code, house_system_code),
+        "cusps": [round(c, 6) for c in cusps],  # cusps[0]..cusps[11] (12 valores)
+        "asc": round(ascmc[0], 6),
+        "mc": round(ascmc[1], 6)
     }
-    
+
     planets_data = {}
     for name, planet_id in PLANETS.items():
-        result, ret_flag = swe.calc_ut(jd_ut, planet_id)
-        lon = result[0]
+        result, _ = swe.calc_ut(jd_ut, planet_id)
+        lon = result[0] % 360.0
         sign_info = deg_to_sign(lon)
         planets_data[name] = {
-            "lon": round(lon, 4),
+            "lon": round(lon, 6),
             "sign": sign_info["sign"],
-            "deg_in_sign": sign_info["deg_in_sign"]
+            "deg_in_sign": round(sign_info["deg_in_sign"], 4)
         }
-    
-    return {
+
+    payload = {
         "utc_datetime": utc_dt.isoformat(),
-        "jd_ut": round(jd_ut, 6),
+        "jd_ut": round(jd_ut, 8),
         "houses": houses_data,
         "planets": planets_data
     }
+    if warning:
+        payload["warning"] = warning
+
+    return payload
 
 
 def compute_transits(
@@ -81,6 +98,7 @@ def compute_transits(
     lng: float,
     tz_offset_minutes: int = 0
 ) -> dict:
+    # 12:00 local como referência (estável)
     return compute_chart(
         year=target_year,
         month=target_month,
@@ -93,3 +111,42 @@ def compute_transits(
         tz_offset_minutes=tz_offset_minutes,
         house_system='P'
     )
+
+
+def compute_moon_only(date_yyyy_mm_dd: str, tz_offset_minutes: int = 0) -> dict:
+    """
+    Retorna dados mínimos da Lua para Cosmic Weather:
+    - longitude
+    - signo (pt)
+    - ângulo de fase Sol–Lua (0..360)
+
+    Usa 12:00 local como referência para estabilidade diária.
+    """
+    try:
+        year, month, day = map(int, date_yyyy_mm_dd.split("-"))
+    except Exception:
+        raise ValueError("Data inválida. Use YYYY-MM-DD.")
+
+    # 12:00 local → UTC
+    local_dt = datetime(year, month, day, 12, 0, 0)
+    utc_dt = local_dt - timedelta(minutes=tz_offset_minutes)
+
+    jd_ut = to_julian_day(utc_dt)
+
+    moon_res, _ = swe.calc_ut(jd_ut, swe.MOON)
+    moon_lon = moon_res[0] % 360.0
+
+    sun_res, _ = swe.calc_ut(jd_ut, swe.SUN)
+    sun_lon = sun_res[0] % 360.0
+
+    phase_angle = (moon_lon - sun_lon) % 360.0
+
+    sign_info = deg_to_sign(moon_lon)
+
+    return {
+        "utc_datetime": utc_dt.isoformat(),
+        "moon_lon": round(moon_lon, 6),
+        "moon_sign": sign_info["sign"],
+        "deg_in_sign": round(sign_info["deg_in_sign"], 4),
+        "phase_angle_deg": round(phase_angle, 4)
+    }
