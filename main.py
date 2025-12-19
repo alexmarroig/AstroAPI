@@ -9,8 +9,6 @@ from typing import Optional, Any, Dict, Literal, List
 from pathlib import Path
 import subprocess
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-import swisseph as swe
-import math
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Depends, Header, Query
@@ -311,31 +309,6 @@ class TimezoneResolveRequest(BaseModel):
     )
 
 
-class EphemerisCheckRequest(BaseModel):
-    datetime_local: datetime = Field(..., description="Data/hora local para validar, ex.: 2024-01-01T12:00:00")
-    timezone: Optional[str] = Field(
-        default=None,
-        description="Timezone IANA (preferencial). Se preenchido, ignora tz_offset_minutes.",
-    )
-    tz_offset_minutes: Optional[int] = Field(
-        default=None,
-        ge=-840,
-        le=840,
-        description="Offset manual em minutos, usado apenas se timezone não for fornecido.",
-    )
-    lat: float = Field(..., ge=-89.9999, le=89.9999)
-    lng: float = Field(..., ge=-180, le=180)
-
-    @model_validator(mode="after")
-    def validate_tz(self):
-        if self.timezone is None and self.tz_offset_minutes is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Informe timezone IANA ou tz_offset_minutes para comparar efemérides.",
-            )
-        return self
-
-
 class SystemAlert(BaseModel):
     id: str
     severity: Literal["low", "medium", "high"]
@@ -352,20 +325,6 @@ class SystemAlertsResponse(BaseModel):
 class NotificationsDailyResponse(BaseModel):
     date: str
     items: List[Dict[str, Any]]
-
-
-class EphemerisCheckItem(BaseModel):
-    planet: str
-    backend_lon: float
-    swiss_lon: float
-    delta_deg_abs: float
-
-
-class EphemerisCheckResponse(BaseModel):
-    datetime_local: str
-    timezone: Optional[str]
-    tz_offset_minutes: int
-    items: List[EphemerisCheckItem]
 
 # -----------------------------
 # Helpers
@@ -517,26 +476,6 @@ def _tz_offset_for(
     return 0
 
 
-_PLANET_CODES = {
-    "Sun": swe.SUN,
-    "Moon": swe.MOON,
-    "Mercury": swe.MERCURY,
-    "Venus": swe.VENUS,
-    "Mars": swe.MARS,
-}
-
-
-def _golden_longitude(planet: str, utc_dt: datetime) -> float:
-    jd = swe.julday(
-        utc_dt.year,
-        utc_dt.month,
-        utc_dt.day,
-        utc_dt.hour + utc_dt.minute / 60.0 + utc_dt.second / 3600.0,
-    )
-    result, _ = swe.calc_ut(jd, _PLANET_CODES[planet])
-    return result[0] % 360.0
-
-
 # -----------------------------
 # Cache TTLs
 # -----------------------------
@@ -619,59 +558,6 @@ async def resolve_timezone(body: TimezoneResolveRequest):
     )
     return {"tz_offset_minutes": resolved_offset}
 
-
-@app.post("/v1/diagnostics/ephemeris-check", response_model=EphemerisCheckResponse)
-async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
-    """Compare backend chart longitudes with Swiss Ephemeris for fixed planets.
-
-    This helps detectar discrepâncias (ex.: fuso incorreto) em tempo real com base
-    no mesmo Swiss Ephemeris usado internamente, retornando deltas mínimos.
-    """
-
-    local_dt = body.datetime_local
-    if local_dt.tzinfo:
-        local_dt = local_dt.replace(tzinfo=None)
-
-    resolved_offset = _tz_offset_for(local_dt, body.timezone, body.tz_offset_minutes)
-    utc_dt = local_dt - timedelta(minutes=resolved_offset)
-
-    chart = compute_chart(
-        year=local_dt.year,
-        month=local_dt.month,
-        day=local_dt.day,
-        hour=local_dt.hour,
-        minute=local_dt.minute,
-        second=local_dt.second,
-        lat=body.lat,
-        lng=body.lng,
-        tz_offset_minutes=resolved_offset,
-    )
-
-    items: List[EphemerisCheckItem] = []
-    for planet in _PLANET_CODES.keys():
-        swiss_lon = _golden_longitude(planet, utc_dt)
-        backend_lon = chart.get("planets", {}).get(planet, {}).get("lon")
-        if backend_lon is None:
-            continue
-
-        # menor delta absoluto (0-180) para evitar saltos em 0/360
-        delta = abs((backend_lon - swiss_lon + 180) % 360 - 180)
-        items.append(
-            EphemerisCheckItem(
-                planet=planet,
-                backend_lon=backend_lon,
-                swiss_lon=swiss_lon,
-                delta_deg_abs=delta,
-            )
-        )
-
-    return EphemerisCheckResponse(
-        datetime_local=local_dt.isoformat(),
-        timezone=body.timezone,
-        tz_offset_minutes=resolved_offset,
-        items=items,
-    )
-
 @app.post("/v1/chart/natal")
 async def natal(body: NatalChartRequest, request: Request, auth=Depends(get_auth)):
     try:
@@ -730,9 +616,7 @@ async def transits(body: TransitsRequest, request: Request, auth=Depends(get_aut
             minute=body.natal_minute,
             second=body.natal_second,
         )
-        tz_offset_minutes = _tz_offset_for(
-            natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
-        )
+        tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
 
         cache_key = f"transits:{auth['user_id']}:{body.target_date}"
         cached = cache.get(cache_key)
@@ -857,9 +741,7 @@ async def render_data(body: RenderDataRequest, request: Request, auth=Depends(ge
         minute=body.minute,
         second=body.second,
     )
-    tz_offset_minutes = _tz_offset_for(
-        dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
-    )
+    tz_offset_minutes = _tz_offset_for(dt, body.timezone, body.tz_offset_minutes)
 
     cache_key = f"render:{auth['user_id']}:{hash(body.model_dump_json())}"
     cached = cache.get(cache_key)
