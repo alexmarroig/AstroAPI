@@ -194,6 +194,10 @@ class NatalChartRequest(BaseModel):
     ayanamsa: Optional[str] = Field(
         default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
     )
+    strict_timezone: bool = Field(
+        default=False,
+        description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
+    )
 
     @model_validator(mode="after")
     def validate_tz(self):
@@ -224,6 +228,10 @@ class TransitsRequest(BaseModel):
     zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
     ayanamsa: Optional[str] = Field(
         default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
+    )
+    strict_timezone: bool = Field(
+        default=False,
+        description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
     )
 
     @model_validator(mode="after")
@@ -277,6 +285,10 @@ class RenderDataRequest(BaseModel):
     ayanamsa: Optional[str] = Field(
         default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
     )
+    strict_timezone: bool = Field(
+        default=False,
+        description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
+    )
 
     @model_validator(mode="after")
     def validate_tz(self):
@@ -291,6 +303,10 @@ class RenderDataRequest(BaseModel):
 class TimezoneResolveRequest(BaseModel):
     datetime_local: datetime = Field(..., description="Data/hora local, ex.: 2025-12-19T14:30:00")
     timezone: str = Field(..., description="Timezone IANA, ex.: America/Sao_Paulo")
+    strict_birth: bool = Field(
+        default=False,
+        description="Quando true, acusa horários ambíguos em transições de DST para dados de nascimento.",
+    )
 
 
 class SystemAlert(BaseModel):
@@ -416,18 +432,42 @@ def _daily_notifications_payload(date: str, lat: float, lng: float, tz_offset_mi
     return NotificationsDailyResponse(date=date, items=items)
 
 
-def _tz_offset_for(date_time: datetime, timezone: Optional[str], fallback_minutes: Optional[int]) -> int:
-    """Resolve timezone: prefer IANA name; fallback to explicit offset or UTC."""
+def _tz_offset_for(
+    date_time: datetime, timezone: Optional[str], fallback_minutes: Optional[int], strict: bool = False
+) -> int:
+    """Resolve timezone: prefer IANA name; fallback to explicit offset or UTC.
+
+    When ``strict`` is True, detect ambiguous DST transitions and reject them with a
+    helpful error so birth datetimes não fiquem "um dia antes" por causa de fuso mal
+    resolvido.
+    """
+
     if timezone:
         try:
             tzinfo = ZoneInfo(timezone)
         except ZoneInfoNotFoundError:
             raise HTTPException(status_code=400, detail=f"Timezone inválido: {timezone}")
 
-        localized = date_time.replace(tzinfo=tzinfo)
-        offset = localized.utcoffset()
+        offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
+        offset_fold1 = date_time.replace(tzinfo=tzinfo, fold=1).utcoffset()
+
+        # Escolhe o offset padrão (compatível com o comportamento anterior)
+        offset = offset_fold0 or offset_fold1
         if offset is None:
             raise HTTPException(status_code=400, detail=f"Timezone sem offset disponível: {timezone}")
+
+        if strict and offset_fold0 and offset_fold1 and offset_fold0 != offset_fold1:
+            # horário ambíguo na virada de DST
+            opts = sorted({int(offset_fold0.total_seconds() // 60), int(offset_fold1.total_seconds() // 60)})
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "detail": "Horário ambíguo na transição de horário de verão.",
+                    "offset_options_minutes": opts,
+                    "hint": "Envie tz_offset_minutes explicitamente ou ajuste o horário local.",
+                },
+            )
+
         return int(offset.total_seconds() // 60)
 
     if fallback_minutes is not None:
@@ -513,15 +553,10 @@ async def roadmap():
 
 @app.post("/v1/time/resolve-tz")
 async def resolve_timezone(body: TimezoneResolveRequest):
-    try:
-        tz = ZoneInfo(body.timezone)
-    except ZoneInfoNotFoundError:
-        raise HTTPException(status_code=400, detail=f"Timezone inválido: {body.timezone}")
-
-    offset = body.datetime_local.replace(tzinfo=tz).utcoffset()
-    if offset is None:
-        raise HTTPException(status_code=400, detail="Offset não disponível para o timezone informado.")
-    return {"tz_offset_minutes": int(offset.total_seconds() // 60)}
+    resolved_offset = _tz_offset_for(
+        body.datetime_local, body.timezone, fallback_minutes=None, strict=body.strict_birth
+    )
+    return {"tz_offset_minutes": resolved_offset}
 
 @app.post("/v1/chart/natal")
 async def natal(body: NatalChartRequest, request: Request, auth=Depends(get_auth)):
@@ -534,7 +569,9 @@ async def natal(body: NatalChartRequest, request: Request, auth=Depends(get_auth
             minute=body.minute,
             second=body.second,
         )
-        tz_offset_minutes = _tz_offset_for(dt, body.timezone, body.tz_offset_minutes)
+        tz_offset_minutes = _tz_offset_for(
+            dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        )
 
         cache_key = f"natal:{auth['user_id']}:{hash(body.model_dump_json())}"
         cached = cache.get(cache_key)
