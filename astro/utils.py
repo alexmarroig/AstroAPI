@@ -16,6 +16,7 @@ SIGN_PT = dict(zip(ZODIAC_SIGNS, ZODIAC_SIGNS_PT))
 
 
 
+
 def to_julian_day(dt: datetime) -> float:
     year = dt.year
     month = dt.month

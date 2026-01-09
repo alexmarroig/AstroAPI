@@ -395,20 +395,19 @@ class CosmicWeatherRangeResponse(BaseModel):
     items: List[CosmicWeatherResponse]
 
 class RenderDataRequest(BaseModel):
-    year: int
-    month: int
-    day: int
-    hour: int
-    minute: int = 0
-    second: int = 0
+    natal_year: int
+    natal_month: int
+    natal_day: int
+    natal_hour: int
+    natal_minute: int = 0
+    natal_second: int = 0
     lat: float = Field(..., ge=-89.9999, le=89.9999)
     lng: float = Field(..., ge=-180, le=180)
     tz_offset_minutes: Optional[int] = Field(
         None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
     )
-    timezone: Optional[str] = Field(
-        None,
-        description="Timezone IANA (ex.: America/Sao_Paulo). Se preenchido, substitui tz_offset_minutes",
+    timezone: str = Field(
+        ..., description="Timezone IANA (ex.: America/Sao_Paulo). Obrigatório para renderização."
     )
     house_system: HouseSystem = Field(default=HouseSystem.PLACIDUS)
     zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
@@ -422,12 +421,22 @@ class RenderDataRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_tz(self):
-        if self.tz_offset_minutes is None and not self.timezone:
-            raise HTTPException(
-                status_code=400,
-                detail="Informe timezone IANA ou tz_offset_minutes para renderização.",
-            )
+        if not self.timezone:
+            raise HTTPException(status_code=422, detail="timezone is required")
         return self
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_date_aliases(cls, data: Any):
+        if isinstance(data, dict):
+            if not data.get("timezone"):
+                raise HTTPException(status_code=422, detail="timezone is required")
+            if any(key in data for key in ("year", "month", "day", "hour")):
+                raise HTTPException(
+                    status_code=422,
+                    detail="render-data expects natal_year/natal_month/natal_day/natal_hour...",
+                )
+        return data
 
 
 class TimezoneResolveRequest(BaseModel):
@@ -1398,6 +1407,14 @@ async def cosmic_weather_range(
     lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
+    if timezone:
+        try:
+            ZoneInfo(timezone)
+        except ZoneInfoNotFoundError:
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid timezone. Use an IANA timezone like America/Sao_Paulo.",
+            )
     start_y, start_m, start_d = _parse_date_yyyy_mm_dd(from_)
     end_y, end_m, end_d = _parse_date_yyyy_mm_dd(to)
 
@@ -1408,8 +1425,21 @@ async def cosmic_weather_range(
         raise HTTPException(status_code=400, detail="Parâmetro 'from' deve ser anterior ou igual a 'to'.")
 
     interval_days = (end_date - start_date).days + 1
-    if interval_days > 90:
-        raise HTTPException(status_code=400, detail="Intervalo máximo permitido é de 90 dias.")
+    if interval_days > 31:
+        raise HTTPException(
+            status_code=422,
+            detail="Range too large. Max 31 days. Use smaller windows.",
+        )
+
+    _log(
+        "info",
+        "cosmic_weather_range_request",
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+        status=200,
+        latency_ms=None,
+        user_id=auth.get("user_id"),
+    )
 
     items: List[CosmicWeatherResponse] = []
     current = start_date
@@ -1429,12 +1459,12 @@ async def render_data(
     auth=Depends(get_auth),
 ):
     dt = datetime(
-        year=body.year,
-        month=body.month,
-        day=body.day,
-        hour=body.hour,
-        minute=body.minute,
-        second=body.second,
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
     )
     tz_offset_minutes = _tz_offset_for(dt, body.timezone, body.tz_offset_minutes)
 
@@ -1445,12 +1475,12 @@ async def render_data(
         return cached
 
     natal = compute_chart(
-        year=body.year,
-        month=body.month,
-        day=body.day,
-        hour=body.hour,
-        minute=body.minute,
-        second=body.second,
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
         lat=body.lat,
         lng=body.lng,
         tz_offset_minutes=tz_offset_minutes,
