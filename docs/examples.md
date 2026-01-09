@@ -50,31 +50,3 @@ curl -X POST "$API_URL/v1/chart/transits" \
 ```bash
 curl -X GET "$API_URL/v1/alerts/retrogrades?date=2024-01-01&timezone=Etc/UTC"
 ```
-
-## Render data
-
-```bash
-curl -X POST "$API_URL/v1/chart/render-data" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "X-User-Id: user_123" \
-  -d '{
-    "natal_year": 1995,
-    "natal_month": 11,
-    "natal_day": 7,
-    "natal_hour": 22,
-    "natal_minute": 56,
-    "natal_second": 0,
-    "lat": -23.5505,
-    "lng": -46.6333,
-    "timezone": "America/Sao_Paulo"
-  }'
-```
-
-## Cosmic weather range
-
-```bash
-curl -X GET "$API_URL/v1/cosmic-weather/range?from=2024-01-01&to=2024-01-07&timezone=Etc/UTC" \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "X-User-Id: user_123"
-```
