@@ -205,12 +205,48 @@ class ZodiacType(str, Enum):
 
 
 class NatalChartRequest(BaseModel):
-    year: int = Field(..., ge=1800, le=2100, validation_alias=AliasChoices("year", "natal_year"))
-    month: int = Field(..., ge=1, le=12, validation_alias=AliasChoices("month", "natal_month"))
-    day: int = Field(..., ge=1, le=31, validation_alias=AliasChoices("day", "natal_day"))
-    hour: int = Field(..., ge=0, le=23, validation_alias=AliasChoices("hour", "natal_hour"))
-    minute: int = Field(0, ge=0, le=59, validation_alias=AliasChoices("minute", "natal_minute"))
-    second: int = Field(0, ge=0, le=59, validation_alias=AliasChoices("second", "natal_second"))
+    year: int = Field(
+        ...,
+        ge=1800,
+        le=2100,
+        validation_alias=AliasChoices("year", "natal_year"),
+        description="Ano de nascimento (aceita alias natal_year).",
+    )
+    month: int = Field(
+        ...,
+        ge=1,
+        le=12,
+        validation_alias=AliasChoices("month", "natal_month"),
+        description="Mês de nascimento (aceita alias natal_month).",
+    )
+    day: int = Field(
+        ...,
+        ge=1,
+        le=31,
+        validation_alias=AliasChoices("day", "natal_day"),
+        description="Dia de nascimento (aceita alias natal_day).",
+    )
+    hour: int = Field(
+        ...,
+        ge=0,
+        le=23,
+        validation_alias=AliasChoices("hour", "natal_hour"),
+        description="Hora de nascimento (aceita alias natal_hour).",
+    )
+    minute: int = Field(
+        0,
+        ge=0,
+        le=59,
+        validation_alias=AliasChoices("minute", "natal_minute"),
+        description="Minuto de nascimento (aceita alias natal_minute).",
+    )
+    second: int = Field(
+        0,
+        ge=0,
+        le=59,
+        validation_alias=AliasChoices("second", "natal_second"),
+        description="Segundo de nascimento (aceita alias natal_second).",
+    )
     lat: float = Field(..., ge=-89.9999, le=89.9999)
     lng: float = Field(..., ge=-180, le=180)
     tz_offset_minutes: Optional[int] = Field(
@@ -240,6 +276,48 @@ class NatalChartRequest(BaseModel):
         return self
 
 class TransitsRequest(BaseModel):
+    natal_year: int = Field(
+        ...,
+        ge=1800,
+        le=2100,
+        validation_alias=AliasChoices("natal_year", "year"),
+        description="Ano de nascimento (aceita alias year).",
+    )
+    natal_month: int = Field(
+        ...,
+        ge=1,
+        le=12,
+        validation_alias=AliasChoices("natal_month", "month"),
+        description="Mês de nascimento (aceita alias month).",
+    )
+    natal_day: int = Field(
+        ...,
+        ge=1,
+        le=31,
+        validation_alias=AliasChoices("natal_day", "day"),
+        description="Dia de nascimento (aceita alias day).",
+    )
+    natal_hour: int = Field(
+        ...,
+        ge=0,
+        le=23,
+        validation_alias=AliasChoices("natal_hour", "hour"),
+        description="Hora de nascimento (aceita alias hour).",
+    )
+    natal_minute: int = Field(
+        0,
+        ge=0,
+        le=59,
+        validation_alias=AliasChoices("natal_minute", "minute"),
+        description="Minuto de nascimento (aceita alias minute).",
+    )
+    natal_second: int = Field(
+        0,
+        ge=0,
+        le=59,
+        validation_alias=AliasChoices("natal_second", "second"),
+        description="Segundo de nascimento (aceita alias second).",
+    )
     natal_year: int = Field(..., ge=1800, le=2100, validation_alias=AliasChoices("natal_year", "year"))
     natal_month: int = Field(..., ge=1, le=12, validation_alias=AliasChoices("natal_month", "month"))
     natal_day: int = Field(..., ge=1, le=31, validation_alias=AliasChoices("natal_day", "day"))
@@ -377,6 +455,30 @@ class EphemerisCheckRequest(BaseModel):
     lng: float = Field(..., ge=-180, le=180)
 
 
+class MercuryRetrogradeRequest(BaseModel):
+    target_date: str = Field(..., description="YYYY-MM-DD")
+    lat: float = Field(..., ge=-89.9999, le=89.9999)
+    lng: float = Field(..., ge=-180, le=180)
+    tz_offset_minutes: Optional[int] = Field(
+        None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
+    )
+    timezone: Optional[str] = Field(
+        None,
+        description="Timezone IANA (ex.: America/Sao_Paulo). Se preenchido, substitui tz_offset_minutes",
+    )
+    zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
+    ayanamsa: Optional[str] = Field(
+        default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
+    )
+
+    @model_validator(mode="after")
+    def validate_tz(self):
+        if self.tz_offset_minutes is None and not self.timezone:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe timezone IANA ou tz_offset_minutes para calcular retrogradação.",
+            )
+        return self
 class EphemerisCheckRequest(BaseModel):
     datetime_local: datetime = Field(..., description="Data/hora local, ex.: 2024-01-01T12:00:00")
     timezone: str = Field(..., description="Timezone IANA, ex.: Etc/UTC")
@@ -454,6 +556,50 @@ def _apply_moon_localization(payload: Dict[str, Any], lang: Optional[str]) -> Di
             if "headline" in payload:
                 payload["headline"] = payload["headline"].replace(sign, sign_pt)
     return payload
+
+def _build_transits_context(
+    body: TransitsRequest, tz_offset_minutes: int, lang: Optional[str]
+) -> Dict[str, Any]:
+    target_y, target_m, target_d = _parse_date_yyyy_mm_dd(body.target_date)
+    natal_chart = compute_chart(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+        lat=body.lat,
+        lng=body.lng,
+        tz_offset_minutes=tz_offset_minutes,
+        house_system=body.house_system.value,
+        zodiac_type=body.zodiac_type.value,
+        ayanamsa=body.ayanamsa,
+    )
+
+    transit_chart = compute_transits(
+        target_year=target_y,
+        target_month=target_m,
+        target_day=target_d,
+        lat=body.lat,
+        lng=body.lng,
+        tz_offset_minutes=tz_offset_minutes,
+        zodiac_type=body.zodiac_type.value,
+        ayanamsa=body.ayanamsa,
+    )
+
+    natal_chart = _apply_sign_localization(natal_chart, lang)
+    transit_chart = _apply_sign_localization(transit_chart, lang)
+
+    aspects = compute_transit_aspects(
+        transit_planets=transit_chart["planets"],
+        natal_planets=natal_chart["planets"],
+    )
+
+    return {
+        "natal": natal_chart,
+        "transits": transit_chart,
+        "aspects": aspects,
+    }
 
 def _now_yyyy_mm_dd() -> str:
     return datetime.utcnow().strftime("%Y-%m-%d")
@@ -715,6 +861,226 @@ async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=De
         "tz_offset_minutes": tz_offset_minutes,
         "items": items,
     }
+
+@app.post("/v1/insights/mercury-retrograde")
+async def mercury_retrograde(
+    body: MercuryRetrogradeRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    y, m, d = _parse_date_yyyy_mm_dd(body.target_date)
+    tz_offset_minutes = _tz_offset_for(
+        datetime(year=y, month=m, day=d, hour=12, minute=0, second=0),
+        body.timezone,
+        body.tz_offset_minutes,
+    )
+
+    transit_chart = compute_transits(
+        target_year=y,
+        target_month=m,
+        target_day=d,
+        lat=body.lat,
+        lng=body.lng,
+        tz_offset_minutes=tz_offset_minutes,
+        zodiac_type=body.zodiac_type.value,
+        ayanamsa=body.ayanamsa,
+    )
+
+    mercury = transit_chart["planets"]["Mercury"]
+    retrograde = bool(mercury.get("retrograde"))
+    speed = mercury.get("speed")
+
+    return {
+        "date": body.target_date,
+        "status": "retrograde" if retrograde else "direct",
+        "retrograde": retrograde,
+        "speed": speed,
+        "planet": "Mercury",
+        "note": "Baseado na velocidade aparente da efeméride no horário local de referência.",
+    }
+
+@app.post("/v1/insights/dominant-theme")
+async def dominant_theme(
+    body: TransitsRequest,
+    request: Request,
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
+    context = _build_transits_context(body, tz_offset_minutes, lang)
+    aspects = context["aspects"]
+
+    influence_counts: Dict[str, int] = {}
+    for asp in aspects:
+        influence = asp.get("influence", "Neutral")
+        influence_counts[influence] = influence_counts.get(influence, 0) + 1
+
+    if not influence_counts:
+        return {
+            "theme": "Quiet influence",
+            "summary": "Poucos aspectos relevantes no período.",
+            "counts": {},
+            "sample_aspects": [],
+        }
+
+    dominant_influence = max(influence_counts.items(), key=lambda item: item[1])[0]
+    sample_aspects = aspects[:3]
+    summary_map = {
+        "Intense influence": "Foco em intensidade e viradas rápidas.",
+        "Challenging influence": "Período de desafios e ajustes conscientes.",
+        "Fluid influence": "Fluxo mais leve e oportunidades de integração.",
+    }
+
+    return {
+        "theme": dominant_influence,
+        "summary": summary_map.get(dominant_influence, "Influência predominante do período."),
+        "counts": influence_counts,
+        "sample_aspects": sample_aspects,
+    }
+
+@app.post("/v1/insights/areas-activated")
+async def areas_activated(
+    body: TransitsRequest,
+    request: Request,
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
+    context = _build_transits_context(body, tz_offset_minutes, lang)
+    aspects = context["aspects"]
+
+    area_map = {
+        "Sun": "Identidade e propósito",
+        "Moon": "Emoções e segurança",
+        "Mercury": "Comunicação e estudos",
+        "Venus": "Relacionamentos e afeto",
+        "Mars": "Ação e energia",
+        "Jupiter": "Expansão e visão",
+        "Saturn": "Estrutura e responsabilidade",
+        "Uranus": "Mudanças e liberdade",
+        "Neptune": "Inspiração e sensibilidade",
+        "Pluto": "Transformação e poder pessoal",
+    }
+
+    influence_weight = {
+        "Intense influence": 3,
+        "Challenging influence": 2,
+        "Fluid influence": 1,
+    }
+
+    scores: Dict[str, Dict[str, Any]] = {}
+    for asp in aspects:
+        planet = asp.get("natal_planet")
+        area = area_map.get(planet, "Tema geral")
+        weight = influence_weight.get(asp.get("influence"), 1)
+        scores.setdefault(area, {"area": area, "score": 0, "aspects": []})
+        scores[area]["score"] += weight
+        if len(scores[area]["aspects"]) < 3:
+            scores[area]["aspects"].append(asp)
+
+    items = sorted(scores.values(), key=lambda item: item["score"], reverse=True)
+    return {"items": items[:5]}
+
+@app.post("/v1/insights/care-suggestion")
+async def care_suggestion(
+    body: TransitsRequest,
+    request: Request,
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
+    context = _build_transits_context(body, tz_offset_minutes, lang)
+    aspects = context["aspects"]
+
+    moon = compute_moon_only(body.target_date, tz_offset_minutes=tz_offset_minutes)
+    phase = _moon_phase_4(moon["phase_angle_deg"])
+    sign = moon["moon_sign"]
+    sign_pt = sign_to_pt(sign)
+
+    dominant_influence = "Neutral"
+    if aspects:
+        dominant_influence = max(
+            (asp.get("influence", "Neutral") for asp in aspects),
+            key=lambda influence: sum(1 for asp in aspects if asp.get("influence") == influence),
+        )
+
+    suggestion_map = {
+        "Intense influence": "Priorize pausas e escolhas conscientes para evitar impulsos.",
+        "Challenging influence": "Organize tarefas e busque apoio antes de decisões grandes.",
+        "Fluid influence": "Aproveite a fluidez para avançar em projetos criativos.",
+        "Neutral": "Mantenha constância e foque em rotinas simples.",
+    }
+
+    return {
+        "moon_phase": phase,
+        "moon_sign": sign_pt if _is_pt_br(lang) else sign,
+        "theme": dominant_influence,
+        "suggestion": suggestion_map.get(dominant_influence, "Mantenha o equilíbrio e a presença."),
+    }
+
+@app.post("/v1/insights/life-cycles")
+async def life_cycles(
+    body: TransitsRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    target_y, target_m, target_d = _parse_date_yyyy_mm_dd(body.target_date)
+    birth = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    target = datetime(target_y, target_m, target_d)
+    age_years = (target - birth).days / 365.25
+
+    cycles = [
+        {"name": "Retorno de Saturno", "cycle_years": 29.5},
+        {"name": "Retorno de Júpiter", "cycle_years": 11.86},
+        {"name": "Retorno de Nodos Lunares", "cycle_years": 18.6},
+    ]
+
+    items = []
+    for cycle in cycles:
+        cycle_years = cycle["cycle_years"]
+        nearest = round(age_years / cycle_years) * cycle_years
+        delta = age_years - nearest
+        items.append(
+            {
+                "cycle": cycle["name"],
+                "approx_age_years": round(nearest, 2),
+                "distance_years": round(delta, 2),
+                "status": "active" if abs(delta) < 0.5 else "out_of_window",
+            }
+        )
+
+    return {"age_years": round(age_years, 2), "items": items}
 
 @app.post("/v1/chart/natal")
 async def natal(

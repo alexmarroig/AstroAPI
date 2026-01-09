@@ -72,6 +72,13 @@ AstroAPI é uma API FastAPI para cálculos astrológicos (mapa natal, trânsitos
 - `GET /v1/cosmic-weather`
 - `GET /v1/cosmic-weather/range`
 
+### Insights (cards sem “em breve”)
+- `POST /v1/insights/mercury-retrograde` → status de retrogradação de Mercúrio.
+- `POST /v1/insights/dominant-theme` → influência dominante baseada em aspectos.
+- `POST /v1/insights/areas-activated` → áreas ativadas a partir de aspectos.
+- `POST /v1/insights/care-suggestion` → sugestão de cuidado baseada em fases e aspectos.
+- `POST /v1/insights/life-cycles` → ciclos de vida aproximados (Saturno, Júpiter, Nodos).
+
 ### Conteúdo/alertas
 - `GET /v1/alerts/system`
 - `GET /v1/notifications/daily`
@@ -99,6 +106,7 @@ await fetch(`${API_URL}/v1/chart/natal`, {
 ```
 
 ### 5.2 Fluxo típico no front-end
+1. **Resolver timezone** (opcional): `POST /v1/time/resolve-tz` (aceita `year/month/day/...` e também `datetime_local` legado).
 1. **Resolver timezone** (opcional): `POST /v1/time/resolve-tz`.
 2. **Mapa natal**: `POST /v1/chart/natal`.
 3. **Renderização visual**: `POST /v1/chart/render-data` (gera casas/planetas em formato fácil para UI).
