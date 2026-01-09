@@ -81,6 +81,7 @@ AstroAPI é uma API FastAPI para cálculos astrológicos (mapa natal, trânsitos
 
 ### Conteúdo/alertas
 - `GET /v1/alerts/system`
+- `GET /v1/alerts/retrogrades`
 - `GET /v1/notifications/daily`
 
 ### IA
@@ -125,6 +126,8 @@ await fetch(`${API_URL}/v1/chart/natal`, {
 - `HouseSystem` (main.py) controla códigos de sistema de casas.
 - `ZodiacType` define `tropical` ou `sidereal`.
 - `NatalChartRequest`, `TransitsRequest`, `RenderDataRequest` definem payloads principais.
+  - `NatalChartRequest` usa `natal_year/natal_month/...`.
+  - `TransitsRequest` usa `natal_year/natal_month/...` e `target_date`.
   - `NatalChartRequest` aceita `year/month/...` e também aliases `natal_year/natal_month/...`.
   - `TransitsRequest` aceita `natal_year/natal_month/...` e também aliases `year/month/...` para compatibilidade.
 

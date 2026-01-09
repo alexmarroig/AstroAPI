@@ -29,6 +29,7 @@ def test_natal_chart_test_vector_pt_br():
         "timezone": "America/Sao_Paulo",
     }
 
+    resp = client.post("/v1/chart/natal", json=payload, headers=_auth_headers())
     resp = client.post(
         "/v1/chart/natal?lang=pt-BR",
         json=payload,
@@ -40,6 +41,10 @@ def test_natal_chart_test_vector_pt_br():
     sun = chart["planets"]["Sun"]
     moon = chart["planets"]["Moon"]
 
+    assert sun["sign"] == "Scorpio"
+    assert sun["deg_in_sign"] == pytest.approx(15.14, abs=0.5)
+
+    assert moon["sign"] == "Taurus"
     assert sun["sign"] == "Escorpião"
     assert sun["sign_pt"] == "Escorpião"
     assert sun["deg_in_sign"] == pytest.approx(15.14, abs=0.5)
