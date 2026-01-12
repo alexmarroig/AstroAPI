@@ -29,6 +29,8 @@ from ai.prompts import build_cosmic_chat_messages
 from core.security import require_api_key_and_user
 from core.cache import cache
 from core.plans import is_trial_or_premium
+from routes.lunations import router as lunations_router
+from routes.progressions import router as progressions_router
 
 # -----------------------------
 # Load env
@@ -92,6 +94,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],  # Authorization + X-User-Id
 )
+
+# -----------------------------
+# Routers (isolated services)
+# -----------------------------
+app.include_router(lunations_router)
+app.include_router(progressions_router)
 
 # -----------------------------
 # Middleware: request_id + logging
