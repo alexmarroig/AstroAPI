@@ -2,6 +2,7 @@ import os
 import time
 import uuid
 import json
+from dataclasses import replace
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
@@ -19,7 +20,9 @@ from fastapi.exceptions import RequestValidationError
 from openai import OpenAI
 import swisseph as swe
 
+from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only, solar_return_datetime
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only
+from astro.solar_return import SolarReturnInputs, compute_solar_return_payload
 from astro.aspects import compute_transit_aspects
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
@@ -27,11 +30,14 @@ from ai.prompts import build_cosmic_chat_messages
 from core.security import require_api_key_and_user
 from core.cache import cache
 from core.plans import is_trial_or_premium
+from routes.lunations import router as lunations_router
+from routes.progressions import router as progressions_router
 
 # -----------------------------
 # Load env
 # -----------------------------
 load_dotenv()
+SOLAR_RETURN_ENGINE = os.getenv("SOLAR_RETURN_ENGINE", "v1").lower()
 
 # -----------------------------
 # Logging (structured)
@@ -90,6 +96,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],  # Authorization + X-User-Id
 )
+
+# -----------------------------
+# Routers (isolated services)
+# -----------------------------
+app.include_router(lunations_router)
+app.include_router(progressions_router)
 
 # -----------------------------
 # Middleware: request_id + logging
@@ -384,6 +396,42 @@ class TransitsRequest(BaseModel):
                 )
         return data
 
+class SolarReturnRequest(BaseModel):
+    natal_year: int = Field(..., ge=1800, le=2100)
+    natal_month: int = Field(..., ge=1, le=12)
+    natal_day: int = Field(..., ge=1, le=31)
+    natal_hour: int = Field(..., ge=0, le=23)
+    natal_minute: int = Field(0, ge=0, le=59)
+    natal_second: int = Field(0, ge=0, le=59)
+    target_year: int = Field(..., ge=1800, le=2100, description="Ano do retorno solar desejado.")
+    lat: float = Field(..., ge=-89.9999, le=89.9999)
+    lng: float = Field(..., ge=-180, le=180)
+    tz_offset_minutes: Optional[int] = Field(
+        None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
+    )
+    timezone: Optional[str] = Field(
+        None,
+        description="Timezone IANA (ex.: America/Sao_Paulo). Se preenchido, substitui tz_offset_minutes",
+    )
+    house_system: HouseSystem = Field(default=HouseSystem.PLACIDUS)
+    zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
+    ayanamsa: Optional[str] = Field(
+        default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
+    )
+    strict_timezone: bool = Field(
+        default=False,
+        description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
+    )
+
+    @model_validator(mode="after")
+    def validate_tz(self):
+        if self.tz_offset_minutes is None and not self.timezone:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe timezone IANA ou tz_offset_minutes para calcular retorno solar.",
+            )
+        return self
+
 class CosmicChatRequest(BaseModel):
     user_question: str = Field(..., min_length=1)
     astro_payload: Dict[str, Any] = Field(...)
@@ -407,12 +455,12 @@ class CosmicWeatherRangeResponse(BaseModel):
     items: List[CosmicWeatherResponse]
 
 class RenderDataRequest(BaseModel):
-    natal_year: int
-    natal_month: int
-    natal_day: int
-    natal_hour: int
-    natal_minute: int = 0
-    natal_second: int = 0
+    year: int
+    month: int
+    day: int
+    hour: int
+    minute: int = 0
+    second: int = 0
     lat: float = Field(..., ge=-89.9999, le=89.9999)
     lng: float = Field(..., ge=-180, le=180)
     tz_offset_minutes: Optional[int] = Field(
@@ -443,12 +491,48 @@ class RenderDataRequest(BaseModel):
         if isinstance(data, dict):
             if not data.get("timezone"):
                 raise HTTPException(status_code=422, detail="timezone is required")
-            if any(key in data for key in ("year", "month", "day", "hour")):
+            if any(key.startswith("natal_") for key in data.keys()):
                 raise HTTPException(
                     status_code=422,
-                    detail="render-data expects natal_year/natal_month/natal_day/natal_hour...",
+                    detail="render-data expects year/month/day/hour/minute/second...",
                 )
         return data
+
+
+class SolarReturnLocal(BaseModel):
+    nome: Optional[str] = None
+    lat: float = Field(..., ge=-89.9999, le=89.9999)
+    lon: float = Field(..., ge=-180, le=180)
+    alt_m: Optional[float] = None
+
+
+class SolarReturnNatal(BaseModel):
+    data: str = Field(..., description="Data natal no formato YYYY-MM-DD")
+    hora: Optional[str] = Field(None, description="Hora natal no formato HH:MM:SS")
+    timezone: str = Field(..., description="Timezone IANA (ex.: America/Sao_Paulo)")
+    local: SolarReturnLocal
+
+
+class SolarReturnTarget(BaseModel):
+    ano: int = Field(..., ge=1800, le=2200)
+    local: SolarReturnLocal
+    timezone: Optional[str] = Field(
+        None, description="Timezone IANA do local alvo (ex.: America/Sao_Paulo)."
+    )
+
+
+class SolarReturnPreferencias(BaseModel):
+    zodiaco: ZodiacType = Field(default=ZodiacType.TROPICAL)
+    ayanamsa: Optional[str] = None
+    sistema_casas: HouseSystem = Field(default=HouseSystem.PLACIDUS)
+    modo: Optional[Literal["geocentrico", "topocentrico"]] = Field(default="geocentrico")
+    orbes: Optional[Dict[str, float]] = None
+
+
+class SolarReturnRequest(BaseModel):
+    natal: SolarReturnNatal
+    alvo: SolarReturnTarget
+    preferencias: Optional[SolarReturnPreferencias] = None
 
 
 class TimezoneResolveRequest(BaseModel):
@@ -549,6 +633,12 @@ class NotificationsDailyResponse(BaseModel):
     date: str
     items: List[Dict[str, Any]]
 
+
+class SolarReturnResponse(BaseModel):
+    target_year: int
+    solar_return_utc: str
+    solar_return_local: str
+
 # -----------------------------
 # Helpers
 # -----------------------------
@@ -586,8 +676,6 @@ def _cw_text(phase: str, sign: str) -> str:
     ]
     return options[hash(phase + sign) % len(options)]
 
-def _build_transits_context(
-    body: TransitsRequest, tz_offset_minutes: int
 def _is_pt_br(lang: Optional[str]) -> bool:
     return (lang or "").lower().replace("_", "-") == "pt-br"
 
@@ -613,6 +701,55 @@ def _apply_moon_localization(payload: Dict[str, Any], lang: Optional[str]) -> Di
             if "headline" in payload:
                 payload["headline"] = payload["headline"].replace(sign, sign_pt)
     return payload
+
+
+def _solar_return_datetime(
+    natal_dt: datetime,
+    target_year: int,
+    tz_offset_minutes: int,
+    request: Request,
+    user_id: Optional[str] = None,
+) -> datetime:
+    v1_dt = solar_return_datetime(
+        natal_dt=natal_dt,
+        target_year=target_year,
+        tz_offset_minutes=tz_offset_minutes,
+        engine="v1",
+    )
+
+    if SOLAR_RETURN_ENGINE == "v2":
+        try:
+            v2_dt = solar_return_datetime(
+                natal_dt=natal_dt,
+                target_year=target_year,
+                tz_offset_minutes=tz_offset_minutes,
+                engine="v2",
+            )
+            diff_seconds = abs((v2_dt - v1_dt).total_seconds())
+            _log(
+                "info",
+                "solar_return_engine_compare",
+                request_id=getattr(request.state, "request_id", None),
+                path=request.url.path,
+                status=200,
+                latency_ms=None,
+                user_id=user_id,
+                v1_utc=v1_dt.isoformat(),
+                v2_utc=v2_dt.isoformat(),
+                diff_seconds=round(diff_seconds, 3),
+            )
+        except Exception:
+            logger.error(
+                "solar_return_engine_compare_error",
+                exc_info=True,
+                extra={
+                    "request_id": getattr(request.state, "request_id", None),
+                    "path": request.url.path,
+                    "user_id": user_id,
+                },
+            )
+
+    return v1_dt
 
 def _build_transits_context(
     body: TransitsRequest, tz_offset_minutes: int, lang: Optional[str]
@@ -1061,7 +1198,6 @@ async def dominant_theme(
         second=body.natal_second,
     )
     tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
-    context = _build_transits_context(body, tz_offset_minutes)
     context = _build_transits_context(body, tz_offset_minutes, lang)
     aspects = context["aspects"]
 
@@ -1167,16 +1303,12 @@ async def care_suggestion(
     moon = compute_moon_only(body.target_date, tz_offset_minutes=tz_offset_minutes)
     phase = _moon_phase_4(moon["phase_angle_deg"])
     sign = moon["moon_sign"]
+    sign_pt = sign_to_pt(sign)
+
     dominant_influence = "neutral"
     if aspects:
         dominant_influence = max(
             (asp.get("influence", "neutral") for asp in aspects),
-    sign_pt = sign_to_pt(sign)
-
-    dominant_influence = "Neutral"
-    if aspects:
-        dominant_influence = max(
-            (asp.get("influence", "Neutral") for asp in aspects),
             key=lambda influence: sum(1 for asp in aspects if asp.get("influence") == influence),
         )
 
@@ -1193,7 +1325,6 @@ async def care_suggestion(
 
     return {
         "moon_phase": phase,
-        "moon_sign": sign,
         "moon_sign": sign_pt if _is_pt_br(lang) else sign,
         "theme": dominant_influence,
         "suggestion": suggestion_map.get(dominant_influence, "Mantenha o equilíbrio e a presença."),
@@ -1238,6 +1369,38 @@ async def life_cycles(
         )
 
     return {"age_years": round(age_years, 2), "items": items}
+
+@app.post("/v1/insights/solar-return", response_model=SolarReturnResponse)
+async def solar_return(
+    body: TransitsRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    target_y, _, _ = _parse_date_yyyy_mm_dd(body.target_date)
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+    )
+    solar_return_utc = _solar_return_datetime(
+        natal_dt=natal_dt,
+        target_year=target_y,
+        tz_offset_minutes=tz_offset_minutes,
+        request=request,
+        user_id=auth.get("user_id"),
+    )
+    solar_return_local = solar_return_utc + timedelta(minutes=tz_offset_minutes)
+    return SolarReturnResponse(
+        target_year=target_y,
+        solar_return_utc=solar_return_utc.isoformat(),
+        solar_return_local=solar_return_local.isoformat(),
+    )
 
 @app.post("/v1/chart/natal")
 async def natal(
@@ -1391,6 +1554,83 @@ async def transits(
         )
         raise HTTPException(status_code=500, detail=f"Erro ao calcular trânsitos: {str(e)}")
 
+@app.post("/v1/solar-return/calculate")
+async def solar_return_calculate(
+    body: SolarReturnRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    try:
+        if body.zodiac_type == ZodiacType.SIDEREAL:
+            swe.set_sid_mode(
+                AYANAMSA_MAP.get((body.ayanamsa or "lahiri").lower(), swe.SIDM_LAHIRI)
+            )
+        natal_dt = datetime(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+        )
+        tz_offset_minutes = _tz_offset_for(
+            natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        )
+        natal_jd = to_julian_day(natal_dt - timedelta(minutes=tz_offset_minutes))
+        natal_sun_lon = _sun_longitude_at_jd(natal_jd)
+
+        try:
+            target_local = natal_dt.replace(year=body.target_year)
+        except ValueError:
+            target_local = natal_dt.replace(year=body.target_year, day=28)
+
+        start_local = target_local - timedelta(days=5)
+        end_local = target_local + timedelta(days=5)
+        start_jd = to_julian_day(start_local - timedelta(minutes=tz_offset_minutes))
+        end_jd = to_julian_day(end_local - timedelta(minutes=tz_offset_minutes))
+
+        return_jd = _solar_return_jd(natal_sun_lon, start_jd, end_jd)
+        return_utc_dt = _datetime_from_jd_utc(return_jd)
+        return_local_dt = return_utc_dt + timedelta(minutes=tz_offset_minutes)
+
+        chart = compute_chart(
+            year=return_local_dt.year,
+            month=return_local_dt.month,
+            day=return_local_dt.day,
+            hour=return_local_dt.hour,
+            minute=return_local_dt.minute,
+            second=return_local_dt.second,
+            lat=body.lat,
+            lng=body.lng,
+            tz_offset_minutes=tz_offset_minutes,
+            house_system=body.house_system.value,
+            zodiac_type=body.zodiac_type.value,
+            ayanamsa=body.ayanamsa,
+        )
+        chart = _apply_sign_localization(chart, "pt-BR")
+        chart_pt = _chart_to_pt(chart)
+
+        return_sun_lon = _sun_longitude_at_jd(return_jd)
+        payload = {
+            "ano_alvo": body.target_year,
+            "data_retorno_utc": return_utc_dt.isoformat(),
+            "data_retorno_local": return_local_dt.isoformat(),
+            "posicao_solar_natal": round(natal_sun_lon, 6),
+            "posicao_solar_retorno": round(return_sun_lon, 6),
+            "diferenca_graus": round(angle_diff(natal_sun_lon, return_sun_lon), 6),
+            "mapa_retorno": chart_pt,
+        }
+        return payload
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "solar_return_error",
+            exc_info=True,
+            extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
+        )
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular retorno solar: {str(e)}")
+
 @app.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
 async def cosmic_weather(
     request: Request,
@@ -1410,8 +1650,8 @@ async def cosmic_weather(
 @app.get("/v1/cosmic-weather/range", response_model=CosmicWeatherRangeResponse)
 async def cosmic_weather_range(
     request: Request,
-    from_: str = Query(..., alias="from", description="Data inicial no formato YYYY-MM-DD"),
-    to: str = Query(..., description="Data final no formato YYYY-MM-DD"),
+    from_: Optional[str] = Query(None, alias="from", description="Data inicial no formato YYYY-MM-DD"),
+    to: Optional[str] = Query(None, description="Data final no formato YYYY-MM-DD"),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(
         None, ge=-840, le=840, description="Offset manual em minutos; ignorado se timezone for enviado."
@@ -1419,6 +1659,13 @@ async def cosmic_weather_range(
     lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
+    default_start = datetime.utcnow().date()
+    default_end = default_start + timedelta(days=6)
+    if from_ is None:
+        from_ = default_start.strftime("%Y-%m-%d")
+    if to is None:
+        to = default_end.strftime("%Y-%m-%d")
+
     if timezone:
         try:
             ZoneInfo(timezone)
@@ -1437,10 +1684,10 @@ async def cosmic_weather_range(
         raise HTTPException(status_code=400, detail="Parâmetro 'from' deve ser anterior ou igual a 'to'.")
 
     interval_days = (end_date - start_date).days + 1
-    if interval_days > 31:
+    if interval_days > 90:
         raise HTTPException(
             status_code=422,
-            detail="Range too large. Max 31 days. Use smaller windows.",
+            detail="Range too large. Max 90 days. Use smaller windows.",
         )
 
     _log(
@@ -1471,12 +1718,12 @@ async def render_data(
     auth=Depends(get_auth),
 ):
     dt = datetime(
-        year=body.natal_year,
-        month=body.natal_month,
-        day=body.natal_day,
-        hour=body.natal_hour,
-        minute=body.natal_minute,
-        second=body.natal_second,
+        year=body.year,
+        month=body.month,
+        day=body.day,
+        hour=body.hour,
+        minute=body.minute,
+        second=body.second,
     )
     tz_offset_minutes = _tz_offset_for(dt, body.timezone, body.tz_offset_minutes)
 
@@ -1487,12 +1734,12 @@ async def render_data(
         return cached
 
     natal = compute_chart(
-        year=body.natal_year,
-        month=body.natal_month,
-        day=body.natal_day,
-        hour=body.natal_hour,
-        minute=body.natal_minute,
-        second=body.natal_second,
+        year=body.year,
+        month=body.month,
+        day=body.day,
+        hour=body.hour,
+        minute=body.minute,
+        second=body.second,
         lat=body.lat,
         lng=body.lng,
         tz_offset_minutes=tz_offset_minutes,
@@ -1537,6 +1784,117 @@ async def render_data(
 
     cache.set(cache_key, resp, ttl_seconds=TTL_RENDER_SECONDS)
     return resp
+
+
+@app.post("/v1/solar-return/calculate")
+async def solar_return_calculate(
+    body: SolarReturnRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    try:
+        ZoneInfo(body.natal.timezone)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(
+            status_code=422,
+            detail="Timezone natal inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
+        )
+
+    target_timezone = body.alvo.timezone or body.natal.timezone
+    try:
+        ZoneInfo(target_timezone)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(
+            status_code=422,
+            detail="Timezone do alvo inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
+        )
+
+    try:
+        natal_y, natal_m, natal_d = _parse_date_yyyy_mm_dd(body.natal.data)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
+
+    natal_time_missing = body.natal.hora is None
+    if body.natal.hora:
+        try:
+            natal_hour, natal_minute, natal_second = map(int, body.natal.hora.split(":"))
+        except Exception:
+            raise HTTPException(status_code=422, detail="Hora natal inválida. Use HH:MM:SS.")
+    else:
+        natal_hour, natal_minute, natal_second = 12, 0, 0
+
+    natal_dt = datetime(
+        year=natal_y,
+        month=natal_m,
+        day=natal_d,
+        hour=natal_hour,
+        minute=natal_minute,
+        second=natal_second,
+    )
+
+    prefs = body.preferencias or SolarReturnPreferencias()
+    engine = (os.getenv("SOLAR_RETURN_ENGINE") or "v1").lower()
+    if engine not in ("v1", "v2"):
+        engine = "v1"
+
+    inputs = SolarReturnInputs(
+        natal_date=natal_dt,
+        natal_lat=body.natal.local.lat,
+        natal_lng=body.natal.local.lon,
+        natal_timezone=body.natal.timezone,
+        target_year=body.alvo.ano,
+        target_lat=body.alvo.local.lat,
+        target_lng=body.alvo.local.lon,
+        target_timezone=target_timezone,
+        house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
+        zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
+        ayanamsa=prefs.ayanamsa,
+        engine=engine,  # type: ignore[arg-type]
+        tz_offset_minutes=None,
+        natal_time_missing=natal_time_missing,
+    )
+
+    try:
+        payload = compute_solar_return_payload(inputs)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    if engine == "v2" and os.getenv("SOLAR_RETURN_COMPARE"):
+        try:
+            v1_inputs = replace(inputs, engine="v1")
+            v1_payload = compute_solar_return_payload(v1_inputs)
+            _log(
+                "info",
+                "solar_return_compare",
+                request_id=getattr(request.state, "request_id", None),
+                path=request.url.path,
+                status=200,
+                latency_ms=None,
+                user_id=auth.get("user_id"),
+                diff_deg=abs(
+                    payload["metadados_tecnicos"]["delta_longitude_graus"]
+                    - v1_payload["metadados_tecnicos"]["delta_longitude_graus"]
+                ),
+            )
+        except Exception:
+            logger.warning(
+                "solar_return_compare_failed",
+                extra={"request_id": getattr(request.state, "request_id", None)},
+            )
+
+    _log(
+        "info",
+        "solar_return_request",
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+        status=200,
+        latency_ms=None,
+        user_id=auth.get("user_id"),
+    )
+
+    return payload
 
 @app.post("/v1/ai/cosmic-chat")
 async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(get_auth)):
