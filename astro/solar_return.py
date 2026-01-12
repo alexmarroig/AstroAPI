@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, List, Literal, Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import swisseph as swe
 
 from astro.aspects import ASPECTS
-from astro.ephemeris import AYANAMSA_MAP, compute_chart
+from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime
 from astro.utils import angle_diff, deg_to_sign, to_julian_day
 
 
@@ -21,6 +22,24 @@ class SolarReturnConfig:
     allow_sidereal: bool = False
     house_system: str = "P"
     allow_custom_house_system: bool = False
+
+
+@dataclass(frozen=True)
+class SolarReturnInputs:
+    natal_date: datetime
+    natal_lat: float
+    natal_lng: float
+    natal_timezone: str
+    target_year: int
+    target_lat: float
+    target_lng: float
+    target_timezone: str
+    house_system: str
+    zodiac_type: ZodiacType
+    ayanamsa: Optional[str]
+    engine: Literal["v1", "v2"]
+    tz_offset_minutes: Optional[int] = None
+    natal_time_missing: bool = False
 
 
 def _resolve_zodiac(config: SolarReturnConfig) -> tuple[ZodiacType, int]:
@@ -249,4 +268,95 @@ def build_interpretation_ptbr(
         "resumo": "Interpretação automática não configurada.",
         "destaques": [],
         "aspectos": aspects,
+    }
+
+
+def _tz_offset_minutes(dt: datetime, timezone_name: str, fallback_minutes: Optional[int]) -> int:
+    if not timezone_name:
+        if fallback_minutes is None:
+            raise ValueError("Timezone não informado.")
+        return fallback_minutes
+    try:
+        tzinfo = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError as exc:
+        raise ValueError(f"Timezone inválido: {timezone_name}") from exc
+
+    if dt.tzinfo is None:
+        offset = dt.replace(tzinfo=tzinfo).utcoffset()
+    else:
+        offset = dt.astimezone(tzinfo).utcoffset()
+    if offset is None:
+        raise ValueError(f"Timezone sem offset disponível: {timezone_name}")
+    return int(offset.total_seconds() // 60)
+
+
+def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
+    natal_offset = _tz_offset_minutes(
+        inputs.natal_date, inputs.natal_timezone, inputs.tz_offset_minutes
+    )
+    solar_return_utc = solar_return_datetime(
+        natal_dt=inputs.natal_date,
+        target_year=inputs.target_year,
+        tz_offset_minutes=natal_offset,
+        engine=inputs.engine,
+    )
+
+    target_offset = _tz_offset_minutes(
+        solar_return_utc.replace(tzinfo=timezone.utc),
+        inputs.target_timezone,
+        None,
+    )
+    solar_return_local = solar_return_utc + timedelta(minutes=target_offset)
+
+    natal_chart = compute_chart(
+        year=inputs.natal_date.year,
+        month=inputs.natal_date.month,
+        day=inputs.natal_date.day,
+        hour=inputs.natal_date.hour,
+        minute=inputs.natal_date.minute,
+        second=inputs.natal_date.second,
+        lat=inputs.natal_lat,
+        lng=inputs.natal_lng,
+        tz_offset_minutes=natal_offset,
+        house_system=inputs.house_system,
+        zodiac_type=inputs.zodiac_type,
+        ayanamsa=inputs.ayanamsa,
+    )
+
+    solar_return_chart = compute_chart(
+        year=solar_return_local.year,
+        month=solar_return_local.month,
+        day=solar_return_local.day,
+        hour=solar_return_local.hour,
+        minute=solar_return_local.minute,
+        second=solar_return_local.second,
+        lat=inputs.target_lat,
+        lng=inputs.target_lng,
+        tz_offset_minutes=target_offset,
+        house_system=inputs.house_system,
+        zodiac_type=inputs.zodiac_type,
+        ayanamsa=inputs.ayanamsa,
+    )
+
+    aspects = compute_aspects(solar_return_chart["planets"], natal_chart["planets"])
+    interpretation = build_interpretation_ptbr(solar_return_chart, aspects)
+
+    natal_sun_lon = natal_chart["planets"]["Sun"]["lon"]
+    return_sun_lon = solar_return_chart["planets"]["Sun"]["lon"]
+    delta_longitude = abs(angle_diff(return_sun_lon, natal_sun_lon))
+
+    return {
+        "metadados_tecnicos": {
+            "engine": inputs.engine,
+            "solar_return_utc": solar_return_utc.isoformat(),
+            "solar_return_local": solar_return_local.isoformat(),
+            "delta_longitude_graus": round(delta_longitude, 6),
+        },
+        "mapa_revolucao": {
+            "planetas": solar_return_chart["planets"],
+            "casas": solar_return_chart["houses"],
+            "aspectos": aspects,
+        },
+        "areas_ativadas": [],
+        "destaques": interpretation.get("destaques", []),
     }
