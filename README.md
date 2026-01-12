@@ -1,5 +1,14 @@
 # AstroAPI
 
+## Dependências
+
+A fonte de verdade das dependências de runtime é o `pyproject.toml`. Para manter o pipeline de deploy/CI com uma única fonte, instale via:
+
+```bash
+pip install .
+```
+
+O `requirements.txt` existe apenas para compatibilidade com ferramentas legadas e deve espelhar o conteúdo do `pyproject.toml`.
 ## Revolução Solar
 
 O endpoint `/v1/solar-return/calculate` calcula o instante exato da Revolução Solar e retorna o mapa completo do retorno (casas, planetas e aspectos).
