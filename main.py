@@ -395,12 +395,12 @@ class CosmicWeatherRangeResponse(BaseModel):
     items: List[CosmicWeatherResponse]
 
 class RenderDataRequest(BaseModel):
-    natal_year: int
-    natal_month: int
-    natal_day: int
-    natal_hour: int
-    natal_minute: int = 0
-    natal_second: int = 0
+    year: int
+    month: int
+    day: int
+    hour: int
+    minute: int = 0
+    second: int = 0
     lat: float = Field(..., ge=-89.9999, le=89.9999)
     lng: float = Field(..., ge=-180, le=180)
     tz_offset_minutes: Optional[int] = Field(
@@ -431,10 +431,10 @@ class RenderDataRequest(BaseModel):
         if isinstance(data, dict):
             if not data.get("timezone"):
                 raise HTTPException(status_code=422, detail="timezone is required")
-            if any(key in data for key in ("year", "month", "day", "hour")):
+            if any(key.startswith("natal_") for key in data.keys()):
                 raise HTTPException(
                     status_code=422,
-                    detail="render-data expects natal_year/natal_month/natal_day/natal_hour...",
+                    detail="render-data expects year/month/day/hour/minute/second...",
                 )
         return data
 
@@ -1466,12 +1466,12 @@ async def render_data(
     auth=Depends(get_auth),
 ):
     dt = datetime(
-        year=body.natal_year,
-        month=body.natal_month,
-        day=body.natal_day,
-        hour=body.natal_hour,
-        minute=body.natal_minute,
-        second=body.natal_second,
+        year=body.year,
+        month=body.month,
+        day=body.day,
+        hour=body.hour,
+        minute=body.minute,
+        second=body.second,
     )
     tz_offset_minutes = _tz_offset_for(dt, body.timezone, body.tz_offset_minutes)
 
@@ -1482,12 +1482,12 @@ async def render_data(
         return cached
 
     natal = compute_chart(
-        year=body.natal_year,
-        month=body.natal_month,
-        day=body.natal_day,
-        hour=body.natal_hour,
-        minute=body.natal_minute,
-        second=body.natal_second,
+        year=body.year,
+        month=body.month,
+        day=body.day,
+        hour=body.hour,
+        minute=body.minute,
+        second=body.second,
         lat=body.lat,
         lng=body.lng,
         tz_offset_minutes=tz_offset_minutes,
