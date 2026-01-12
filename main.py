@@ -1398,8 +1398,8 @@ async def cosmic_weather(
 @app.get("/v1/cosmic-weather/range", response_model=CosmicWeatherRangeResponse)
 async def cosmic_weather_range(
     request: Request,
-    from_: str = Query(..., alias="from", description="Data inicial no formato YYYY-MM-DD"),
-    to: str = Query(..., description="Data final no formato YYYY-MM-DD"),
+    from_: Optional[str] = Query(None, alias="from", description="Data inicial no formato YYYY-MM-DD"),
+    to: Optional[str] = Query(None, description="Data final no formato YYYY-MM-DD"),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(
         None, ge=-840, le=840, description="Offset manual em minutos; ignorado se timezone for enviado."
@@ -1407,6 +1407,13 @@ async def cosmic_weather_range(
     lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
+    default_start = datetime.utcnow().date()
+    default_end = default_start + timedelta(days=6)
+    if from_ is None:
+        from_ = default_start.strftime("%Y-%m-%d")
+    if to is None:
+        to = default_end.strftime("%Y-%m-%d")
+
     if timezone:
         try:
             ZoneInfo(timezone)
@@ -1425,10 +1432,10 @@ async def cosmic_weather_range(
         raise HTTPException(status_code=400, detail="Parâmetro 'from' deve ser anterior ou igual a 'to'.")
 
     interval_days = (end_date - start_date).days + 1
-    if interval_days > 31:
+    if interval_days > 90:
         raise HTTPException(
             status_code=422,
-            detail="Range too large. Max 31 days. Use smaller windows.",
+            detail="Range too large. Max 90 days. Use smaller windows.",
         )
 
     _log(
