@@ -9,20 +9,31 @@ import swisseph as swe
 
 from astro.aspects import ASPECTS
 from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime
-from astro.i18n_ptbr import (
-    aspect_to_ptbr,
-    build_aspects_ptbr,
-    build_houses_ptbr,
-    build_planets_ptbr,
-    format_position_ptbr,
-    house_theme_ptbr,
-    planet_key_to_ptbr,
-    sign_to_ptbr,
-)
 from astro.utils import angle_diff, deg_to_sign, to_julian_day
 
 
 ZodiacType = Literal["tropical", "sidereal"]
+
+PLANET_PTBR = {
+    "Sun": "Sol",
+    "Moon": "Lua",
+    "Mercury": "Mercúrio",
+    "Venus": "Vênus",
+    "Mars": "Marte",
+    "Jupiter": "Júpiter",
+    "Saturn": "Saturno",
+    "Uranus": "Urano",
+    "Neptune": "Netuno",
+    "Pluto": "Plutão",
+}
+
+ASPECT_PTBR = {
+    "conjunction": "Conjunção",
+    "opposition": "Oposição",
+    "square": "Quadratura",
+    "trine": "Trígono",
+    "sextile": "Sextil",
+}
 
 
 @dataclass(frozen=True)
@@ -300,128 +311,6 @@ def _tz_offset_minutes(dt: datetime, timezone_name: str, fallback_minutes: Optio
     return int(offset.total_seconds() // 60)
 
 
-def _house_for_lon(cusps: List[float], lon: float) -> int:
-    if not cusps:
-        return 1
-    lon_mod = lon % 360
-    for idx in range(12):
-        start = cusps[idx]
-        end = cusps[(idx + 1) % 12]
-        start_mod = start
-        end_mod = end
-        lon_check = lon_mod
-        if end_mod < start_mod:
-            end_mod += 360
-            if lon_check < start_mod:
-                lon_check += 360
-        if start_mod <= lon_check < end_mod:
-            return idx + 1
-    return 12
-
-
-def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
-    cusps = solar_chart.get("houses", {}).get("cusps", [])
-    planets = solar_chart.get("planets", {})
-    areas: List[dict] = []
-
-    sun_lon = planets.get("Sun", {}).get("lon", 0.0)
-    moon_lon = planets.get("Moon", {}).get("lon", 0.0)
-    sun_house = _house_for_lon(cusps, float(sun_lon))
-    moon_house = _house_for_lon(cusps, float(moon_lon))
-
-    areas.append(
-        {
-            "area": house_theme_ptbr(sun_house),
-            "level": "high",
-            "score": 78,
-            "reason": f"Sol em destaque na casa {sun_house}.",
-        }
-    )
-    areas.append(
-        {
-            "area": house_theme_ptbr(moon_house),
-            "level": "medium",
-            "score": 65,
-            "reason": f"Lua ativando a casa {moon_house}.",
-        }
-    )
-
-    asc = solar_chart.get("houses", {}).get("asc", 0.0)
-    mc = solar_chart.get("houses", {}).get("mc", 0.0)
-    areas.append(
-        {
-            "area": "Direção",
-            "level": "medium",
-            "score": 62,
-            "reason": f"Ângulos ASC/MC em {format_position_ptbr(float(asc) % 30, sign_to_ptbr(deg_to_sign(float(asc))['sign']))} e {format_position_ptbr(float(mc) % 30, sign_to_ptbr(deg_to_sign(float(mc))['sign']))}.",
-        }
-    )
-
-    if aspects:
-        top = aspects[0]
-        areas.append(
-            {
-                "area": "Relacionamentos",
-                "level": "high",
-                "score": 72,
-                "reason": (
-                    f"{planet_key_to_ptbr(top.get('transit_planet'))} "
-                    f"{aspect_to_ptbr(top.get('aspect'))} "
-                    f"{planet_key_to_ptbr(top.get('natal_planet'))}."
-                ),
-            }
-        )
-
-    if len(areas) < 5:
-        areas.append(
-            {
-                "area": "Rotina",
-                "level": "medium",
-                "score": 58,
-                "reason": "Equilíbrio entre demandas pessoais e objetivos anuais.",
-            }
-        )
-
-    return areas[:5]
-
-
-def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
-    planets = solar_chart.get("planets", {})
-    sun_sign = sign_to_ptbr(planets.get("Sun", {}).get("sign", ""))
-    moon_sign = sign_to_ptbr(planets.get("Moon", {}).get("sign", ""))
-    highlights = [
-        {
-            "titulo": "Tema solar do ano",
-            "descricao": f"Sol em {sun_sign} favorece foco em identidade e visibilidade.",
-        },
-        {
-            "titulo": "Clima emocional",
-            "descricao": f"Lua em {moon_sign} indica sensibilidade e ajustes afetivos.",
-        },
-    ]
-    if aspects:
-        top = aspects[0]
-        highlights.append(
-            {
-                "titulo": "Aspecto dominante",
-                "descricao": (
-                    f"{planet_key_to_ptbr(top.get('transit_planet'))} "
-                    f"{aspect_to_ptbr(top.get('aspect'))} "
-                    f"{planet_key_to_ptbr(top.get('natal_planet'))}."
-                ),
-            }
-        )
-    else:
-        highlights.append(
-            {
-                "titulo": "Integração gradual",
-                "descricao": "Poucos aspectos exatos: tendência a mudanças progressivas.",
-            }
-        )
-
-    return highlights[:3]
-
-
 def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
     natal_offset = _tz_offset_minutes(
         inputs.natal_date, inputs.natal_timezone, inputs.tz_offset_minutes
@@ -471,19 +360,11 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
     )
 
     aspects = compute_aspects(solar_return_chart["planets"], natal_chart["planets"])
+    interpretation = build_interpretation_ptbr(solar_return_chart, aspects)
 
     natal_sun_lon = natal_chart["planets"]["Sun"]["lon"]
     return_sun_lon = solar_return_chart["planets"]["Sun"]["lon"]
     delta_longitude = abs(angle_diff(return_sun_lon, natal_sun_lon))
-
-    casas_ptbr = build_houses_ptbr(solar_return_chart["houses"])
-    planetas_ptbr = build_planets_ptbr(solar_return_chart["planets"])
-    aspectos_ptbr = build_aspects_ptbr(aspects)
-    areas_ativadas = _build_areas_ativadas(solar_return_chart, aspects)
-    destaques = _build_destaques(solar_return_chart, aspects)
-
-    metodo_refino = "bissecao" if inputs.engine == "v2" else "grade-horaria"
-    iteracoes = 60 if inputs.engine == "v2" else 97
 
     return {
         "metadados_tecnicos": {
@@ -491,21 +372,12 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "solar_return_utc": solar_return_utc.isoformat(),
             "solar_return_local": solar_return_local.isoformat(),
             "delta_longitude_graus": round(delta_longitude, 6),
-            "diferenca_longitude_graus": round(delta_longitude, 6),
-            "idioma": "pt-BR",
-            "fonte_traducao": "backend",
-            "tolerancia_graus": 1e-6 if inputs.engine == "v2" else None,
-            "metodo_refino": metodo_refino,
-            "iteracoes": iteracoes,
         },
         "mapa_revolucao": {
             "planetas": solar_return_chart["planets"],
-            "planetas_ptbr": planetas_ptbr,
             "casas": solar_return_chart["houses"],
-            "casas_ptbr": casas_ptbr,
             "aspectos": aspects,
-            "aspectos_ptbr": aspectos_ptbr,
         },
-        "areas_ativadas": areas_ativadas,
-        "destaques": destaques,
+        "areas_ativadas": [],
+        "destaques": interpretation.get("destaques", []),
     }
