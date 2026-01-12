@@ -3,7 +3,7 @@ from typing import Literal, Optional
 
 import swisseph as swe
 
-from astro.utils import to_julian_day, deg_to_sign
+from astro.utils import angle_diff, to_julian_day, deg_to_sign
 
 # garante funcionamento em cloud mesmo sem ephemeris externa
 swe.set_ephe_path(".")
@@ -171,4 +171,74 @@ def compute_moon_only(date_yyyy_mm_dd: str, tz_offset_minutes: int = 0) -> dict:
         "moon_sign": sign_info["sign"],
         "deg_in_sign": round(sign_info["deg_in_sign"], 4),
         "phase_angle_deg": round(phase_angle, 4)
+    }
+
+
+def _planet_longitude(utc_dt: datetime, planet_id: int) -> float:
+    jd_ut = to_julian_day(utc_dt)
+    result, _ = swe.calc_ut(jd_ut, planet_id)
+    return result[0] % 360.0
+
+
+def find_longitude_match(
+    *,
+    planet_id: int,
+    target_lon: float,
+    start_local: datetime,
+    end_local: datetime,
+    tz_offset_minutes: int = 0,
+    tolerance_deg: float = 0.1,
+    step_minutes: int = 60,
+    refine_steps: int = 12,
+) -> dict:
+    if end_local <= start_local:
+        raise ValueError("end_local must be after start_local")
+
+    start_utc = start_local - timedelta(minutes=tz_offset_minutes)
+    end_utc = end_local - timedelta(minutes=tz_offset_minutes)
+
+    if end_utc <= start_utc:
+        raise ValueError("end_local must be after start_local")
+
+    step_seconds = max(60, int(step_minutes * 60))
+    best_utc = start_utc
+    best_delta = 360.0
+    current = start_utc
+    while current <= end_utc:
+        lon = _planet_longitude(current, planet_id)
+        delta = angle_diff(lon, target_lon)
+        if delta < best_delta:
+            best_delta = delta
+            best_utc = current
+        if best_delta <= tolerance_deg:
+            break
+        current += timedelta(seconds=step_seconds)
+
+    center = best_utc
+    window_seconds = step_seconds
+    for _ in range(refine_steps):
+        if window_seconds <= 1:
+            break
+        half_window = max(1, window_seconds // 2)
+        candidates = [
+            max(start_utc, center - timedelta(seconds=half_window)),
+            center,
+            min(end_utc, center + timedelta(seconds=half_window)),
+        ]
+        for candidate in candidates:
+            lon = _planet_longitude(candidate, planet_id)
+            delta = angle_diff(lon, target_lon)
+            if delta < best_delta:
+                best_delta = delta
+                center = candidate
+        window_seconds = half_window
+
+    center = center.replace(microsecond=0)
+    best_lon = _planet_longitude(center, planet_id)
+    local_dt = (center + timedelta(minutes=tz_offset_minutes)).replace(microsecond=0)
+    return {
+        "local_datetime": local_dt.isoformat(),
+        "utc_datetime": center.isoformat(),
+        "planet_lon": round(best_lon, 6),
+        "delta_deg": round(best_delta, 6),
     }
