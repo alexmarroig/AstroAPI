@@ -1,7 +1,15 @@
 # Proxy Supabase (AstroAPI)
 
 ## Normalização de payload
-O proxy não deve aplicar normalização automática de campos `natal_*` no endpoint
-`/v1/solar-return/calculate`. Esse endpoint deve receber e encaminhar o payload
-exatamente conforme o schema definido, preservando os nomes originais dos campos
-e evitando conversões implícitas entre `year/month/day/...` e `natal_year/natal_month/...`.
+### PASS-THROUGH (não normalizar year/natal_year)
+- `/v1/solar-return/calculate`
+- `/v1/chart/natal`
+- `/v1/chart/transits`
+- `/v1/chart/render-data`
+
+Esses endpoints devem receber e encaminhar o payload exatamente conforme o schema
+definido, preservando os nomes originais dos campos e evitando conversões implícitas
+entre `year/month/day/...` e `natal_year/natal_month/...`.
+
+### Pode normalizar (resolve-tz)
+- `/v1/time/resolve-tz`
