@@ -1,3 +1,4 @@
+import calendar
 from datetime import datetime, timedelta
 from typing import Literal, Optional
 
@@ -172,3 +173,94 @@ def compute_moon_only(date_yyyy_mm_dd: str, tz_offset_minutes: int = 0) -> dict:
         "deg_in_sign": round(sign_info["deg_in_sign"], 4),
         "phase_angle_deg": round(phase_angle, 4)
     }
+
+
+def _sun_longitude_at(dt: datetime) -> float:
+    jd_ut = to_julian_day(dt)
+    result, _ = swe.calc_ut(jd_ut, swe.SUN)
+    return result[0] % 360.0
+
+
+def _angle_delta(lon: float, target: float) -> float:
+    return ((lon - target + 180.0) % 360.0) - 180.0
+
+
+def _target_year_datetime(natal_dt: datetime, target_year: int) -> datetime:
+    day = min(natal_dt.day, calendar.monthrange(target_year, natal_dt.month)[1])
+    return natal_dt.replace(year=target_year, day=day)
+
+
+def _solar_return_v1(natal_lon: float, approx_dt: datetime) -> datetime:
+    window_start = approx_dt - timedelta(days=2)
+    best_dt = window_start
+    best_delta = 360.0
+    for hour in range(0, 97):
+        candidate = window_start + timedelta(hours=hour)
+        delta = abs(_angle_delta(_sun_longitude_at(candidate), natal_lon))
+        if delta < best_delta:
+            best_delta = delta
+            best_dt = candidate
+    return best_dt
+
+
+def _solar_return_v2(natal_lon: float, approx_dt: datetime) -> Optional[datetime]:
+    window_start = approx_dt - timedelta(days=3)
+    window_end = approx_dt + timedelta(days=3)
+    step = timedelta(hours=6)
+
+    prev_dt = window_start
+    prev_delta = _angle_delta(_sun_longitude_at(prev_dt), natal_lon)
+    if prev_delta == 0:
+        return prev_dt
+
+    current = window_start + step
+    bracket = None
+    while current <= window_end:
+        current_delta = _angle_delta(_sun_longitude_at(current), natal_lon)
+        if current_delta == 0:
+            return current
+        if prev_delta * current_delta < 0:
+            bracket = (prev_dt, current)
+            break
+        prev_dt, prev_delta = current, current_delta
+        current += step
+
+    if bracket is None:
+        return None
+
+    left_dt, right_dt = bracket
+    left_delta = _angle_delta(_sun_longitude_at(left_dt), natal_lon)
+    right_delta = _angle_delta(_sun_longitude_at(right_dt), natal_lon)
+
+    for _ in range(60):
+        midpoint = left_dt + (right_dt - left_dt) / 2
+        mid_delta = _angle_delta(_sun_longitude_at(midpoint), natal_lon)
+        if abs(mid_delta) < 1e-6 or (right_dt - left_dt).total_seconds() <= 1:
+            return midpoint
+        if left_delta * mid_delta < 0:
+            right_dt = midpoint
+            right_delta = mid_delta
+        else:
+            left_dt = midpoint
+            left_delta = mid_delta
+
+    return left_dt + (right_dt - left_dt) / 2
+
+
+def solar_return_datetime(
+    natal_dt: datetime,
+    target_year: int,
+    tz_offset_minutes: int = 0,
+    engine: Literal["v1", "v2"] = "v1",
+) -> datetime:
+    natal_utc = natal_dt - timedelta(minutes=tz_offset_minutes)
+    natal_lon = _sun_longitude_at(natal_utc)
+    approx_local = _target_year_datetime(natal_dt, target_year)
+    approx_utc = approx_local - timedelta(minutes=tz_offset_minutes)
+
+    if engine == "v2":
+        result = _solar_return_v2(natal_lon, approx_utc)
+        if result is not None:
+            return result
+
+    return _solar_return_v1(natal_lon, approx_utc)
