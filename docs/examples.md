@@ -45,6 +45,28 @@ curl -X POST "$API_URL/v1/chart/transits" \
   }'
 ```
 
+## Render data (UI)
+
+```bash
+curl -X POST "$API_URL/v1/chart/render-data" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123" \
+  -d '{
+    "natal_year": 1995,
+    "natal_month": 11,
+    "natal_day": 7,
+    "natal_hour": 22,
+    "natal_minute": 56,
+    "natal_second": 0,
+    "lat": -23.5505,
+    "lng": -46.6333,
+    "timezone": "America/Sao_Paulo",
+    "house_system": "P",
+    "zodiac_type": "tropical"
+  }'
+```
+
 ## Retrogrades alerts
 
 ```bash
