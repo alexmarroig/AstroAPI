@@ -50,3 +50,19 @@ curl -X POST "$API_URL/v1/chart/transits" \
 ```bash
 curl -X GET "$API_URL/v1/alerts/retrogrades?date=2024-01-01&timezone=Etc/UTC"
 ```
+
+## Cosmic weather (range)
+
+`from` e `to` são opcionais. Quando ausentes, o backend assume `today..today+6`.
+
+```bash
+curl -X GET "$API_URL/v1/cosmic-weather/range?from=2024-05-01&to=2024-05-07" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123"
+```
+
+```bash
+curl -X GET "$API_URL/v1/cosmic-weather/range" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123"
+```
