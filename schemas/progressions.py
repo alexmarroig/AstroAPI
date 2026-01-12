@@ -53,3 +53,4 @@ class SecondaryProgressionCalculateResponse(BaseModel):
     age_years: float
     tz_offset_minutes: int
     chart: dict
+    chart_ptbr: Optional[dict] = None

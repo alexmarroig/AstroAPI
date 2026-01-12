@@ -33,6 +33,7 @@ def test_render_data_accepts_year_payload():
     assert resp.status_code == 200
     body = resp.json()
     assert body["planets"]
+    assert body["planetas_ptbr"]
 
 
 def test_render_data_rejects_natal_payload():
