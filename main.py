@@ -123,6 +123,18 @@ async def request_logging_middleware(request: Request, call_next):
             "latency_ms": latency_ms,
         }
         _log("info", "request", **extra)
+        if request.url.path == "/v1/chart/render-data":
+            auth_present = bool(request.headers.get("authorization"))
+            user_id_header = request.headers.get("x-user-id")
+            _log(
+                "info",
+                f"render_data_proxy headers auth_present={auth_present} x_user_id_present={bool(user_id_header)}",
+                request_id=request_id,
+                path=request.url.path,
+                status=response.status_code,
+                latency_ms=latency_ms,
+                user_id=user_id_header,
+            )
 
         response.headers["X-Request-Id"] = request_id
         return response

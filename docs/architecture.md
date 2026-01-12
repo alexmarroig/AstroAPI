@@ -93,6 +93,8 @@ A maioria dos endpoints exige:
 - Header `Authorization: Bearer <API_KEY>`
 - Header `X-User-Id: <user_id>`
 
+Para `/v1/chart/render-data`, chame o backend diretamente (sem Edge Function/proxy) e sempre envie ambos os headers.
+
 Exemplo (fetch):
 ```ts
 await fetch(`${API_URL}/v1/chart/natal`, {
@@ -119,7 +121,7 @@ await fetch(`${API_URL}/v1/chart/natal`, {
 - Cachear respostas do backend quando possível (principalmente mapas). 
 - Usar `house_system`, `zodiac_type` e `ayanamsa` conforme configurações do usuário.
 - Quando precisar de nomes dos signos em PT-BR, use `?lang=pt-BR`. Respostas incluem `sign_pt` e `moon_sign_pt`.
-- Tratar erros 400 (timezone inválido) e 500 (cálculo falhou) exibindo mensagens amigáveis.
+- Tratar erros 400 (timezone inválido), 401/403 (credenciais ausentes/inválidas) e 500 (cálculo falhou) exibindo mensagens amigáveis.
 - Para UX, considerar loading states para chamadas com cálculo astrológico.
 
 ## 6. Modelos e enums relevantes
