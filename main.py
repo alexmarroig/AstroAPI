@@ -20,6 +20,7 @@ from fastapi.exceptions import RequestValidationError
 from openai import OpenAI
 import swisseph as swe
 
+from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only, solar_return_datetime
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only
 from astro.solar_return import SolarReturnInputs, compute_solar_return_payload
 from astro.aspects import compute_transit_aspects
@@ -29,11 +30,14 @@ from ai.prompts import build_cosmic_chat_messages
 from core.security import require_api_key_and_user
 from core.cache import cache
 from core.plans import is_trial_or_premium
+from routes.lunations import router as lunations_router
+from routes.progressions import router as progressions_router
 
 # -----------------------------
 # Load env
 # -----------------------------
 load_dotenv()
+SOLAR_RETURN_ENGINE = os.getenv("SOLAR_RETURN_ENGINE", "v1").lower()
 
 # -----------------------------
 # Logging (structured)
@@ -92,6 +96,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],  # Authorization + X-User-Id
 )
+
+# -----------------------------
+# Routers (isolated services)
+# -----------------------------
+app.include_router(lunations_router)
+app.include_router(progressions_router)
 
 # -----------------------------
 # Middleware: request_id + logging
@@ -575,6 +585,12 @@ class NotificationsDailyResponse(BaseModel):
     date: str
     items: List[Dict[str, Any]]
 
+
+class SolarReturnResponse(BaseModel):
+    target_year: int
+    solar_return_utc: str
+    solar_return_local: str
+
 # -----------------------------
 # Helpers
 # -----------------------------
@@ -637,6 +653,55 @@ def _apply_moon_localization(payload: Dict[str, Any], lang: Optional[str]) -> Di
             if "headline" in payload:
                 payload["headline"] = payload["headline"].replace(sign, sign_pt)
     return payload
+
+
+def _solar_return_datetime(
+    natal_dt: datetime,
+    target_year: int,
+    tz_offset_minutes: int,
+    request: Request,
+    user_id: Optional[str] = None,
+) -> datetime:
+    v1_dt = solar_return_datetime(
+        natal_dt=natal_dt,
+        target_year=target_year,
+        tz_offset_minutes=tz_offset_minutes,
+        engine="v1",
+    )
+
+    if SOLAR_RETURN_ENGINE == "v2":
+        try:
+            v2_dt = solar_return_datetime(
+                natal_dt=natal_dt,
+                target_year=target_year,
+                tz_offset_minutes=tz_offset_minutes,
+                engine="v2",
+            )
+            diff_seconds = abs((v2_dt - v1_dt).total_seconds())
+            _log(
+                "info",
+                "solar_return_engine_compare",
+                request_id=getattr(request.state, "request_id", None),
+                path=request.url.path,
+                status=200,
+                latency_ms=None,
+                user_id=user_id,
+                v1_utc=v1_dt.isoformat(),
+                v2_utc=v2_dt.isoformat(),
+                diff_seconds=round(diff_seconds, 3),
+            )
+        except Exception:
+            logger.error(
+                "solar_return_engine_compare_error",
+                exc_info=True,
+                extra={
+                    "request_id": getattr(request.state, "request_id", None),
+                    "path": request.url.path,
+                    "user_id": user_id,
+                },
+            )
+
+    return v1_dt
 
 def _build_transits_context(
     body: TransitsRequest, tz_offset_minutes: int, lang: Optional[str]
@@ -1256,6 +1321,38 @@ async def life_cycles(
         )
 
     return {"age_years": round(age_years, 2), "items": items}
+
+@app.post("/v1/insights/solar-return", response_model=SolarReturnResponse)
+async def solar_return(
+    body: TransitsRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    target_y, _, _ = _parse_date_yyyy_mm_dd(body.target_date)
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+    )
+    solar_return_utc = _solar_return_datetime(
+        natal_dt=natal_dt,
+        target_year=target_y,
+        tz_offset_minutes=tz_offset_minutes,
+        request=request,
+        user_id=auth.get("user_id"),
+    )
+    solar_return_local = solar_return_utc + timedelta(minutes=tz_offset_minutes)
+    return SolarReturnResponse(
+        target_year=target_y,
+        solar_return_utc=solar_return_utc.isoformat(),
+        solar_return_local=solar_return_local.isoformat(),
+    )
 
 @app.post("/v1/chart/natal")
 async def natal(
