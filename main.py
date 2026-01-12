@@ -628,8 +628,6 @@ def _cw_text(phase: str, sign: str) -> str:
     ]
     return options[hash(phase + sign) % len(options)]
 
-def _build_transits_context(
-    body: TransitsRequest, tz_offset_minutes: int
 def _is_pt_br(lang: Optional[str]) -> bool:
     return (lang or "").lower().replace("_", "-") == "pt-br"
 
@@ -1152,7 +1150,6 @@ async def dominant_theme(
         second=body.natal_second,
     )
     tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
-    context = _build_transits_context(body, tz_offset_minutes)
     context = _build_transits_context(body, tz_offset_minutes, lang)
     aspects = context["aspects"]
 
@@ -1258,16 +1255,12 @@ async def care_suggestion(
     moon = compute_moon_only(body.target_date, tz_offset_minutes=tz_offset_minutes)
     phase = _moon_phase_4(moon["phase_angle_deg"])
     sign = moon["moon_sign"]
+    sign_pt = sign_to_pt(sign)
+
     dominant_influence = "neutral"
     if aspects:
         dominant_influence = max(
             (asp.get("influence", "neutral") for asp in aspects),
-    sign_pt = sign_to_pt(sign)
-
-    dominant_influence = "Neutral"
-    if aspects:
-        dominant_influence = max(
-            (asp.get("influence", "Neutral") for asp in aspects),
             key=lambda influence: sum(1 for asp in aspects if asp.get("influence") == influence),
         )
 
@@ -1284,7 +1277,6 @@ async def care_suggestion(
 
     return {
         "moon_phase": phase,
-        "moon_sign": sign,
         "moon_sign": sign_pt if _is_pt_br(lang) else sign,
         "theme": dominant_influence,
         "suggestion": suggestion_map.get(dominant_influence, "Mantenha o equilíbrio e a presença."),

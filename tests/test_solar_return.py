@@ -42,6 +42,8 @@ def test_solar_return_structure():
     assert "mapa_revolucao" in body
     assert "planetas" in body["mapa_revolucao"]
     assert "aspectos" in body["mapa_revolucao"]
+    assert "areas_ativadas" in body
+    assert "destaques" in body
 
 
 def test_solar_return_matches_sun_longitude():
