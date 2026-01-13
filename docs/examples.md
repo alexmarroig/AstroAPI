@@ -479,6 +479,76 @@ curl -X POST "$API_URL/v1/ai/cosmic-chat" \
 }
 ```
 
+## /v1/time/validate-local-datetime
+
+**cURL (horário ambíguo — fim do DST)**
+```bash
+curl -X POST "$API_URL/v1/time/validate-local-datetime" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "datetime_local": "2024-11-03T01:30:00",
+    "timezone": "America/New_York",
+    "strict": false
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "status": "ambiguous",
+  "is_valid": true,
+  "offset_options_minutes": [-300, -240],
+  "resolved_offset_minutes": -300,
+  "fold": 0
+}
+```
+
+**cURL (horário inexistente — início do DST)**
+```bash
+curl -X POST "$API_URL/v1/time/validate-local-datetime" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "datetime_local": "2024-03-10T02:30:00",
+    "timezone": "America/New_York",
+    "strict": true
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "detail": "Horário inexistente na transição de horário de verão.",
+  "hint": "Ajuste o horário local ou envie outro horário válido."
+}
+```
+
+**cURL (preferindo o segundo horário na ambiguidade)**
+```bash
+curl -X POST "$API_URL/v1/time/validate-local-datetime" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "datetime_local": "2024-11-03T01:30:00",
+    "timezone": "America/New_York",
+    "strict": false,
+    "prefer_fold": 1
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "status": "ambiguous",
+  "is_valid": true,
+  "offset_options_minutes": [-300, -240],
+  "resolved_offset_minutes": -240,
+  "fold": 1
+}
+```
+
+**Notas**
+- `strict=true` faz o endpoint rejeitar horários ambíguos (fim do DST) e inexistentes (início do DST) com erro 400, garantindo validação rígida do horário local.
+- `prefer_fold` permite escolher qual instância usar quando o horário é ambíguo (`0` = primeira ocorrência, `1` = segunda ocorrência), mantendo a consistência do offset retornado.
+
 ## Erros comuns
 - **401**: faltando `Authorization` ou `X-User-Id` em endpoints protegidos.
 - **400**: data inválida (formato YYYY-MM-DD) ou timezone inválido.
