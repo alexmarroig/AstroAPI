@@ -584,6 +584,18 @@ class SolarReturnPreferencias(BaseModel):
     modo: Optional[Literal["geocentrico", "topocentrico"]] = Field(default="geocentrico")
     aspectos_habilitados: Optional[List[str]] = None
     orbes: Optional[Dict[str, float]] = None
+    janela_dias: Optional[int] = Field(
+        default=None, ge=1, description="Janela em dias para busca do retorno solar."
+    )
+    passo_horas: Optional[int] = Field(
+        default=None, ge=1, description="Passo em horas para busca do retorno solar."
+    )
+    max_iteracoes: Optional[int] = Field(
+        default=None, ge=1, description="Iterações máximas no refinamento do retorno solar."
+    )
+    tolerancia_graus: Optional[float] = Field(
+        default=None, gt=0, description="Tolerância em graus para refinamento do retorno solar."
+    )
 
 
 class SolarReturnRequest(BaseModel):
@@ -2808,6 +2820,10 @@ async def solar_return_calculate(
         zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
         ayanamsa=prefs.ayanamsa,
         engine=engine,  # type: ignore[arg-type]
+        window_days=prefs.janela_dias,
+        step_hours=prefs.passo_horas,
+        max_iter=prefs.max_iteracoes,
+        tolerance_degrees=prefs.tolerancia_graus,
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
         request_id=getattr(request.state, "request_id", None),

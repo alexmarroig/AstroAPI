@@ -78,6 +78,10 @@ class SolarReturnInputs:
     zodiac_type: ZodiacType
     ayanamsa: Optional[str]
     engine: Literal["v1", "v2"]
+    window_days: Optional[int] = None
+    step_hours: Optional[int] = None
+    max_iter: Optional[int] = None
+    tolerance_degrees: Optional[float] = None
     tz_offset_minutes: Optional[int] = None
     natal_time_missing: bool = False
     aspectos_habilitados: Optional[List[str]] = None
@@ -624,6 +628,10 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
         target_year=inputs.target_year,
         tz_offset_minutes=natal_offset,
         engine=inputs.engine,
+        window_days=inputs.window_days,
+        step_hours=inputs.step_hours,
+        max_iter=inputs.max_iter,
+        tolerance_degrees=inputs.tolerance_degrees,
     )
 
     target_offset = _tz_offset_minutes(
@@ -722,6 +730,8 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "tolerancia_graus": tolerancia_graus,
             "metodo_refino": metodo_refino,
             "iteracoes": iteracoes,
+            "janela_dias": window_days,
+            "passo_horas": step_hours,
             "bracket_encontrado": bracket_encontrado,
             "janela_usada_dias": janela_usada_dias,
             "passo_usado_horas": passo_usado_horas,
