@@ -15,7 +15,7 @@ def _auth_headers():
     return {"Authorization": "Bearer test-key", "X-User-Id": "u1"}
 
 
-def test_natal_chart_test_vector_pt_br():
+def test_interpretation_shape():
     client = TestClient(main.app)
     payload = {
         "natal_year": 1995,
@@ -28,22 +28,9 @@ def test_natal_chart_test_vector_pt_br():
         "lng": -46.6333,
         "timezone": "America/Sao_Paulo",
     }
-
-    resp = client.post("/v1/chart/natal", json=payload, headers=_auth_headers())
-    resp = client.post(
-        "/v1/chart/natal?lang=pt-BR",
-        json=payload,
-        headers=_auth_headers(),
-    )
+    resp = client.post("/v1/interpretation/natal", json=payload, headers=_auth_headers())
     assert resp.status_code == 200
-
-    chart = resp.json()
-    sun = chart["planets"]["Sun"]
-    moon = chart["planets"]["Moon"]
-
-    assert sun["sign"] == "Escorpião"
-    assert sun["sign_pt"] == "Escorpião"
-    assert sun["deg_in_sign"] == pytest.approx(15.14, abs=0.5)
-
-    assert moon["sign"] == "Touro"
-    assert moon["sign_pt"] == "Touro"
+    body = resp.json()
+    assert body["titulo"] == "Resumo Geral do Mapa"
+    assert len(body["sintese"]) >= 3
+    assert body["planetas_com_maior_peso"]
