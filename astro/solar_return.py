@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+import logging
 from typing import Callable, Dict, List, Literal, Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -45,6 +46,8 @@ ASPECT_PTBR = {
     "sextile": "Sextil",
 }
 
+logger = logging.getLogger("astro-api")
+
 
 @dataclass(frozen=True)
 class SolarReturnConfig:
@@ -71,6 +74,7 @@ class SolarReturnInputs:
     engine: Literal["v1", "v2"]
     tz_offset_minutes: Optional[int] = None
     natal_time_missing: bool = False
+    request_id: Optional[str] = None
 
 
 def _resolve_zodiac(config: SolarReturnConfig) -> tuple[ZodiacType, int]:
@@ -302,23 +306,106 @@ def build_interpretation_ptbr(
     }
 
 
-def _tz_offset_minutes(dt: datetime, timezone_name: str, fallback_minutes: Optional[int]) -> int:
+def _tz_offset_minutes(
+    dt: datetime,
+    timezone_name: str,
+    fallback_minutes: Optional[int],
+    request_id: Optional[str],
+    context: str,
+) -> int:
+    warnings: List[str] = []
     if not timezone_name:
         if fallback_minutes is None:
+            logger.warning(
+                "solar_return_timezone_missing",
+                extra={
+                    "request_id": request_id,
+                    "context": context,
+                    "timezone": None,
+                    "local_datetime": dt.isoformat(),
+                    "warnings": ["timezone_missing"],
+                },
+            )
             raise ValueError("Timezone não informado.")
+        warnings.append("fallback_offset_used")
+        utc_dt = dt - timedelta(minutes=fallback_minutes)
+        logger.info(
+            "solar_return_timezone_resolved",
+            extra={
+                "request_id": request_id,
+                "context": context,
+                "timezone": None,
+                "offset_minutes": fallback_minutes,
+                "offset_fold0_minutes": None,
+                "offset_fold1_minutes": None,
+                "fold": None,
+                "local_datetime": dt.isoformat(),
+                "utc_datetime": utc_dt.isoformat(),
+                "warnings": warnings,
+            },
+        )
         return fallback_minutes
     try:
         tzinfo = ZoneInfo(timezone_name)
     except ZoneInfoNotFoundError as exc:
+        logger.warning(
+            "solar_return_timezone_invalid",
+            extra={
+                "request_id": request_id,
+                "context": context,
+                "timezone": timezone_name,
+                "local_datetime": dt.isoformat(),
+                "warnings": ["invalid_timezone"],
+            },
+        )
         raise ValueError(f"Timezone inválido: {timezone_name}") from exc
 
     if dt.tzinfo is None:
-        offset = dt.replace(tzinfo=tzinfo).utcoffset()
+        offset_fold0 = dt.replace(tzinfo=tzinfo, fold=0).utcoffset()
+        offset_fold1 = dt.replace(tzinfo=tzinfo, fold=1).utcoffset()
+        offset = offset_fold0 or offset_fold1
+        fold = 0 if offset_fold0 is not None else 1
+        local_dt = dt
+        if offset_fold0 and offset_fold1 and offset_fold0 != offset_fold1:
+            warnings.append("ambiguous_time")
     else:
         offset = dt.astimezone(tzinfo).utcoffset()
+        offset_fold0 = None
+        offset_fold1 = None
+        fold = None
+        local_dt = dt.astimezone(tzinfo)
+
     if offset is None:
+        logger.warning(
+            "solar_return_timezone_offset_missing",
+            extra={
+                "request_id": request_id,
+                "context": context,
+                "timezone": timezone_name,
+                "local_datetime": dt.isoformat(),
+                "warnings": ["missing_offset"],
+            },
+        )
         raise ValueError(f"Timezone sem offset disponível: {timezone_name}")
-    return int(offset.total_seconds() // 60)
+
+    offset_minutes = int(offset.total_seconds() // 60)
+    utc_dt = local_dt - timedelta(minutes=offset_minutes)
+    logger.info(
+        "solar_return_timezone_resolved",
+        extra={
+            "request_id": request_id,
+            "context": context,
+            "timezone": timezone_name,
+            "offset_minutes": offset_minutes,
+            "offset_fold0_minutes": int(offset_fold0.total_seconds() // 60) if offset_fold0 else None,
+            "offset_fold1_minutes": int(offset_fold1.total_seconds() // 60) if offset_fold1 else None,
+            "fold": fold,
+            "local_datetime": local_dt.isoformat(),
+            "utc_datetime": utc_dt.isoformat(),
+            "warnings": warnings,
+        },
+    )
+    return offset_minutes
 
 
 def _house_for_lon(cusps: List[float], lon: float) -> int:
@@ -445,7 +532,11 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
 
 def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
     natal_offset = _tz_offset_minutes(
-        inputs.natal_date, inputs.natal_timezone, inputs.tz_offset_minutes
+        inputs.natal_date,
+        inputs.natal_timezone,
+        inputs.tz_offset_minutes,
+        inputs.request_id,
+        "natal",
     )
     solar_return_utc = solar_return_datetime(
         natal_dt=inputs.natal_date,
@@ -458,6 +549,8 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
         solar_return_utc.replace(tzinfo=timezone.utc),
         inputs.target_timezone,
         None,
+        inputs.request_id,
+        "target",
     )
     solar_return_local = solar_return_utc + timedelta(minutes=target_offset)
 
@@ -505,6 +598,16 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
 
     metodo_refino = "bissecao" if inputs.engine == "v2" else "grade-horaria"
     iteracoes = 60 if inputs.engine == "v2" else 97
+    logger.info(
+        "solar_return_metadata",
+        extra={
+            "request_id": inputs.request_id,
+            "engine": inputs.engine,
+            "metodo_refino": metodo_refino,
+            "iteracoes": iteracoes,
+            "delta_longitude": round(delta_longitude, 6),
+        },
+    )
 
     return {
         "metadados_tecnicos": {
