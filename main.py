@@ -42,6 +42,7 @@ from ai.prompts import build_cosmic_chat_messages
 from core.security import require_api_key_and_user
 from core.cache import cache
 from core.plans import is_trial_or_premium
+from services.timezone_utils import resolve_local_datetime
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
 
@@ -601,6 +602,15 @@ class TimezoneResolveRequest(BaseModel):
             data.setdefault("minute", dt.minute)
             data.setdefault("second", dt.second)
         return data
+
+
+class ValidateLocalDatetimeRequest(BaseModel):
+    datetime_local: datetime = Field(..., description="Data/hora local, ex.: 2024-11-03T01:30:00")
+    timezone: str = Field(..., description="Timezone IANA, ex.: America/New_York")
+    strict: bool = Field(
+        default=True,
+        description="Quando true, rejeita horário ambíguo/inexistente nas transições de DST.",
+    )
 
 
 class EphemerisCheckRequest(BaseModel):
@@ -1299,6 +1309,15 @@ ENDPOINTS_CATALOG = [
     },
     {
         "method": "POST",
+        "path": "/v1/time/validate-local-datetime",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": "ValidateLocalDatetimeRequest",
+        "response_model": None,
+        "description": "Valida horário local com DST (ambíguo/inexistente).",
+    },
+    {
+        "method": "POST",
         "path": "/v1/diagnostics/ephemeris-check",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
@@ -1543,6 +1562,22 @@ async def resolve_timezone(body: TimezoneResolveRequest):
         "tz_offset_minutes": resolved_offset,
         "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
     }
+
+
+@app.post("/v1/time/validate-local-datetime")
+async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
+    resolution = resolve_local_datetime(
+        body.datetime_local, body.timezone, strict=body.strict
+    )
+    payload = {
+        "datetime_local_usado": resolution.datetime_local_used.isoformat(),
+        "datetime_utc_usado": resolution.datetime_utc_used.isoformat(),
+        "fold_usado": resolution.fold_used,
+        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+    }
+    if resolution.warnings:
+        payload["avisos"] = resolution.warnings
+    return payload
 
 @app.post("/v1/diagnostics/ephemeris-check")
 async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
