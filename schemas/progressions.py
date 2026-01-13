@@ -54,3 +54,9 @@ class SecondaryProgressionCalculateResponse(BaseModel):
     tz_offset_minutes: int
     chart: dict
     chart_ptbr: Optional[dict] = None
+    timezone_resolvida: Optional[str] = None
+    tz_offset_minutes_usado: Optional[int] = None
+    fold_usado: Optional[int] = None
+    datetime_local_usado: Optional[str] = None
+    datetime_utc_usado: Optional[str] = None
+    avisos: Optional[list[str]] = None

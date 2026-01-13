@@ -12,7 +12,12 @@ from schemas.progressions import (
     SecondaryProgressionCalculateResponse,
 )
 from services.progressions import calculate_secondary_progressions
-from services.time_utils import parse_date_yyyy_mm_dd, resolve_tz_offset
+from services.time_utils import (
+    localize_with_zoneinfo,
+    parse_date_yyyy_mm_dd,
+    parse_local_datetime,
+    to_utc,
+)
 
 router = APIRouter()
 
@@ -52,15 +57,17 @@ def secondary_progressions_calculate(
         body.natal_minute,
         body.natal_second,
     )
-    tz_resolution = resolve_tz_offset(
-        natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+    natal_local = parse_local_datetime(datetime_local=natal_dt)
+    localized = localize_with_zoneinfo(
+        natal_local, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
     )
+    utc_dt = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     result = calculate_secondary_progressions(
         natal_dt=natal_dt,
         target_date=target_dt,
         lat=body.lat,
         lng=body.lng,
-        tz_offset_minutes=tz_resolution.offset_minutes,
+        tz_offset_minutes=localized.tz_offset_minutes,
         house_system=body.house_system.value,
         zodiac_type=body.zodiac_type.value,
         ayanamsa=body.ayanamsa,
@@ -69,4 +76,13 @@ def secondary_progressions_calculate(
         "planetas_ptbr": build_planets_ptbr(result.chart.get("planets", {})),
         "casas_ptbr": build_houses_ptbr(result.chart.get("houses", {})),
     }
-    return SecondaryProgressionCalculateResponse(**result.__dict__, chart_ptbr=chart_ptbr)
+    return SecondaryProgressionCalculateResponse(
+        **result.__dict__,
+        chart_ptbr=chart_ptbr,
+        timezone_resolvida=localized.timezone_resolved,
+        tz_offset_minutes_usado=localized.tz_offset_minutes,
+        fold_usado=localized.fold,
+        datetime_local_usado=localized.datetime_local.isoformat(),
+        datetime_utc_usado=utc_dt.isoformat(),
+        avisos=localized.warnings,
+    )
