@@ -44,6 +44,7 @@ from core.cache import cache
 from core.plans import is_trial_or_premium
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
+from services.time_utils import parse_local_datetime, to_utc, utc_offset_minutes
 
 # -----------------------------
 # Load env
@@ -1204,9 +1205,8 @@ def _cosmic_weather_payload(
 ) -> Dict[str, Any]:
     """Compute (or fetch) the cosmic weather payload for a single day."""
 
-    _parse_date_yyyy_mm_dd(date_str)
-    dt = datetime.strptime(date_str, "%Y-%m-%d").replace(hour=12, minute=0, second=0)
-    resolved_offset = _tz_offset_for(dt, timezone, tz_offset_minutes)
+    local_dt = parse_local_datetime(date_str)
+    resolved_offset = utc_offset_minutes(local_dt, timezone, tz_offset_minutes)
 
     lang_key = (lang or "").lower()
     cache_key = f"cw:{user_id}:{date_str}:{timezone}:{resolved_offset}:{lang_key}"
@@ -1528,17 +1528,11 @@ async def system_endpoints():
 
 @app.post("/v1/time/resolve-tz")
 async def resolve_timezone(body: TimezoneResolveRequest):
-    dt = datetime(
-        year=body.year,
-        month=body.month,
-        day=body.day,
-        hour=body.hour,
-        minute=body.minute,
-        second=body.second,
-    )
-    resolved_offset = _tz_offset_for(
-        dt, body.timezone, fallback_minutes=None, strict=body.strict_birth
-    )
+    date_str = f"{body.year:04d}-{body.month:02d}-{body.day:02d}"
+    time_str = f"{body.hour:02d}:{body.minute:02d}:{body.second:02d}"
+    local_dt = parse_local_datetime(date_str, time_str)
+    utc_dt = to_utc(local_dt, body.timezone, fallback_minutes=None, strict=body.strict_birth)
+    resolved_offset = int((local_dt - utc_dt).total_seconds() // 60)
     return {
         "tz_offset_minutes": resolved_offset,
         "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
@@ -1922,16 +1916,11 @@ async def natal(
     auth=Depends(get_auth),
 ):
     try:
-        dt = datetime(
-            year=body.natal_year,
-            month=body.natal_month,
-            day=body.natal_day,
-            hour=body.natal_hour,
-            minute=body.natal_minute,
-            second=body.natal_second,
-        )
-        tz_offset_minutes = _tz_offset_for(
-            dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        date_str = f"{body.natal_year:04d}-{body.natal_month:02d}-{body.natal_day:02d}"
+        time_str = f"{body.natal_hour:02d}:{body.natal_minute:02d}:{body.natal_second:02d}"
+        local_dt = parse_local_datetime(date_str, time_str)
+        tz_offset_minutes = utc_offset_minutes(
+            local_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
         )
 
         lang_key = (lang or "").lower()
@@ -1980,16 +1969,11 @@ async def chart_distributions(
     auth=Depends(get_auth),
 ):
     try:
-        dt = datetime(
-            year=body.natal_year,
-            month=body.natal_month,
-            day=body.natal_day,
-            hour=body.natal_hour,
-            minute=body.natal_minute,
-            second=body.natal_second,
-        )
-        tz_offset_minutes = _tz_offset_for(
-            dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        date_str = f"{body.natal_year:04d}-{body.natal_month:02d}-{body.natal_day:02d}"
+        time_str = f"{body.natal_hour:02d}:{body.natal_minute:02d}:{body.natal_second:02d}"
+        local_dt = parse_local_datetime(date_str, time_str)
+        tz_offset_minutes = utc_offset_minutes(
+            local_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
         )
         chart = compute_chart(
             year=body.natal_year,
@@ -2025,15 +2009,10 @@ async def transits(
     y, m, d = _parse_date_yyyy_mm_dd(body.target_date)
 
     try:
-        natal_dt = datetime(
-            year=body.natal_year,
-            month=body.natal_month,
-            day=body.natal_day,
-            hour=body.natal_hour,
-            minute=body.natal_minute,
-            second=body.natal_second,
-        )
-        tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
+        date_str = f"{body.natal_year:04d}-{body.natal_month:02d}-{body.natal_day:02d}"
+        time_str = f"{body.natal_hour:02d}:{body.natal_minute:02d}:{body.natal_second:02d}"
+        natal_dt = parse_local_datetime(date_str, time_str)
+        tz_offset_minutes = utc_offset_minutes(natal_dt, body.timezone, body.tz_offset_minutes)
 
         lang_key = (lang or "").lower()
         cache_key = f"transits:{auth['user_id']}:{body.target_date}:{lang_key}"
@@ -2133,16 +2112,11 @@ async def interpretation_natal(
     auth=Depends(get_auth),
 ):
     try:
-        dt = datetime(
-            year=body.natal_year,
-            month=body.natal_month,
-            day=body.natal_day,
-            hour=body.natal_hour,
-            minute=body.natal_minute,
-            second=body.natal_second,
-        )
-        tz_offset_minutes = _tz_offset_for(
-            dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        date_str = f"{body.natal_year:04d}-{body.natal_month:02d}-{body.natal_day:02d}"
+        time_str = f"{body.natal_hour:02d}:{body.natal_minute:02d}:{body.natal_second:02d}"
+        local_dt = parse_local_datetime(date_str, time_str)
+        tz_offset_minutes = utc_offset_minutes(
+            local_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
         )
         chart = compute_chart(
             year=body.natal_year,
@@ -2354,15 +2328,10 @@ async def render_data(
     lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
-    dt = datetime(
-        year=body.year,
-        month=body.month,
-        day=body.day,
-        hour=body.hour,
-        minute=body.minute,
-        second=body.second,
-    )
-    tz_offset_minutes = _tz_offset_for(dt, body.timezone, body.tz_offset_minutes)
+    date_str = f"{body.year:04d}-{body.month:02d}-{body.day:02d}"
+    time_str = f"{body.hour:02d}:{body.minute:02d}:{body.second:02d}"
+    local_dt = parse_local_datetime(date_str, time_str)
+    tz_offset_minutes = utc_offset_minutes(local_dt, body.timezone, body.tz_offset_minutes)
 
     lang_key = (lang or "").lower()
     cache_key = f"render:{auth['user_id']}:{hash(body.model_dump_json())}:{lang_key}"
@@ -2474,30 +2443,15 @@ async def solar_return_calculate(
             detail="Timezone do alvo inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
         )
 
-    try:
-        natal_y, natal_m, natal_d = _parse_date_yyyy_mm_dd(body.natal.data)
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
-
     natal_time_missing = body.natal.hora is None
-    if body.natal.hora:
-        try:
-            natal_hour, natal_minute, natal_second = map(int, body.natal.hora.split(":"))
-        except Exception:
+    try:
+        natal_dt = parse_local_datetime(body.natal.data, body.natal.hora)
+    except HTTPException as exc:
+        if exc.detail == "Formato inválido de data. Use YYYY-MM-DD.":
+            raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
+        if exc.detail == "Formato inválido de hora. Use HH:MM:SS.":
             raise HTTPException(status_code=422, detail="Hora natal inválida. Use HH:MM:SS.")
-    else:
-        natal_hour, natal_minute, natal_second = 12, 0, 0
-
-    natal_dt = datetime(
-        year=natal_y,
-        month=natal_m,
-        day=natal_d,
-        hour=natal_hour,
-        minute=natal_minute,
-        second=natal_second,
-    )
+        raise
 
     prefs = body.preferencias or SolarReturnPreferencias()
     engine = (os.getenv("SOLAR_RETURN_ENGINE") or "v1").lower()
