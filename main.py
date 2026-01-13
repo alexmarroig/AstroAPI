@@ -44,6 +44,7 @@ from core.cache import cache
 from core.plans import is_trial_or_premium
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
+from services import timezone_utils
 
 # -----------------------------
 # Load env
@@ -601,6 +602,22 @@ class TimezoneResolveRequest(BaseModel):
             data.setdefault("minute", dt.minute)
             data.setdefault("second", dt.second)
         return data
+
+
+class ValidateLocalDatetimeRequest(BaseModel):
+    date: str = Field(..., description="Data local no formato YYYY-MM-DD.")
+    time: str = Field(..., description="Hora local no formato HH:MM ou HH:MM:SS.")
+    timezone: str = Field(..., description="Timezone IANA (ex.: America/Sao_Paulo).")
+    strict: bool = Field(
+        default=False,
+        description="Quando true, rejeita horários ambíguos/inexistentes em transições de DST.",
+    )
+    prefer_fold: int = Field(
+        default=0,
+        ge=0,
+        le=1,
+        description="Preferência de fold (0 ou 1) para horários ambíguos.",
+    )
 
 
 class EphemerisCheckRequest(BaseModel):
@@ -1299,6 +1316,15 @@ ENDPOINTS_CATALOG = [
     },
     {
         "method": "POST",
+        "path": "/v1/time/validate-local-datetime",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": "ValidateLocalDatetimeRequest",
+        "response_model": None,
+        "description": "Valida data/hora local e resolve UTC/offset.",
+    },
+    {
+        "method": "POST",
         "path": "/v1/diagnostics/ephemeris-check",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
@@ -1541,6 +1567,24 @@ async def resolve_timezone(body: TimezoneResolveRequest):
     )
     return {
         "tz_offset_minutes": resolved_offset,
+        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+    }
+
+
+@app.post("/v1/time/validate-local-datetime")
+async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
+    validation = timezone_utils.validate_local_datetime(
+        date_str=body.date,
+        time_str=body.time,
+        timezone_name=body.timezone,
+        strict=body.strict,
+        prefer_fold=body.prefer_fold,
+    )
+    return {
+        "utc_datetime": validation.utc_datetime.isoformat(),
+        "tz_offset_minutes": validation.tz_offset_minutes,
+        "flags": validation.flags,
+        "warnings": validation.warnings,
         "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
     }
 
