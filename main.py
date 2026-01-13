@@ -2242,6 +2242,7 @@ async def interpretation_natal(
             )
 
         payload = {
+            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
             "titulo": "Resumo Geral do Mapa",
             "sintese": sintese,
             "temas_principais": temas_principais,

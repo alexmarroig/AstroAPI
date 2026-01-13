@@ -356,6 +356,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             "level": "high",
             "score": 78,
             "reason": f"Sol em destaque na casa {sun_house}.",
+            "metodo": "heuristico",
         }
     )
     areas.append(
@@ -364,6 +365,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             "level": "medium",
             "score": 65,
             "reason": f"Lua ativando a casa {moon_house}.",
+            "metodo": "heuristico",
         }
     )
 
@@ -375,6 +377,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             "level": "medium",
             "score": 62,
             "reason": f"Ângulos ASC/MC em {format_position_ptbr(float(asc) % 30, sign_to_ptbr(deg_to_sign(float(asc))['sign']))} e {format_position_ptbr(float(mc) % 30, sign_to_ptbr(deg_to_sign(float(mc))['sign']))}.",
+            "metodo": "heuristico",
         }
     )
 
@@ -390,6 +393,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
                     f"{aspect_to_ptbr(top.get('aspect'))} "
                     f"{planet_key_to_ptbr(top.get('natal_planet'))}."
                 ),
+                "metodo": "heuristico",
             }
         )
 
@@ -400,6 +404,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
                 "level": "medium",
                 "score": 58,
                 "reason": "Equilíbrio entre demandas pessoais e objetivos anuais.",
+                "metodo": "heuristico",
             }
         )
 
@@ -414,10 +419,12 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
         {
             "titulo": "Tema solar do ano",
             "descricao": f"Sol em {sun_sign} favorece foco em identidade e visibilidade.",
+            "metodo": "heuristico",
         },
         {
             "titulo": "Clima emocional",
             "descricao": f"Lua em {moon_sign} indica sensibilidade e ajustes afetivos.",
+            "metodo": "heuristico",
         },
     ]
     if aspects:
@@ -430,6 +437,7 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
                     f"{aspect_to_ptbr(top.get('aspect'))} "
                     f"{planet_key_to_ptbr(top.get('natal_planet'))}."
                 ),
+                "metodo": "heuristico",
             }
         )
     else:
@@ -437,6 +445,7 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             {
                 "titulo": "Integração gradual",
                 "descricao": "Poucos aspectos exatos: tendência a mudanças progressivas.",
+                "metodo": "heuristico",
             }
         )
 
@@ -507,6 +516,7 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
     iteracoes = 60 if inputs.engine == "v2" else 97
 
     return {
+        "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
         "metadados_tecnicos": {
             "engine": inputs.engine,
             "solar_return_utc": solar_return_utc.isoformat(),
