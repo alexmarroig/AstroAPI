@@ -38,12 +38,14 @@ from astro.i18n_ptbr import (
 )
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
+from timezone_utils import parse_local_datetime
 
 from core.security import require_api_key_and_user
 from core.cache import cache
 from core.plans import is_trial_or_premium
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
+from services import timezone_utils
 
 # -----------------------------
 # Load env
@@ -602,6 +604,17 @@ class TimezoneResolveRequest(BaseModel):
             data.setdefault("minute", dt.minute)
             data.setdefault("second", dt.second)
         return data
+
+
+class ValidateLocalDatetimeRequest(BaseModel):
+    datetime_local: datetime = Field(
+        ..., description="Data/hora local ISO (ex.: 2025-12-19T14:30:00)"
+    )
+    timezone: str = Field(..., description="Timezone IANA, ex.: America/Sao_Paulo")
+    strict: bool = Field(
+        default=False,
+        description="Quando true, acusa horários ambíguos/inexistentes nas transições de DST.",
+    )
 
 
 class EphemerisCheckRequest(BaseModel):
@@ -1300,6 +1313,15 @@ ENDPOINTS_CATALOG = [
     },
     {
         "method": "POST",
+        "path": "/v1/time/validate-local-datetime",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": "ValidateLocalDatetimeRequest",
+        "response_model": None,
+        "description": "Valida data/hora local e resolve UTC com tratamento de DST.",
+    },
+    {
+        "method": "POST",
         "path": "/v1/diagnostics/ephemeris-check",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
@@ -1544,6 +1566,32 @@ async def resolve_timezone(body: TimezoneResolveRequest):
         "tz_offset_minutes": resolved_offset,
         "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
     }
+
+
+@app.post("/v1/time/validate-local-datetime")
+async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
+    result = timezone_utils.validate_local_datetime(
+        body.datetime_local, body.timezone, strict=body.strict
+    )
+    payload = {
+        "input_datetime_local": result.input_datetime.isoformat(),
+        "datetime_local": result.resolved_datetime.isoformat(),
+        "timezone": result.timezone,
+        "tz_offset_minutes": result.tz_offset_minutes,
+        "utc_datetime": result.utc_datetime.isoformat(),
+        "fold": result.fold,
+        "warning": result.warning,
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            "timezone": result.timezone,
+            "tz_offset_minutes": result.tz_offset_minutes,
+            "fold": result.fold,
+        },
+    }
+    if result.adjustment_minutes:
+        payload["metadados_tecnicos"]["ajuste_minutos"] = result.adjustment_minutes
+    return payload
 
 @app.post("/v1/diagnostics/ephemeris-check")
 async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
@@ -2243,6 +2291,7 @@ async def interpretation_natal(
             )
 
         payload = {
+            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
             "titulo": "Resumo Geral do Mapa",
             "sintese": sintese,
             "temas_principais": temas_principais,
@@ -2476,29 +2525,13 @@ async def solar_return_calculate(
         )
 
     try:
-        natal_y, natal_m, natal_d = _parse_date_yyyy_mm_dd(body.natal.data)
+        natal_dt, warnings, natal_time_missing = parse_local_datetime(
+            body.natal.data, body.natal.hora
+        )
     except HTTPException:
         raise
     except Exception:
         raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
-
-    natal_time_missing = body.natal.hora is None
-    if body.natal.hora:
-        try:
-            natal_hour, natal_minute, natal_second = map(int, body.natal.hora.split(":"))
-        except Exception:
-            raise HTTPException(status_code=422, detail="Hora natal inválida. Use HH:MM:SS.")
-    else:
-        natal_hour, natal_minute, natal_second = 12, 0, 0
-
-    natal_dt = datetime(
-        year=natal_y,
-        month=natal_m,
-        day=natal_d,
-        hour=natal_hour,
-        minute=natal_minute,
-        second=natal_second,
-    )
 
     prefs = body.preferencias or SolarReturnPreferencias()
     engine = (os.getenv("SOLAR_RETURN_ENGINE") or "v1").lower()
@@ -2561,6 +2594,9 @@ async def solar_return_calculate(
         latency_ms=None,
         user_id=auth.get("user_id"),
     )
+
+    if warnings:
+        payload["warnings"] = warnings
 
     return payload
 
