@@ -46,6 +46,7 @@ from timezone_utils import parse_local_datetime
 from core.security import require_api_key_and_user
 from core.cache import cache
 from core.plans import is_trial_or_premium
+from services.timezone_utils import resolve_local_datetime
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
 from services import timezone_utils
@@ -639,6 +640,11 @@ class TimezoneResolveRequest(BaseModel):
 
 
 class ValidateLocalDatetimeRequest(BaseModel):
+    datetime_local: datetime = Field(..., description="Data/hora local, ex.: 2024-11-03T01:30:00")
+    timezone: str = Field(..., description="Timezone IANA, ex.: America/New_York")
+    strict: bool = Field(
+        default=True,
+        description="Quando true, rejeita horário ambíguo/inexistente nas transições de DST.",
     date: str = Field(..., description="Data local no formato YYYY-MM-DD.")
     time: str = Field(..., description="Hora local no formato HH:MM ou HH:MM:SS.")
     timezone: str = Field(..., description="Timezone IANA (ex.: America/Sao_Paulo).")
