@@ -38,6 +38,7 @@ from astro.i18n_ptbr import (
 )
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
+from timezone_utils import parse_local_datetime
 
 from core.security import require_api_key_and_user
 from core.cache import cache
@@ -2475,29 +2476,13 @@ async def solar_return_calculate(
         )
 
     try:
-        natal_y, natal_m, natal_d = _parse_date_yyyy_mm_dd(body.natal.data)
+        natal_dt, warnings, natal_time_missing = parse_local_datetime(
+            body.natal.data, body.natal.hora
+        )
     except HTTPException:
         raise
     except Exception:
         raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
-
-    natal_time_missing = body.natal.hora is None
-    if body.natal.hora:
-        try:
-            natal_hour, natal_minute, natal_second = map(int, body.natal.hora.split(":"))
-        except Exception:
-            raise HTTPException(status_code=422, detail="Hora natal inválida. Use HH:MM:SS.")
-    else:
-        natal_hour, natal_minute, natal_second = 12, 0, 0
-
-    natal_dt = datetime(
-        year=natal_y,
-        month=natal_m,
-        day=natal_d,
-        hour=natal_hour,
-        minute=natal_minute,
-        second=natal_second,
-    )
 
     prefs = body.preferencias or SolarReturnPreferencias()
     engine = (os.getenv("SOLAR_RETURN_ENGINE") or "v1").lower()
@@ -2558,6 +2543,9 @@ async def solar_return_calculate(
         latency_ms=None,
         user_id=auth.get("user_id"),
     )
+
+    if warnings:
+        payload["warnings"] = warnings
 
     return payload
 
