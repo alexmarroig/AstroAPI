@@ -2312,10 +2312,10 @@ async def cosmic_weather_range(
         raise HTTPException(status_code=400, detail="Parâmetro 'from' deve ser anterior ou igual a 'to'.")
 
     interval_days = (end_date - start_date).days + 1
-    if interval_days > 90:
+    if interval_days > 31:
         raise HTTPException(
             status_code=422,
-            detail="Range too large. Max 90 days. Use smaller windows.",
+            detail="Range too large. Max 31 days. Use smaller windows.",
         )
 
     _log(

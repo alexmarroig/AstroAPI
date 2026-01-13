@@ -24,6 +24,27 @@ from astro.utils import angle_diff, deg_to_sign, to_julian_day
 
 ZodiacType = Literal["tropical", "sidereal"]
 
+PLANET_PTBR = {
+    "Sun": "Sol",
+    "Moon": "Lua",
+    "Mercury": "Mercúrio",
+    "Venus": "Vênus",
+    "Mars": "Marte",
+    "Jupiter": "Júpiter",
+    "Saturn": "Saturno",
+    "Uranus": "Urano",
+    "Neptune": "Netuno",
+    "Pluto": "Plutão",
+}
+
+ASPECT_PTBR = {
+    "conjunction": "Conjunção",
+    "opposition": "Oposição",
+    "square": "Quadratura",
+    "trine": "Trígono",
+    "sextile": "Sextil",
+}
+
 
 @dataclass(frozen=True)
 class SolarReturnConfig:

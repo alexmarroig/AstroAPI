@@ -314,6 +314,67 @@ curl -X POST "$API_URL/v1/progressions/secondary/calculate" \
 **Response (exemplo)**
 ```json
 {
+  "titulo": "Resumo Geral do Mapa",
+  "sintese": ["Sol em Escorpião aponta foco em temas de vida mais visíveis."],
+  "temas_principais": [{ "titulo": "Foco solar", "porque": "Sol em Escorpião na casa 8." }],
+  "planetas_com_maior_peso": [{ "planeta": "Sol", "peso": 0.92, "porque": "Casa 8 com influência de ângulos (3.2°)." }],
+  "distribuicao": { "elementos": { "Fogo": 3, "Terra": 2, "Ar": 2, "Água": 3 } },
+  "avisos": [],
+  "metadados": { "version": "v1", "fonte": "regras" }
+}
+```
+
+**Notas de normalização**: usa `natal_*` (pass-through).
+
+## /v1/lunations/calculate
+
+**cURL**
+```bash
+curl -X POST "$API_URL/v1/lunations/calculate" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123" \
+  -d '{ "date": "2024-05-01", "timezone": "America/Sao_Paulo" }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "date": "2024-05-01",
+  "phase": "first_quarter",
+  "phase_pt": "Quarto Crescente",
+  "moon_sign": "Aries",
+  "moon_sign_pt": "Áries",
+  "sun_sign": "Taurus",
+  "sun_sign_pt": "Touro"
+}
+```
+
+## /v1/progressions/secondary/calculate
+
+**cURL**
+```bash
+curl -X POST "$API_URL/v1/progressions/secondary/calculate" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123" \
+  -d '{
+    "natal_year": 1995,
+    "natal_month": 11,
+    "natal_day": 7,
+    "natal_hour": 22,
+    "natal_minute": 56,
+    "natal_second": 0,
+    "lat": -23.5505,
+    "lng": -46.6333,
+    "timezone": "America/Sao_Paulo",
+    "target_date": "2026-11-07"
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
   "natal_datetime_local": "1995-11-07T22:56:00",
   "target_date": "2026-11-07",
   "progressed_datetime_local": "1995-12-13T22:56:00",
