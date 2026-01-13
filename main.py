@@ -607,13 +607,18 @@ class TimezoneResolveRequest(BaseModel):
 
 
 class ValidateLocalDatetimeRequest(BaseModel):
-    datetime_local: datetime = Field(
-        ..., description="Data/hora local ISO (ex.: 2025-12-19T14:30:00)"
-    )
-    timezone: str = Field(..., description="Timezone IANA, ex.: America/Sao_Paulo")
+    date: str = Field(..., description="Data local no formato YYYY-MM-DD.")
+    time: str = Field(..., description="Hora local no formato HH:MM ou HH:MM:SS.")
+    timezone: str = Field(..., description="Timezone IANA (ex.: America/Sao_Paulo).")
     strict: bool = Field(
         default=False,
-        description="Quando true, acusa horários ambíguos/inexistentes nas transições de DST.",
+        description="Quando true, rejeita horários ambíguos/inexistentes em transições de DST.",
+    )
+    prefer_fold: int = Field(
+        default=0,
+        ge=0,
+        le=1,
+        description="Preferência de fold (0 ou 1) para horários ambíguos.",
     )
 
 
