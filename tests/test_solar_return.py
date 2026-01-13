@@ -33,6 +33,13 @@ def _payload():
     }
 
 
+def _payload_missing_time():
+    payload = _payload()
+    payload["natal"] = {**payload["natal"]}
+    payload["natal"].pop("hora", None)
+    return payload
+
+
 def test_solar_return_structure():
     client = TestClient(main.app)
     resp = client.post("/v1/solar-return/calculate", json=_payload(), headers=_auth_headers())
@@ -58,3 +65,13 @@ def test_solar_return_matches_sun_longitude():
     body = resp.json()
     delta = body["metadados_tecnicos"]["delta_longitude_graus"]
     assert delta <= 0.01
+
+
+def test_solar_return_missing_time_warns():
+    client = TestClient(main.app)
+    resp = client.post(
+        "/v1/solar-return/calculate", json=_payload_missing_time(), headers=_auth_headers()
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["warnings"] == ["hora ausente; assumido 12:00:00"]

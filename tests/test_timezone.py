@@ -74,3 +74,71 @@ def test_cosmic_weather_accepts_timezone():
     assert body["date"] == "2024-01-01"
     assert body["moon_sign"]
     assert body["moon_phase"]
+
+
+def test_validate_local_datetime_fall_back_ambiguous_strict():
+    client = TestClient(main.app)
+    payload = {
+        "datetime_local": "2024-11-03T01:30:00",
+        "timezone": "America/New_York",
+        "strict": True,
+    }
+    resp = client.post("/v1/time/validate-local-datetime", json=payload)
+    assert resp.status_code == 400
+
+
+def test_validate_local_datetime_fall_back_ambiguous_relaxed():
+    client = TestClient(main.app)
+    payload = {
+        "datetime_local": "2024-11-03T01:30:00",
+        "timezone": "America/New_York",
+        "strict": False,
+    }
+    resp = client.post("/v1/time/validate-local-datetime", json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["datetime_local_usado"] == "2024-11-03T01:30:00"
+    assert body["datetime_utc_usado"] == "2024-11-03T05:30:00"
+    assert body["fold_usado"] == 0
+    assert body["avisos"]
+
+
+def test_validate_local_datetime_spring_forward_inexistent_strict():
+    client = TestClient(main.app)
+    payload = {
+        "datetime_local": "2024-03-10T02:30:00",
+        "timezone": "America/New_York",
+        "strict": True,
+    }
+    resp = client.post("/v1/time/validate-local-datetime", json=payload)
+    assert resp.status_code == 400
+
+
+def test_validate_local_datetime_spring_forward_inexistent_relaxed():
+    client = TestClient(main.app)
+    payload = {
+        "datetime_local": "2024-03-10T02:30:00",
+        "timezone": "America/New_York",
+        "strict": False,
+    }
+    resp = client.post("/v1/time/validate-local-datetime", json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["datetime_local_usado"] == "2024-03-10T03:30:00"
+    assert body["datetime_utc_usado"] == "2024-03-10T07:30:00"
+    assert body["fold_usado"] == 0
+    assert body["avisos"]
+
+
+def test_validate_local_datetime_midnight_has_used_datetimes():
+    client = TestClient(main.app)
+    payload = {
+        "datetime_local": "2024-01-15T00:00:00",
+        "timezone": "America/New_York",
+        "strict": True,
+    }
+    resp = client.post("/v1/time/validate-local-datetime", json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["datetime_local_usado"] == "2024-01-15T00:00:00"
+    assert body["datetime_utc_usado"] == "2024-01-15T05:00:00"
