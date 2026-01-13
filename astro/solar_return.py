@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import swisseph as swe
 
-from astro.aspects import ASPECTS
+from astro.aspects import ASPECTS, resolve_aspects_config
 from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
@@ -71,6 +71,8 @@ class SolarReturnInputs:
     engine: Literal["v1", "v2"]
     tz_offset_minutes: Optional[int] = None
     natal_time_missing: bool = False
+    aspectos_habilitados: Optional[List[str]] = None
+    orbes: Optional[Dict[str, float]] = None
 
 
 def _resolve_zodiac(config: SolarReturnConfig) -> tuple[ZodiacType, int]:
@@ -491,7 +493,15 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
         ayanamsa=inputs.ayanamsa,
     )
 
-    aspects = compute_aspects(solar_return_chart["planets"], natal_chart["planets"])
+    aspects_config, aspectos_usados, orbes_usados = resolve_aspects_config(
+        inputs.aspectos_habilitados,
+        inputs.orbes,
+    )
+    aspects = compute_aspects(
+        solar_return_chart["planets"],
+        natal_chart["planets"],
+        aspects=aspects_config,
+    )
 
     natal_sun_lon = natal_chart["planets"]["Sun"]["lon"]
     return_sun_lon = solar_return_chart["planets"]["Sun"]["lon"]
@@ -518,6 +528,8 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "tolerancia_graus": 1e-6 if inputs.engine == "v2" else None,
             "metodo_refino": metodo_refino,
             "iteracoes": iteracoes,
+            "aspectos_usados": aspectos_usados,
+            "orbes_usados": orbes_usados,
         },
         "mapa_revolucao": {
             "planetas": solar_return_chart["planets"],

@@ -23,7 +23,7 @@ import swisseph as swe
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only, solar_return_datetime
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only
 from astro.solar_return import SolarReturnInputs, compute_solar_return_payload
-from astro.aspects import compute_transit_aspects
+from astro.aspects import compute_transit_aspects, resolve_aspects_config
 from astro.retrogrades import retrograde_alerts
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
@@ -381,6 +381,14 @@ class TransitsRequest(BaseModel):
     ayanamsa: Optional[str] = Field(
         default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
     )
+    aspectos_habilitados: Optional[List[str]] = Field(
+        default=None,
+        description="Lista de aspectos habilitados (ex.: ['conj', 'opos', 'quad', 'tri', 'sext']).",
+    )
+    orbes: Optional[Dict[str, float]] = Field(
+        default=None,
+        description="Orbes por aspecto, ex.: {'conj': 8, 'opos': 6}.",
+    )
     strict_timezone: bool = Field(
         default=False,
         description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
@@ -547,6 +555,7 @@ class SolarReturnPreferencias(BaseModel):
     ayanamsa: Optional[str] = None
     sistema_casas: HouseSystem = Field(default=HouseSystem.PLACIDUS)
     modo: Optional[Literal["geocentrico", "topocentrico"]] = Field(default="geocentrico")
+    aspectos_habilitados: Optional[List[str]] = None
     orbes: Optional[Dict[str, float]] = None
 
 
@@ -965,15 +974,22 @@ def _build_transits_context(
     natal_chart = _apply_sign_localization(natal_chart, lang)
     transit_chart = _apply_sign_localization(transit_chart, lang)
 
+    aspects_config, aspectos_usados, orbes_usados = resolve_aspects_config(
+        body.aspectos_habilitados,
+        body.orbes,
+    )
     aspects = compute_transit_aspects(
         transit_planets=transit_chart["planets"],
         natal_planets=natal_chart["planets"],
+        aspects=aspects_config,
     )
 
     return {
         "natal": natal_chart,
         "transits": transit_chart,
         "aspects": aspects,
+        "aspectos_usados": aspectos_usados,
+        "orbes_usados": orbes_usados,
     }
 
 def _areas_activated(aspects: List[Dict[str, Any]], moon_phase: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -1649,6 +1665,8 @@ async def dominant_theme(
     tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
     context = _build_transits_context(body, tz_offset_minutes, lang)
     aspects = context["aspects"]
+    aspectos_usados = context["aspectos_usados"]
+    orbes_usados = context["orbes_usados"]
 
     influence_counts: Dict[str, int] = {}
     for asp in aspects:
@@ -1669,6 +1687,10 @@ async def dominant_theme(
                 "Atenção aos detalhes do cotidiano.",
             ],
             "sample_aspects_ptbr": [],
+            "metadados_tecnicos": {
+                "aspectos_usados": aspectos_usados,
+                "orbes_usados": orbes_usados,
+            },
         }
 
     dominant_influence = max(influence_counts.items(), key=lambda item: item[1])[0]
@@ -1698,6 +1720,10 @@ async def dominant_theme(
             "Priorize ações alinhadas ao tom dominante.",
             "Ajuste expectativas conforme a intensidade do período.",
         ],
+        "metadados_tecnicos": {
+            "aspectos_usados": aspectos_usados,
+            "orbes_usados": orbes_usados,
+        },
     }
 
 @app.post("/v1/insights/areas-activated")
@@ -1718,6 +1744,8 @@ async def areas_activated(
     tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
     context = _build_transits_context(body, tz_offset_minutes, lang)
     aspects = context["aspects"]
+    aspectos_usados = context["aspectos_usados"]
+    orbes_usados = context["orbes_usados"]
 
     area_map = {
         "Sun": "Identidade e propósito",
@@ -1750,6 +1778,10 @@ async def areas_activated(
                 "Priorize consistência nas decisões.",
                 "Atenção aos sinais sutis do cotidiano.",
             ],
+            "metadados_tecnicos": {
+                "aspectos_usados": aspectos_usados,
+                "orbes_usados": orbes_usados,
+            },
         }
 
     scores: Dict[str, Dict[str, Any]] = {}
@@ -1773,6 +1805,10 @@ async def areas_activated(
             "Busque equilíbrio entre temas ativos.",
             "Use pequenas ações para ajustar o foco.",
         ],
+        "metadados_tecnicos": {
+            "aspectos_usados": aspectos_usados,
+            "orbes_usados": orbes_usados,
+        },
     }
 
 @app.post("/v1/insights/care-suggestion")
@@ -2070,9 +2106,14 @@ async def transits(
         natal_chart = _apply_sign_localization(natal_chart, lang)
         transit_chart = _apply_sign_localization(transit_chart, lang)
 
+        aspects_config, aspectos_usados, orbes_usados = resolve_aspects_config(
+            body.aspectos_habilitados,
+            body.orbes,
+        )
         aspects = compute_transit_aspects(
             transit_planets=transit_chart["planets"],
             natal_planets=natal_chart["planets"],
+            aspects=aspects_config,
         )
 
         moon = compute_moon_only(body.target_date, tz_offset_minutes=tz_offset_minutes)
@@ -2113,6 +2154,10 @@ async def transits(
             "aspects": aspects,
             "aspectos_ptbr": aspectos_ptbr,
             "areas_activated": _areas_activated(aspects, phase),
+            "metadados_tecnicos": {
+                "aspectos_usados": aspectos_usados,
+                "orbes_usados": orbes_usados,
+            },
         }
 
         cache.set(cache_key, response, ttl_seconds=TTL_TRANSITS_SECONDS)
@@ -2516,6 +2561,8 @@ async def solar_return_calculate(
         house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
         zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
         ayanamsa=prefs.ayanamsa,
+        aspectos_habilitados=prefs.aspectos_habilitados,
+        orbes=prefs.orbes,
         engine=engine,  # type: ignore[arg-type]
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,

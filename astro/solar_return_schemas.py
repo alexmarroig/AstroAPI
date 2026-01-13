@@ -56,6 +56,14 @@ class SolarReturnPreferencias(BaseModel):
         default=None,
         description="Ayanamsa para zodíaco sideral (ex.: lahiri).",
     )
+    aspectos_habilitados: Optional[List[str]] = Field(
+        default=None,
+        description="Lista de aspectos habilitados (ex.: ['conj', 'opos', 'quad', 'tri', 'sext']).",
+    )
+    orbes: Optional[Dict[str, float]] = Field(
+        default=None,
+        description="Orbes por aspecto, ex.: {'conj': 8, 'opos': 6}.",
+    )
     timezone_estrito: bool = Field(
         default=False,
         description="Quando true, rejeita horários ambíguos em transições de DST.",
