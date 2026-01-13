@@ -11,6 +11,8 @@ from pathlib import Path
 import subprocess
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from core.timezone_utils import TimezoneResolutionError, resolve_timezone_offset
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Depends, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +25,7 @@ import swisseph as swe
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only, solar_return_datetime
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only
 from astro.solar_return import SolarReturnInputs, compute_solar_return_payload
-from astro.aspects import compute_transit_aspects
+from astro.aspects import compute_transit_aspects, get_aspects_profile
 from astro.retrogrades import retrograde_alerts
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
@@ -38,13 +40,17 @@ from astro.i18n_ptbr import (
 )
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
+from services.time_utils import localize_with_zoneinfo, parse_local_datetime, to_utc
+from timezone_utils import parse_local_datetime
 
 from core.security import require_api_key_and_user
 from core.cache import cache
 from core.plans import is_trial_or_premium
+from services.timezone_utils import resolve_local_datetime
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
-from services.time_utils import parse_local_datetime, to_utc, utc_offset_minutes
+from routes.time import router as time_router
+from services import timezone_utils
 
 # -----------------------------
 # Load env
@@ -70,9 +76,38 @@ class JsonFormatter(logging.Formatter):
             "ts": datetime.utcnow().isoformat() + "Z",
             "msg": record.getMessage(),
         }
-        for k in ("request_id", "path", "status", "latency_ms", "user_id"):
-            if hasattr(record, k):
-                payload[k] = getattr(record, k)
+        standard = {
+            "args",
+            "asctime",
+            "created",
+            "exc_info",
+            "exc_text",
+            "filename",
+            "funcName",
+            "levelname",
+            "levelno",
+            "lineno",
+            "message",
+            "module",
+            "msecs",
+            "msg",
+            "name",
+            "pathname",
+            "process",
+            "processName",
+            "relativeCreated",
+            "stack_info",
+            "thread",
+            "threadName",
+        }
+        for key, value in record.__dict__.items():
+            if key in standard or key in payload:
+                continue
+            try:
+                json.dumps(value, ensure_ascii=False)
+                payload[key] = value
+            except TypeError:
+                payload[key] = str(value)
         if record.exc_info:
             payload["exc"] = self.formatException(record.exc_info)
         return json.dumps(payload, ensure_ascii=False)
@@ -115,6 +150,7 @@ app.add_middleware(
 # -----------------------------
 app.include_router(lunations_router)
 app.include_router(progressions_router)
+app.include_router(time_router)
 
 # -----------------------------
 # Middleware: request_id + logging
@@ -382,6 +418,14 @@ class TransitsRequest(BaseModel):
     ayanamsa: Optional[str] = Field(
         default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
     )
+    aspectos_habilitados: Optional[List[str]] = Field(
+        default=None,
+        description="Lista de aspectos habilitados (ex.: ['conj', 'opos', 'quad', 'tri', 'sext']).",
+    )
+    orbes: Optional[Dict[str, float]] = Field(
+        default=None,
+        description="Orbes por aspecto, ex.: {'conj': 8, 'opos': 6}.",
+    )
     strict_timezone: bool = Field(
         default=False,
         description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
@@ -548,7 +592,20 @@ class SolarReturnPreferencias(BaseModel):
     ayanamsa: Optional[str] = None
     sistema_casas: HouseSystem = Field(default=HouseSystem.PLACIDUS)
     modo: Optional[Literal["geocentrico", "topocentrico"]] = Field(default="geocentrico")
+    aspectos_habilitados: Optional[List[str]] = None
     orbes: Optional[Dict[str, float]] = None
+    janela_dias: Optional[int] = Field(
+        default=None, ge=1, description="Janela em dias para busca do retorno solar."
+    )
+    passo_horas: Optional[int] = Field(
+        default=None, ge=1, description="Passo em horas para busca do retorno solar."
+    )
+    max_iteracoes: Optional[int] = Field(
+        default=None, ge=1, description="Iterações máximas no refinamento do retorno solar."
+    )
+    tolerancia_graus: Optional[float] = Field(
+        default=None, gt=0, description="Tolerância em graus para refinamento do retorno solar."
+    )
 
 
 class SolarReturnRequest(BaseModel):
@@ -602,6 +659,27 @@ class TimezoneResolveRequest(BaseModel):
             data.setdefault("minute", dt.minute)
             data.setdefault("second", dt.second)
         return data
+
+
+class ValidateLocalDatetimeRequest(BaseModel):
+    datetime_local: datetime = Field(..., description="Data/hora local, ex.: 2024-11-03T01:30:00")
+    timezone: str = Field(..., description="Timezone IANA, ex.: America/New_York")
+    strict: bool = Field(
+        default=True,
+        description="Quando true, rejeita horário ambíguo/inexistente nas transições de DST.",
+    date: str = Field(..., description="Data local no formato YYYY-MM-DD.")
+    time: str = Field(..., description="Hora local no formato HH:MM ou HH:MM:SS.")
+    timezone: str = Field(..., description="Timezone IANA (ex.: America/Sao_Paulo).")
+    strict: bool = Field(
+        default=False,
+        description="Quando true, rejeita horários ambíguos/inexistentes em transições de DST.",
+    )
+    prefer_fold: int = Field(
+        default=0,
+        ge=0,
+        le=1,
+        description="Preferência de fold (0 ou 1) para horários ambíguos.",
+    )
 
 
 class EphemerisCheckRequest(BaseModel):
@@ -670,6 +748,12 @@ class SolarReturnResponse(BaseModel):
     target_year: int
     solar_return_utc: str
     solar_return_local: str
+    timezone_resolvida: Optional[str] = None
+    tz_offset_minutes_usado: Optional[int] = None
+    fold_usado: Optional[int] = None
+    datetime_local_usado: Optional[str] = None
+    datetime_utc_usado: Optional[str] = None
+    avisos: Optional[List[str]] = None
     idioma: Optional[str] = None
     fonte_traducao: Optional[str] = None
 
@@ -831,7 +915,10 @@ def _house_for_lon(cusps: List[float], lon: float) -> int:
     return 12
 
 
-def _distributions_payload(chart: Dict[str, Any]) -> Dict[str, Any]:
+def _distributions_payload(
+    chart: Dict[str, Any],
+    metadata: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     elements = {"Fogo": 0, "Terra": 0, "Ar": 0, "Água": 0}
     modalities = {"Cardinal": 0, "Fixo": 0, "Mutável": 0}
     houses_counts = {house: {"casa": house, "contagem": 0, "planetas": []} for house in range(1, 13)}
@@ -881,6 +968,11 @@ def _distributions_payload(chart: Dict[str, Any]) -> Dict[str, Any]:
         },
         "metadados": {"fonte": "natal", "version": "v1"},
     }
+    payload["metadados"].update(
+        metadata
+        if metadata is not None
+        else _build_time_metadata(timezone=None, tz_offset_minutes=None, local_dt=None)
+    )
     if avisos:
         payload["avisos"] = avisos
     return payload
@@ -966,15 +1058,22 @@ def _build_transits_context(
     natal_chart = _apply_sign_localization(natal_chart, lang)
     transit_chart = _apply_sign_localization(transit_chart, lang)
 
+    aspects_config, aspectos_usados, orbes_usados = resolve_aspects_config(
+        body.aspectos_habilitados,
+        body.orbes,
+    )
     aspects = compute_transit_aspects(
         transit_planets=transit_chart["planets"],
         natal_planets=natal_chart["planets"],
+        aspects=aspects_config,
     )
 
     return {
         "natal": natal_chart,
         "transits": transit_chart,
         "aspects": aspects,
+        "aspectos_usados": aspectos_usados,
+        "orbes_usados": orbes_usados,
     }
 
 def _areas_activated(aspects: List[Dict[str, Any]], moon_phase: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -1144,7 +1243,13 @@ def _daily_notifications_payload(date: str, lat: float, lng: float, tz_offset_mi
 
 
 def _tz_offset_for(
-    date_time: datetime, timezone: Optional[str], fallback_minutes: Optional[int], strict: bool = False
+    date_time: datetime,
+    timezone: Optional[str],
+    fallback_minutes: Optional[int],
+    strict: bool = False,
+    request_id: Optional[str] = None,
+    path: Optional[str] = None,
+    prefer_fold: Optional[int] = None,
 ) -> int:
     """Resolve timezone: prefer IANA name; fallback to explicit offset or UTC.
 
@@ -1152,11 +1257,21 @@ def _tz_offset_for(
     helpful error so birth datetimes não fiquem "um dia antes" por causa de fuso mal
     resolvido.
     """
+    warnings: List[str] = []
 
     if timezone:
         try:
             tzinfo = ZoneInfo(timezone)
         except ZoneInfoNotFoundError:
+            _log(
+                "warning",
+                "timezone_invalid",
+                request_id=request_id,
+                path=path,
+                timezone=timezone,
+                local_datetime=date_time.isoformat(),
+                warnings=["invalid_timezone"],
+            )
             raise HTTPException(status_code=400, detail=f"Timezone inválido: {timezone}")
 
         offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
@@ -1165,11 +1280,33 @@ def _tz_offset_for(
         # Escolhe o offset padrão (compatível com o comportamento anterior)
         offset = offset_fold0 or offset_fold1
         if offset is None:
+            _log(
+                "warning",
+                "timezone_offset_missing",
+                request_id=request_id,
+                path=path,
+                timezone=timezone,
+                local_datetime=date_time.isoformat(),
+                warnings=["missing_offset"],
+            )
             raise HTTPException(status_code=400, detail=f"Timezone sem offset disponível: {timezone}")
 
         if strict and offset_fold0 and offset_fold1 and offset_fold0 != offset_fold1:
             # horário ambíguo na virada de DST
             opts = sorted({int(offset_fold0.total_seconds() // 60), int(offset_fold1.total_seconds() // 60)})
+            _log(
+                "warning",
+                "timezone_ambiguous",
+                request_id=request_id,
+                path=path,
+                timezone=timezone,
+                offset_options_minutes=opts,
+                offset_fold0_minutes=int(offset_fold0.total_seconds() // 60),
+                offset_fold1_minutes=int(offset_fold1.total_seconds() // 60),
+                fold=None,
+                local_datetime=date_time.isoformat(),
+                warnings=["ambiguous_time"],
+            )
             raise HTTPException(
                 status_code=400,
                 detail={
@@ -1179,12 +1316,121 @@ def _tz_offset_for(
                 },
             )
 
-        return int(offset.total_seconds() // 60)
+        if offset_fold0 and offset_fold1 and offset_fold0 != offset_fold1:
+            warnings.append("ambiguous_time")
+
+        resolved_offset = int(offset.total_seconds() // 60)
+        fold = 0 if offset_fold0 is not None else 1
+        utc_dt = date_time - timedelta(minutes=resolved_offset)
+        _log(
+            "info",
+            "timezone_resolved",
+            request_id=request_id,
+            path=path,
+            timezone=timezone,
+            offset_minutes=resolved_offset,
+            offset_fold0_minutes=int(offset_fold0.total_seconds() // 60) if offset_fold0 else None,
+            offset_fold1_minutes=int(offset_fold1.total_seconds() // 60) if offset_fold1 else None,
+            fold=fold,
+            local_datetime=date_time.isoformat(),
+            utc_datetime=utc_dt.isoformat(),
+            warnings=warnings,
+        )
+        return resolved_offset
 
     if fallback_minutes is not None:
+        warnings.append("fallback_offset_used")
+        utc_dt = date_time - timedelta(minutes=fallback_minutes)
+        _log(
+            "info",
+            "timezone_resolved",
+            request_id=request_id,
+            path=path,
+            timezone=None,
+            offset_minutes=fallback_minutes,
+            offset_fold0_minutes=None,
+            offset_fold1_minutes=None,
+            fold=None,
+            local_datetime=date_time.isoformat(),
+            utc_datetime=utc_dt.isoformat(),
+            warnings=warnings,
+        )
         return fallback_minutes
 
+    warnings.append("timezone_missing_default_utc")
+    _log(
+        "info",
+        "timezone_resolved",
+        request_id=request_id,
+        path=path,
+        timezone=None,
+        offset_minutes=0,
+        offset_fold0_minutes=None,
+        offset_fold1_minutes=None,
+        fold=None,
+        local_datetime=date_time.isoformat(),
+        utc_datetime=date_time.isoformat(),
+        warnings=warnings,
+    )
     return 0
+    try:
+        resolved = resolve_timezone_offset(
+            date_time=date_time,
+            timezone=timezone,
+            fallback_minutes=fallback_minutes,
+            strict=strict,
+            prefer_fold=prefer_fold,
+        )
+    except TimezoneResolutionError as exc:
+        raise HTTPException(status_code=400, detail=exc.detail) from exc
+
+    return resolved.offset_minutes
+
+
+def _resolve_fold_for(
+    date_time: Optional[datetime],
+    timezone: Optional[str],
+    tz_offset_minutes: Optional[int],
+) -> Optional[int]:
+    if date_time is None or not timezone or tz_offset_minutes is None:
+        return None
+
+    try:
+        tzinfo = ZoneInfo(timezone)
+    except ZoneInfoNotFoundError:
+        return None
+
+    target_offset = timedelta(minutes=tz_offset_minutes)
+    offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
+    offset_fold1 = date_time.replace(tzinfo=tzinfo, fold=1).utcoffset()
+
+    if offset_fold0 == target_offset:
+        return 0
+    if offset_fold1 == target_offset:
+        return 1
+    return None
+
+
+def _build_time_metadata(
+    *,
+    timezone: Optional[str],
+    tz_offset_minutes: Optional[int],
+    local_dt: Optional[datetime],
+    avisos: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    utc_dt = (
+        local_dt - timedelta(minutes=tz_offset_minutes)
+        if local_dt is not None and tz_offset_minutes is not None
+        else None
+    )
+    return {
+        "timezone_resolvida": timezone,
+        "tz_offset_minutes_usado": tz_offset_minutes,
+        "fold_usado": _resolve_fold_for(local_dt, timezone, tz_offset_minutes),
+        "datetime_local_usado": local_dt.isoformat() if local_dt else None,
+        "datetime_utc_usado": utc_dt.isoformat() if utc_dt else None,
+        "avisos": avisos or [],
+    }
 
 
 # -----------------------------
@@ -1202,11 +1448,20 @@ def _cosmic_weather_payload(
     tz_offset_minutes: Optional[int],
     user_id: str,
     lang: Optional[str] = None,
+    request_id: Optional[str] = None,
+    path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Compute (or fetch) the cosmic weather payload for a single day."""
 
-    local_dt = parse_local_datetime(date_str)
-    resolved_offset = utc_offset_minutes(local_dt, timezone, tz_offset_minutes)
+    _parse_date_yyyy_mm_dd(date_str)
+    dt = datetime.strptime(date_str, "%Y-%m-%d").replace(hour=12, minute=0, second=0)
+    resolved_offset = _tz_offset_for(
+        dt,
+        timezone,
+        tz_offset_minutes,
+        request_id=request_id,
+        path=path,
+    )
 
     lang_key = (lang or "").lower()
     cache_key = f"cw:{user_id}:{date_str}:{timezone}:{resolved_offset}:{lang_key}"
@@ -1236,6 +1491,13 @@ def _cosmic_weather_payload(
         "idioma": "pt-BR",
         "fonte_traducao": "backend",
     }
+    payload["metadados_tecnicos"].update(
+        _build_time_metadata(
+            timezone=timezone,
+            tz_offset_minutes=resolved_offset,
+            local_dt=dt,
+        )
+    )
 
     cache.set(cache_key, payload, ttl_seconds=TTL_COSMIC_WEATHER_SECONDS)
     return payload
@@ -1296,6 +1558,15 @@ ENDPOINTS_CATALOG = [
         "request_model": "TimezoneResolveRequest",
         "response_model": None,
         "description": "Resolve offset de timezone.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/time/validate-local-datetime",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": "ValidateLocalDatetimeRequest",
+        "response_model": None,
+        "description": "Valida data/hora local e resolve UTC com tratamento de DST.",
     },
     {
         "method": "POST",
@@ -1513,7 +1784,11 @@ async def roadmap():
     """Visão rápida do andamento das próximas funcionalidades."""
     return {
         "features": ROADMAP_FEATURES,
-        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            **_build_time_metadata(timezone=None, tz_offset_minutes=None, local_dt=None),
+        },
     }
 
 @app.get("/v1/system/endpoints")
@@ -1522,38 +1797,96 @@ async def system_endpoints():
         raise HTTPException(status_code=404, detail="Endpoint não disponível.")
     return {
         "endpoints": ENDPOINTS_CATALOG,
-        "metadados": {"version": "v1", "ambiente": "dev"},
+        "metadados": {
+            "version": "v1",
+            "ambiente": "dev",
+            **_build_time_metadata(timezone=None, tz_offset_minutes=None, local_dt=None),
+        },
     }
 
 
 @app.post("/v1/time/resolve-tz")
-async def resolve_timezone(body: TimezoneResolveRequest):
-    date_str = f"{body.year:04d}-{body.month:02d}-{body.day:02d}"
-    time_str = f"{body.hour:02d}:{body.minute:02d}:{body.second:02d}"
-    local_dt = parse_local_datetime(date_str, time_str)
-    utc_dt = to_utc(local_dt, body.timezone, fallback_minutes=None, strict=body.strict_birth)
-    resolved_offset = int((local_dt - utc_dt).total_seconds() // 60)
+async def resolve_timezone(body: TimezoneResolveRequest, request: Request):
+    dt = datetime(
+        year=body.year,
+        month=body.month,
+        day=body.day,
+        hour=body.hour,
+        minute=body.minute,
+        second=body.second,
+    )
+    resolved_offset = _tz_offset_for(
+        dt,
+        body.timezone,
+        fallback_minutes=None,
+        strict=body.strict_birth,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
     return {
         "tz_offset_minutes": resolved_offset,
-        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            **_build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=resolved_offset,
+                local_dt=dt,
+            ),
+        },
     }
+
+
+@app.post("/v1/time/validate-local-datetime")
+async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
+    result = timezone_utils.validate_local_datetime(
+        body.datetime_local, body.timezone, strict=body.strict
+    )
+    payload = {
+        "input_datetime_local": result.input_datetime.isoformat(),
+        "datetime_local": result.resolved_datetime.isoformat(),
+        "timezone": result.timezone,
+        "tz_offset_minutes": result.tz_offset_minutes,
+        "utc_datetime": result.utc_datetime.isoformat(),
+        "fold": result.fold,
+        "warning": result.warning,
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            "timezone": result.timezone,
+            "tz_offset_minutes": result.tz_offset_minutes,
+            "fold": result.fold,
+        },
+    }
+    if result.adjustment_minutes:
+        payload["metadados_tecnicos"]["ajuste_minutos"] = result.adjustment_minutes
+    return payload
 
 @app.post("/v1/diagnostics/ephemeris-check")
 async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
-    tz_offset_minutes = _tz_offset_for(body.datetime_local, body.timezone, fallback_minutes=None)
+    tz_offset_minutes = _tz_offset_for(
+        body.datetime_local,
+        body.timezone,
+        fallback_minutes=None,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
     utc_dt = body.datetime_local - timedelta(minutes=tz_offset_minutes)
+    local_dt = parse_local_datetime(datetime_local=body.datetime_local)
+    localized = localize_with_zoneinfo(local_dt, body.timezone, None)
+    utc_dt = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     jd_ut = to_julian_day(utc_dt)
 
     chart = compute_chart(
-        year=body.datetime_local.year,
-        month=body.datetime_local.month,
-        day=body.datetime_local.day,
-        hour=body.datetime_local.hour,
-        minute=body.datetime_local.minute,
-        second=body.datetime_local.second,
+        year=local_dt.year,
+        month=local_dt.month,
+        day=local_dt.day,
+        hour=local_dt.hour,
+        minute=local_dt.minute,
+        second=local_dt.second,
         lat=body.lat,
         lng=body.lng,
-        tz_offset_minutes=tz_offset_minutes,
+        tz_offset_minutes=localized.tz_offset_minutes,
         house_system="P",
         zodiac_type="tropical",
         ayanamsa=None,
@@ -1576,9 +1909,23 @@ async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=De
 
     return {
         "utc_datetime": utc_dt.isoformat(),
-        "tz_offset_minutes": tz_offset_minutes,
+        "tz_offset_minutes": localized.tz_offset_minutes,
+        "timezone_resolvida": localized.timezone_resolved,
+        "tz_offset_minutes_usado": localized.tz_offset_minutes,
+        "fold_usado": localized.fold,
+        "datetime_local_usado": localized.datetime_local.isoformat(),
+        "datetime_utc_usado": utc_dt.isoformat(),
+        "avisos": localized.warnings,
         "items": items,
-        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            **_build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=body.datetime_local,
+            ),
+        },
     }
 
 @app.post("/v1/insights/mercury-retrograde")
@@ -1592,6 +1939,8 @@ async def mercury_retrograde(
         datetime(year=y, month=m, day=d, hour=12, minute=0, second=0),
         body.timezone,
         body.tz_offset_minutes,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
     )
 
     transit_chart = compute_transits(
@@ -1640,9 +1989,17 @@ async def dominant_theme(
         minute=body.natal_minute,
         second=body.natal_second,
     )
-    tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
     context = _build_transits_context(body, tz_offset_minutes, lang)
     aspects = context["aspects"]
+    aspectos_usados = context["aspectos_usados"]
+    orbes_usados = context["orbes_usados"]
 
     influence_counts: Dict[str, int] = {}
     for asp in aspects:
@@ -1663,6 +2020,10 @@ async def dominant_theme(
                 "Atenção aos detalhes do cotidiano.",
             ],
             "sample_aspects_ptbr": [],
+            "metadados_tecnicos": {
+                "aspectos_usados": aspectos_usados,
+                "orbes_usados": orbes_usados,
+            },
         }
 
     dominant_influence = max(influence_counts.items(), key=lambda item: item[1])[0]
@@ -1692,6 +2053,10 @@ async def dominant_theme(
             "Priorize ações alinhadas ao tom dominante.",
             "Ajuste expectativas conforme a intensidade do período.",
         ],
+        "metadados_tecnicos": {
+            "aspectos_usados": aspectos_usados,
+            "orbes_usados": orbes_usados,
+        },
     }
 
 @app.post("/v1/insights/areas-activated")
@@ -1709,9 +2074,17 @@ async def areas_activated(
         minute=body.natal_minute,
         second=body.natal_second,
     )
-    tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
     context = _build_transits_context(body, tz_offset_minutes, lang)
     aspects = context["aspects"]
+    aspectos_usados = context["aspectos_usados"]
+    orbes_usados = context["orbes_usados"]
 
     area_map = {
         "Sun": "Identidade e propósito",
@@ -1744,6 +2117,10 @@ async def areas_activated(
                 "Priorize consistência nas decisões.",
                 "Atenção aos sinais sutis do cotidiano.",
             ],
+            "metadados_tecnicos": {
+                "aspectos_usados": aspectos_usados,
+                "orbes_usados": orbes_usados,
+            },
         }
 
     scores: Dict[str, Dict[str, Any]] = {}
@@ -1767,6 +2144,10 @@ async def areas_activated(
             "Busque equilíbrio entre temas ativos.",
             "Use pequenas ações para ajustar o foco.",
         ],
+        "metadados_tecnicos": {
+            "aspectos_usados": aspectos_usados,
+            "orbes_usados": orbes_usados,
+        },
     }
 
 @app.post("/v1/insights/care-suggestion")
@@ -1784,7 +2165,13 @@ async def care_suggestion(
         minute=body.natal_minute,
         second=body.natal_second,
     )
-    tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
     context = _build_transits_context(body, tz_offset_minutes, lang)
     aspects = context["aspects"]
 
@@ -1890,20 +2277,35 @@ async def solar_return(
         second=body.natal_second,
     )
     tz_offset_minutes = _tz_offset_for(
-        natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    natal_local = parse_local_datetime(datetime_local=natal_dt)
+    localized = localize_with_zoneinfo(
+        natal_local, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
     )
+    natal_utc = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     solar_return_utc = _solar_return_datetime(
         natal_dt=natal_dt,
         target_year=target_y,
-        tz_offset_minutes=tz_offset_minutes,
+        tz_offset_minutes=localized.tz_offset_minutes,
         request=request,
         user_id=auth.get("user_id"),
     )
-    solar_return_local = solar_return_utc + timedelta(minutes=tz_offset_minutes)
+    solar_return_local = solar_return_utc + timedelta(minutes=localized.tz_offset_minutes)
     return SolarReturnResponse(
         target_year=target_y,
         solar_return_utc=solar_return_utc.isoformat(),
         solar_return_local=solar_return_local.isoformat(),
+        timezone_resolvida=localized.timezone_resolved,
+        tz_offset_minutes_usado=localized.tz_offset_minutes,
+        fold_usado=localized.fold,
+        datetime_local_usado=localized.datetime_local.isoformat(),
+        datetime_utc_usado=natal_utc.isoformat(),
+        avisos=localized.warnings,
         idioma="pt-BR",
         fonte_traducao="backend",
     )
@@ -1916,11 +2318,21 @@ async def natal(
     auth=Depends(get_auth),
 ):
     try:
-        date_str = f"{body.natal_year:04d}-{body.natal_month:02d}-{body.natal_day:02d}"
-        time_str = f"{body.natal_hour:02d}:{body.natal_minute:02d}:{body.natal_second:02d}"
-        local_dt = parse_local_datetime(date_str, time_str)
-        tz_offset_minutes = utc_offset_minutes(
-            local_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        dt = datetime(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+        )
+        tz_offset_minutes = _tz_offset_for(
+            dt,
+            body.timezone,
+            body.tz_offset_minutes,
+            strict=body.strict_timezone,
+            request_id=getattr(request.state, "request_id", None),
+            path=request.url.path,
         )
 
         lang_key = (lang or "").lower()
@@ -1951,6 +2363,13 @@ async def natal(
             "idioma": "pt-BR",
             "fonte_traducao": "backend",
         }
+        chart["metadados_tecnicos"].update(
+            _build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=dt,
+            )
+        )
 
         cache.set(cache_key, chart, ttl_seconds=TTL_NATAL_SECONDS)
         return chart
@@ -1969,11 +2388,21 @@ async def chart_distributions(
     auth=Depends(get_auth),
 ):
     try:
-        date_str = f"{body.natal_year:04d}-{body.natal_month:02d}-{body.natal_day:02d}"
-        time_str = f"{body.natal_hour:02d}:{body.natal_minute:02d}:{body.natal_second:02d}"
-        local_dt = parse_local_datetime(date_str, time_str)
-        tz_offset_minutes = utc_offset_minutes(
-            local_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        dt = datetime(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+        )
+        tz_offset_minutes = _tz_offset_for(
+            dt,
+            body.timezone,
+            body.tz_offset_minutes,
+            strict=body.strict_timezone,
+            request_id=getattr(request.state, "request_id", None),
+            path=request.url.path,
         )
         chart = compute_chart(
             year=body.natal_year,
@@ -1989,7 +2418,14 @@ async def chart_distributions(
             zodiac_type=body.zodiac_type.value,
             ayanamsa=body.ayanamsa,
         )
-        payload = _distributions_payload(chart)
+        payload = _distributions_payload(
+            chart,
+            metadata=_build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=dt,
+            ),
+        )
         return payload
     except Exception as e:
         logger.error(
@@ -2009,10 +2445,21 @@ async def transits(
     y, m, d = _parse_date_yyyy_mm_dd(body.target_date)
 
     try:
-        date_str = f"{body.natal_year:04d}-{body.natal_month:02d}-{body.natal_day:02d}"
-        time_str = f"{body.natal_hour:02d}:{body.natal_minute:02d}:{body.natal_second:02d}"
-        natal_dt = parse_local_datetime(date_str, time_str)
-        tz_offset_minutes = utc_offset_minutes(natal_dt, body.timezone, body.tz_offset_minutes)
+        natal_dt = datetime(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+        )
+        tz_offset_minutes = _tz_offset_for(
+            natal_dt,
+            body.timezone,
+            body.tz_offset_minutes,
+            request_id=getattr(request.state, "request_id", None),
+            path=request.url.path,
+        )
 
         lang_key = (lang or "").lower()
         cache_key = f"transits:{auth['user_id']}:{body.target_date}:{lang_key}"
@@ -2049,9 +2496,11 @@ async def transits(
         natal_chart = _apply_sign_localization(natal_chart, lang)
         transit_chart = _apply_sign_localization(transit_chart, lang)
 
+        aspects_profile, aspects_config = get_aspects_profile()
         aspects = compute_transit_aspects(
             transit_planets=transit_chart["planets"],
             natal_planets=natal_chart["planets"],
+            aspects=aspects_config,
         )
 
         moon = compute_moon_only(body.target_date, tz_offset_minutes=tz_offset_minutes)
@@ -2092,6 +2541,9 @@ async def transits(
             "aspects": aspects,
             "aspectos_ptbr": aspectos_ptbr,
             "areas_activated": _areas_activated(aspects, phase),
+            "metadados_tecnicos": {
+                "perfil_aspectos": aspects_profile,
+            },
         }
 
         cache.set(cache_key, response, ttl_seconds=TTL_TRANSITS_SECONDS)
@@ -2112,11 +2564,21 @@ async def interpretation_natal(
     auth=Depends(get_auth),
 ):
     try:
-        date_str = f"{body.natal_year:04d}-{body.natal_month:02d}-{body.natal_day:02d}"
-        time_str = f"{body.natal_hour:02d}:{body.natal_minute:02d}:{body.natal_second:02d}"
-        local_dt = parse_local_datetime(date_str, time_str)
-        tz_offset_minutes = utc_offset_minutes(
-            local_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        dt = datetime(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+        )
+        tz_offset_minutes = _tz_offset_for(
+            dt,
+            body.timezone,
+            body.tz_offset_minutes,
+            strict=body.strict_timezone,
+            request_id=getattr(request.state, "request_id", None),
+            path=request.url.path,
         )
         chart = compute_chart(
             year=body.natal_year,
@@ -2132,7 +2594,14 @@ async def interpretation_natal(
             zodiac_type=body.zodiac_type.value,
             ayanamsa=body.ayanamsa,
         )
-        distributions = _distributions_payload(chart)
+        distributions = _distributions_payload(
+            chart,
+            metadata=_build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=dt,
+            ),
+        )
 
         planets = chart.get("planets", {})
         houses = chart.get("houses", {})
@@ -2216,14 +2685,23 @@ async def interpretation_natal(
             )
 
         payload = {
+            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
             "titulo": "Resumo Geral do Mapa",
             "sintese": sintese,
             "temas_principais": temas_principais,
             "planetas_com_maior_peso": top_planets,
             "distribuicao": distributions,
             "avisos": avisos,
+            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
             "metadados": {"version": "v1", "fonte": "regras"},
         }
+        payload["metadados"].update(
+            _build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=dt,
+            )
+        )
         return payload
     except Exception as e:
         logger.error(
@@ -2245,7 +2723,15 @@ async def cosmic_weather(
     auth=Depends(get_auth),
 ):
     d = date or _now_yyyy_mm_dd()
-    payload = _cosmic_weather_payload(d, timezone, tz_offset_minutes, auth["user_id"], lang)
+    payload = _cosmic_weather_payload(
+        d,
+        timezone,
+        tz_offset_minutes,
+        auth["user_id"],
+        lang,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
     return CosmicWeatherResponse(**payload)
 
 
@@ -2307,7 +2793,15 @@ async def cosmic_weather_range(
     current = start_date
     for _ in range(interval_days):
         date_str = current.strftime("%Y-%m-%d")
-        payload = _cosmic_weather_payload(date_str, timezone, tz_offset_minutes, auth["user_id"], lang)
+        payload = _cosmic_weather_payload(
+            date_str,
+            timezone,
+            tz_offset_minutes,
+            auth["user_id"],
+            lang,
+            request_id=getattr(request.state, "request_id", None),
+            path=request.url.path,
+        )
         items.append(CosmicWeatherResponse(**payload))
         items_ptbr.append(
             {
@@ -2328,10 +2822,21 @@ async def render_data(
     lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
-    date_str = f"{body.year:04d}-{body.month:02d}-{body.day:02d}"
-    time_str = f"{body.hour:02d}:{body.minute:02d}:{body.second:02d}"
-    local_dt = parse_local_datetime(date_str, time_str)
-    tz_offset_minutes = utc_offset_minutes(local_dt, body.timezone, body.tz_offset_minutes)
+    dt = datetime(
+        year=body.year,
+        month=body.month,
+        day=body.day,
+        hour=body.hour,
+        minute=body.minute,
+        second=body.second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
 
     lang_key = (lang or "").lower()
     cache_key = f"render:{auth['user_id']}:{hash(body.model_dump_json())}:{lang_key}"
@@ -2443,15 +2948,14 @@ async def solar_return_calculate(
             detail="Timezone do alvo inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
         )
 
-    natal_time_missing = body.natal.hora is None
     try:
-        natal_dt = parse_local_datetime(body.natal.data, body.natal.hora)
-    except HTTPException as exc:
-        if exc.detail == "Formato inválido de data. Use YYYY-MM-DD.":
-            raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
-        if exc.detail == "Formato inválido de hora. Use HH:MM:SS.":
-            raise HTTPException(status_code=422, detail="Hora natal inválida. Use HH:MM:SS.")
+        natal_dt, warnings, natal_time_missing = parse_local_datetime(
+            body.natal.data, body.natal.hora
+        )
+    except HTTPException:
         raise
+    except Exception:
+        raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
 
     prefs = body.preferencias or SolarReturnPreferencias()
     engine = (os.getenv("SOLAR_RETURN_ENGINE") or "v1").lower()
@@ -2470,9 +2974,18 @@ async def solar_return_calculate(
         house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
         zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
         ayanamsa=prefs.ayanamsa,
+        aspectos_habilitados=prefs.aspectos_habilitados,
+        orbes=prefs.orbes,
         engine=engine,  # type: ignore[arg-type]
+        window_days=prefs.janela_dias,
+        step_hours=prefs.passo_horas,
+        max_iter=prefs.max_iteracoes,
+        tolerance_degrees=prefs.tolerancia_graus,
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
+        request_id=getattr(request.state, "request_id", None),
+        aspectos_habilitados=prefs.aspectos_habilitados,
+        orbes=prefs.orbes,
     )
 
     try:
@@ -2511,7 +3024,14 @@ async def solar_return_calculate(
         status=200,
         latency_ms=None,
         user_id=auth.get("user_id"),
+        engine=payload["metadados_tecnicos"]["engine"],
+        metodo_refino=payload["metadados_tecnicos"]["metodo_refino"],
+        iteracoes=payload["metadados_tecnicos"]["iteracoes"],
+        delta_longitude=payload["metadados_tecnicos"]["delta_longitude_graus"],
     )
+
+    if warnings:
+        payload["warnings"] = warnings
 
     return payload
 
@@ -2553,7 +3073,11 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
                 "completion_tokens": response.usage.completion_tokens,
                 "total_tokens": response.usage.total_tokens,
             },
-            "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+            "metadados_tecnicos": {
+                "idioma": "pt-BR",
+                "fonte_traducao": "backend",
+                **_build_time_metadata(timezone=None, tz_offset_minutes=None, local_dt=None),
+            },
         }
 
     except Exception as e:
@@ -2572,11 +3096,18 @@ async def system_alerts(
     lng: float = Query(..., ge=-180, le=180),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
+    request: Request,
     auth=Depends(get_auth),
 ):
     _parse_date_yyyy_mm_dd(date)
     dt = datetime.strptime(date, "%Y-%m-%d").replace(hour=12, minute=0, second=0)
-    resolved_offset = _tz_offset_for(dt, timezone, tz_offset_minutes)
+    resolved_offset = _tz_offset_for(
+        dt,
+        timezone,
+        tz_offset_minutes,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
     alerts: List[SystemAlert] = []
 
     mercury = _mercury_alert_for(date, lat, lng, resolved_offset)
@@ -2608,6 +3139,7 @@ async def retrogrades_alerts(
     date: Optional[str] = Query(None, description="YYYY-MM-DD"),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
+    request: Request,
 ):
     if date:
         y, m, d = _parse_date_yyyy_mm_dd(date)
@@ -2622,8 +3154,17 @@ async def retrogrades_alerts(
         else:
             local_dt = datetime.utcnow().replace(hour=12, minute=0, second=0, microsecond=0)
 
-    resolved_offset = _tz_offset_for(local_dt, timezone, tz_offset_minutes)
+    resolved_offset = _tz_offset_for(
+        local_dt,
+        timezone,
+        tz_offset_minutes,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
     utc_dt = local_dt - timedelta(minutes=resolved_offset)
+    base_local = parse_local_datetime(datetime_local=local_dt)
+    localized = localize_with_zoneinfo(base_local, timezone, tz_offset_minutes)
+    utc_dt = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     alerts = retrograde_alerts(utc_dt)
     retrogrades_ptbr = [
         {
@@ -2638,6 +3179,12 @@ async def retrogrades_alerts(
         "retrogrades": alerts,
         "retrogrades_ptbr": retrogrades_ptbr,
         "planetas_ptbr": planetas_ptbr,
+        "timezone_resolvida": localized.timezone_resolved,
+        "tz_offset_minutes_usado": localized.tz_offset_minutes,
+        "fold_usado": localized.fold,
+        "datetime_local_usado": localized.datetime_local.isoformat(),
+        "datetime_utc_usado": utc_dt.isoformat(),
+        "avisos": localized.warnings,
     }
 
 
@@ -2648,12 +3195,19 @@ async def notifications_daily(
     lng: float = Query(..., ge=-180, le=180),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
+    request: Request,
     auth=Depends(get_auth),
 ):
     d = date or _now_yyyy_mm_dd()
     _parse_date_yyyy_mm_dd(d)
     dt = datetime.strptime(d, "%Y-%m-%d").replace(hour=12, minute=0, second=0)
-    resolved_offset = _tz_offset_for(dt, timezone, tz_offset_minutes)
+    resolved_offset = _tz_offset_for(
+        dt,
+        timezone,
+        tz_offset_minutes,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
 
     cache_key = f"notif:{auth['user_id']}:{d}:{lat}:{lng}:{timezone}:{resolved_offset}"
     cached = cache.get(cache_key)
