@@ -38,12 +38,15 @@ from astro.i18n_ptbr import (
 )
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
+from services.time_utils import localize_with_zoneinfo, parse_local_datetime, to_utc
+from timezone_utils import parse_local_datetime
 
 from core.security import require_api_key_and_user
 from core.cache import cache
 from core.plans import is_trial_or_premium
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
+from services import timezone_utils
 
 # -----------------------------
 # Load env
@@ -547,6 +550,7 @@ class SolarReturnPreferencias(BaseModel):
     ayanamsa: Optional[str] = None
     sistema_casas: HouseSystem = Field(default=HouseSystem.PLACIDUS)
     modo: Optional[Literal["geocentrico", "topocentrico"]] = Field(default="geocentrico")
+    aspectos_habilitados: Optional[List[str]] = None
     orbes: Optional[Dict[str, float]] = None
 
 
@@ -601,6 +605,22 @@ class TimezoneResolveRequest(BaseModel):
             data.setdefault("minute", dt.minute)
             data.setdefault("second", dt.second)
         return data
+
+
+class ValidateLocalDatetimeRequest(BaseModel):
+    date: str = Field(..., description="Data local no formato YYYY-MM-DD.")
+    time: str = Field(..., description="Hora local no formato HH:MM ou HH:MM:SS.")
+    timezone: str = Field(..., description="Timezone IANA (ex.: America/Sao_Paulo).")
+    strict: bool = Field(
+        default=False,
+        description="Quando true, rejeita horários ambíguos/inexistentes em transições de DST.",
+    )
+    prefer_fold: int = Field(
+        default=0,
+        ge=0,
+        le=1,
+        description="Preferência de fold (0 ou 1) para horários ambíguos.",
+    )
 
 
 class EphemerisCheckRequest(BaseModel):
@@ -669,6 +689,12 @@ class SolarReturnResponse(BaseModel):
     target_year: int
     solar_return_utc: str
     solar_return_local: str
+    timezone_resolvida: Optional[str] = None
+    tz_offset_minutes_usado: Optional[int] = None
+    fold_usado: Optional[int] = None
+    datetime_local_usado: Optional[str] = None
+    datetime_utc_usado: Optional[str] = None
+    avisos: Optional[List[str]] = None
     idioma: Optional[str] = None
     fonte_traducao: Optional[str] = None
 
@@ -1299,6 +1325,15 @@ ENDPOINTS_CATALOG = [
     },
     {
         "method": "POST",
+        "path": "/v1/time/validate-local-datetime",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": "ValidateLocalDatetimeRequest",
+        "response_model": None,
+        "description": "Valida data/hora local e resolve UTC com tratamento de DST.",
+    },
+    {
+        "method": "POST",
         "path": "/v1/diagnostics/ephemeris-check",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
@@ -1544,22 +1579,49 @@ async def resolve_timezone(body: TimezoneResolveRequest):
         "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
     }
 
+
+@app.post("/v1/time/validate-local-datetime")
+async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
+    result = timezone_utils.validate_local_datetime(
+        body.datetime_local, body.timezone, strict=body.strict
+    )
+    payload = {
+        "input_datetime_local": result.input_datetime.isoformat(),
+        "datetime_local": result.resolved_datetime.isoformat(),
+        "timezone": result.timezone,
+        "tz_offset_minutes": result.tz_offset_minutes,
+        "utc_datetime": result.utc_datetime.isoformat(),
+        "fold": result.fold,
+        "warning": result.warning,
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            "timezone": result.timezone,
+            "tz_offset_minutes": result.tz_offset_minutes,
+            "fold": result.fold,
+        },
+    }
+    if result.adjustment_minutes:
+        payload["metadados_tecnicos"]["ajuste_minutos"] = result.adjustment_minutes
+    return payload
+
 @app.post("/v1/diagnostics/ephemeris-check")
 async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
-    tz_offset_minutes = _tz_offset_for(body.datetime_local, body.timezone, fallback_minutes=None)
-    utc_dt = body.datetime_local - timedelta(minutes=tz_offset_minutes)
+    local_dt = parse_local_datetime(datetime_local=body.datetime_local)
+    localized = localize_with_zoneinfo(local_dt, body.timezone, None)
+    utc_dt = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     jd_ut = to_julian_day(utc_dt)
 
     chart = compute_chart(
-        year=body.datetime_local.year,
-        month=body.datetime_local.month,
-        day=body.datetime_local.day,
-        hour=body.datetime_local.hour,
-        minute=body.datetime_local.minute,
-        second=body.datetime_local.second,
+        year=local_dt.year,
+        month=local_dt.month,
+        day=local_dt.day,
+        hour=local_dt.hour,
+        minute=local_dt.minute,
+        second=local_dt.second,
         lat=body.lat,
         lng=body.lng,
-        tz_offset_minutes=tz_offset_minutes,
+        tz_offset_minutes=localized.tz_offset_minutes,
         house_system="P",
         zodiac_type="tropical",
         ayanamsa=None,
@@ -1582,7 +1644,13 @@ async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=De
 
     return {
         "utc_datetime": utc_dt.isoformat(),
-        "tz_offset_minutes": tz_offset_minutes,
+        "tz_offset_minutes": localized.tz_offset_minutes,
+        "timezone_resolvida": localized.timezone_resolved,
+        "tz_offset_minutes_usado": localized.tz_offset_minutes,
+        "fold_usado": localized.fold,
+        "datetime_local_usado": localized.datetime_local.isoformat(),
+        "datetime_utc_usado": utc_dt.isoformat(),
+        "avisos": localized.warnings,
         "items": items,
         "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
     }
@@ -1895,21 +1963,29 @@ async def solar_return(
         minute=body.natal_minute,
         second=body.natal_second,
     )
-    tz_offset_minutes = _tz_offset_for(
-        natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+    natal_local = parse_local_datetime(datetime_local=natal_dt)
+    localized = localize_with_zoneinfo(
+        natal_local, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
     )
+    natal_utc = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     solar_return_utc = _solar_return_datetime(
         natal_dt=natal_dt,
         target_year=target_y,
-        tz_offset_minutes=tz_offset_minutes,
+        tz_offset_minutes=localized.tz_offset_minutes,
         request=request,
         user_id=auth.get("user_id"),
     )
-    solar_return_local = solar_return_utc + timedelta(minutes=tz_offset_minutes)
+    solar_return_local = solar_return_utc + timedelta(minutes=localized.tz_offset_minutes)
     return SolarReturnResponse(
         target_year=target_y,
         solar_return_utc=solar_return_utc.isoformat(),
         solar_return_local=solar_return_local.isoformat(),
+        timezone_resolvida=localized.timezone_resolved,
+        tz_offset_minutes_usado=localized.tz_offset_minutes,
+        fold_usado=localized.fold,
+        datetime_local_usado=localized.datetime_local.isoformat(),
+        datetime_utc_usado=natal_utc.isoformat(),
+        avisos=localized.warnings,
         idioma="pt-BR",
         fonte_traducao="backend",
     )
@@ -2242,6 +2318,7 @@ async def interpretation_natal(
             )
 
         payload = {
+            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
             "titulo": "Resumo Geral do Mapa",
             "sintese": sintese,
             "temas_principais": temas_principais,
@@ -2475,29 +2552,13 @@ async def solar_return_calculate(
         )
 
     try:
-        natal_y, natal_m, natal_d = _parse_date_yyyy_mm_dd(body.natal.data)
+        natal_dt, warnings, natal_time_missing = parse_local_datetime(
+            body.natal.data, body.natal.hora
+        )
     except HTTPException:
         raise
     except Exception:
         raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
-
-    natal_time_missing = body.natal.hora is None
-    if body.natal.hora:
-        try:
-            natal_hour, natal_minute, natal_second = map(int, body.natal.hora.split(":"))
-        except Exception:
-            raise HTTPException(status_code=422, detail="Hora natal inválida. Use HH:MM:SS.")
-    else:
-        natal_hour, natal_minute, natal_second = 12, 0, 0
-
-    natal_dt = datetime(
-        year=natal_y,
-        month=natal_m,
-        day=natal_d,
-        hour=natal_hour,
-        minute=natal_minute,
-        second=natal_second,
-    )
 
     prefs = body.preferencias or SolarReturnPreferencias()
     engine = (os.getenv("SOLAR_RETURN_ENGINE") or "v1").lower()
@@ -2519,6 +2580,8 @@ async def solar_return_calculate(
         engine=engine,  # type: ignore[arg-type]
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
+        aspectos_habilitados=prefs.aspectos_habilitados,
+        orbes=prefs.orbes,
     )
 
     try:
@@ -2558,6 +2621,9 @@ async def solar_return_calculate(
         latency_ms=None,
         user_id=auth.get("user_id"),
     )
+
+    if warnings:
+        payload["warnings"] = warnings
 
     return payload
 
@@ -2668,8 +2734,9 @@ async def retrogrades_alerts(
         else:
             local_dt = datetime.utcnow().replace(hour=12, minute=0, second=0, microsecond=0)
 
-    resolved_offset = _tz_offset_for(local_dt, timezone, tz_offset_minutes)
-    utc_dt = local_dt - timedelta(minutes=resolved_offset)
+    base_local = parse_local_datetime(datetime_local=local_dt)
+    localized = localize_with_zoneinfo(base_local, timezone, tz_offset_minutes)
+    utc_dt = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     alerts = retrograde_alerts(utc_dt)
     retrogrades_ptbr = [
         {
@@ -2684,6 +2751,12 @@ async def retrogrades_alerts(
         "retrogrades": alerts,
         "retrogrades_ptbr": retrogrades_ptbr,
         "planetas_ptbr": planetas_ptbr,
+        "timezone_resolvida": localized.timezone_resolved,
+        "tz_offset_minutes_usado": localized.tz_offset_minutes,
+        "fold_usado": localized.fold,
+        "datetime_local_usado": localized.datetime_local.isoformat(),
+        "datetime_utc_usado": utc_dt.isoformat(),
+        "avisos": localized.warnings,
     }
 
 
