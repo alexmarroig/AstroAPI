@@ -492,7 +492,6 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
     )
 
     aspects = compute_aspects(solar_return_chart["planets"], natal_chart["planets"])
-    interpretation = build_interpretation_ptbr(solar_return_chart, aspects)
 
     natal_sun_lon = natal_chart["planets"]["Sun"]["lon"]
     return_sun_lon = solar_return_chart["planets"]["Sun"]["lon"]
