@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import swisseph as swe
 
 from astro.aspects import ASPECTS
-from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime
+from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime, sun_longitude_at
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
     build_aspects_ptbr,
@@ -211,6 +211,30 @@ def find_solar_return_instant(
         "sign": sign_info["sign"],
         "deg_in_sign": round(sign_info["deg_in_sign"], 4),
         "window_days": window_days,
+    }
+
+
+def compute_solar_return_reference(
+    natal_dt: datetime,
+    target_year: int,
+    tz_offset_minutes: int = 0,
+    engine: Literal["v1", "v2"] = "v2",
+) -> dict:
+    solar_return_utc = solar_return_datetime(
+        natal_dt=natal_dt,
+        target_year=target_year,
+        tz_offset_minutes=tz_offset_minutes,
+        engine=engine,
+    )
+    natal_utc = natal_dt - timedelta(minutes=tz_offset_minutes)
+    natal_lon = sun_longitude_at(natal_utc)
+    return_lon = sun_longitude_at(solar_return_utc)
+    delta_longitude = abs(angle_diff(return_lon, natal_lon))
+    return {
+        "solar_return_utc": solar_return_utc.isoformat(),
+        "natal_sun_lon": round(natal_lon, 6),
+        "solar_return_sun_lon": round(return_lon, 6),
+        "delta_longitude": round(delta_longitude, 6),
     }
 
 
