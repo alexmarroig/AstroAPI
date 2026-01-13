@@ -23,7 +23,7 @@ import swisseph as swe
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only, solar_return_datetime
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only
 from astro.solar_return import SolarReturnInputs, compute_solar_return_payload
-from astro.aspects import compute_transit_aspects
+from astro.aspects import compute_transit_aspects, get_aspects_profile
 from astro.retrogrades import retrograde_alerts
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
@@ -2070,9 +2070,11 @@ async def transits(
         natal_chart = _apply_sign_localization(natal_chart, lang)
         transit_chart = _apply_sign_localization(transit_chart, lang)
 
+        aspects_profile, aspects_config = get_aspects_profile()
         aspects = compute_transit_aspects(
             transit_planets=transit_chart["planets"],
             natal_planets=natal_chart["planets"],
+            aspects=aspects_config,
         )
 
         moon = compute_moon_only(body.target_date, tz_offset_minutes=tz_offset_minutes)
@@ -2113,6 +2115,9 @@ async def transits(
             "aspects": aspects,
             "aspectos_ptbr": aspectos_ptbr,
             "areas_activated": _areas_activated(aspects, phase),
+            "metadados_tecnicos": {
+                "perfil_aspectos": aspects_profile,
+            },
         }
 
         cache.set(cache_key, response, ttl_seconds=TTL_TRANSITS_SECONDS)

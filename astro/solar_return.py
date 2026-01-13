@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import swisseph as swe
 
-from astro.aspects import ASPECTS
+from astro.aspects import get_aspects_profile
 from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
@@ -258,7 +258,8 @@ def compute_aspects(
     aspects: Optional[Dict[str, dict]] = None,
 ) -> List[dict]:
     aspects_found: List[dict] = []
-    aspects = aspects or ASPECTS
+    if aspects is None:
+        _, aspects = get_aspects_profile()
 
     for t_name, t_data in transit_planets.items():
         t_lon = t_data["lon"]
@@ -491,7 +492,12 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
         ayanamsa=inputs.ayanamsa,
     )
 
-    aspects = compute_aspects(solar_return_chart["planets"], natal_chart["planets"])
+    aspects_profile, aspects_config = get_aspects_profile()
+    aspects = compute_aspects(
+        solar_return_chart["planets"],
+        natal_chart["planets"],
+        aspects=aspects_config,
+    )
 
     natal_sun_lon = natal_chart["planets"]["Sun"]["lon"]
     return_sun_lon = solar_return_chart["planets"]["Sun"]["lon"]
@@ -515,6 +521,7 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "diferenca_longitude_graus": round(delta_longitude, 6),
             "idioma": "pt-BR",
             "fonte_traducao": "backend",
+            "perfil_aspectos": aspects_profile,
             "tolerancia_graus": 1e-6 if inputs.engine == "v2" else None,
             "metodo_refino": metodo_refino,
             "iteracoes": iteracoes,
