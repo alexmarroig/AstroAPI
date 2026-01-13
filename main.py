@@ -38,6 +38,7 @@ from astro.i18n_ptbr import (
 )
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
+from services.time_utils import localize_with_zoneinfo, parse_local_datetime, to_utc
 from timezone_utils import parse_local_datetime
 
 from core.security import require_api_key_and_user
@@ -688,6 +689,12 @@ class SolarReturnResponse(BaseModel):
     target_year: int
     solar_return_utc: str
     solar_return_local: str
+    timezone_resolvida: Optional[str] = None
+    tz_offset_minutes_usado: Optional[int] = None
+    fold_usado: Optional[int] = None
+    datetime_local_usado: Optional[str] = None
+    datetime_utc_usado: Optional[str] = None
+    avisos: Optional[List[str]] = None
     idioma: Optional[str] = None
     fonte_traducao: Optional[str] = None
 
@@ -1600,20 +1607,21 @@ async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
 
 @app.post("/v1/diagnostics/ephemeris-check")
 async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
-    tz_offset_minutes = _tz_offset_for(body.datetime_local, body.timezone, fallback_minutes=None)
-    utc_dt = body.datetime_local - timedelta(minutes=tz_offset_minutes)
+    local_dt = parse_local_datetime(datetime_local=body.datetime_local)
+    localized = localize_with_zoneinfo(local_dt, body.timezone, None)
+    utc_dt = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     jd_ut = to_julian_day(utc_dt)
 
     chart = compute_chart(
-        year=body.datetime_local.year,
-        month=body.datetime_local.month,
-        day=body.datetime_local.day,
-        hour=body.datetime_local.hour,
-        minute=body.datetime_local.minute,
-        second=body.datetime_local.second,
+        year=local_dt.year,
+        month=local_dt.month,
+        day=local_dt.day,
+        hour=local_dt.hour,
+        minute=local_dt.minute,
+        second=local_dt.second,
         lat=body.lat,
         lng=body.lng,
-        tz_offset_minutes=tz_offset_minutes,
+        tz_offset_minutes=localized.tz_offset_minutes,
         house_system="P",
         zodiac_type="tropical",
         ayanamsa=None,
@@ -1636,7 +1644,13 @@ async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=De
 
     return {
         "utc_datetime": utc_dt.isoformat(),
-        "tz_offset_minutes": tz_offset_minutes,
+        "tz_offset_minutes": localized.tz_offset_minutes,
+        "timezone_resolvida": localized.timezone_resolved,
+        "tz_offset_minutes_usado": localized.tz_offset_minutes,
+        "fold_usado": localized.fold,
+        "datetime_local_usado": localized.datetime_local.isoformat(),
+        "datetime_utc_usado": utc_dt.isoformat(),
+        "avisos": localized.warnings,
         "items": items,
         "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
     }
@@ -1949,21 +1963,29 @@ async def solar_return(
         minute=body.natal_minute,
         second=body.natal_second,
     )
-    tz_offset_minutes = _tz_offset_for(
-        natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+    natal_local = parse_local_datetime(datetime_local=natal_dt)
+    localized = localize_with_zoneinfo(
+        natal_local, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
     )
+    natal_utc = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     solar_return_utc = _solar_return_datetime(
         natal_dt=natal_dt,
         target_year=target_y,
-        tz_offset_minutes=tz_offset_minutes,
+        tz_offset_minutes=localized.tz_offset_minutes,
         request=request,
         user_id=auth.get("user_id"),
     )
-    solar_return_local = solar_return_utc + timedelta(minutes=tz_offset_minutes)
+    solar_return_local = solar_return_utc + timedelta(minutes=localized.tz_offset_minutes)
     return SolarReturnResponse(
         target_year=target_y,
         solar_return_utc=solar_return_utc.isoformat(),
         solar_return_local=solar_return_local.isoformat(),
+        timezone_resolvida=localized.timezone_resolved,
+        tz_offset_minutes_usado=localized.tz_offset_minutes,
+        fold_usado=localized.fold,
+        datetime_local_usado=localized.datetime_local.isoformat(),
+        datetime_utc_usado=natal_utc.isoformat(),
+        avisos=localized.warnings,
         idioma="pt-BR",
         fonte_traducao="backend",
     )
@@ -2712,8 +2734,9 @@ async def retrogrades_alerts(
         else:
             local_dt = datetime.utcnow().replace(hour=12, minute=0, second=0, microsecond=0)
 
-    resolved_offset = _tz_offset_for(local_dt, timezone, tz_offset_minutes)
-    utc_dt = local_dt - timedelta(minutes=resolved_offset)
+    base_local = parse_local_datetime(datetime_local=local_dt)
+    localized = localize_with_zoneinfo(base_local, timezone, tz_offset_minutes)
+    utc_dt = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     alerts = retrograde_alerts(utc_dt)
     retrogrades_ptbr = [
         {
@@ -2728,6 +2751,12 @@ async def retrogrades_alerts(
         "retrogrades": alerts,
         "retrogrades_ptbr": retrogrades_ptbr,
         "planetas_ptbr": planetas_ptbr,
+        "timezone_resolvida": localized.timezone_resolved,
+        "tz_offset_minutes_usado": localized.tz_offset_minutes,
+        "fold_usado": localized.fold,
+        "datetime_local_usado": localized.datetime_local.isoformat(),
+        "datetime_utc_usado": utc_dt.isoformat(),
+        "avisos": localized.warnings,
     }
 
 
