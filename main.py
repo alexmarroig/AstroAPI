@@ -44,6 +44,7 @@ from core.cache import cache
 from core.plans import is_trial_or_premium
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
+from routes.time import router as time_router
 
 # -----------------------------
 # Load env
@@ -114,6 +115,7 @@ app.add_middleware(
 # -----------------------------
 app.include_router(lunations_router)
 app.include_router(progressions_router)
+app.include_router(time_router)
 
 # -----------------------------
 # Middleware: request_id + logging
