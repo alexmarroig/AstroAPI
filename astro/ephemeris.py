@@ -258,12 +258,18 @@ def _target_year_datetime(natal_dt: datetime, target_year: int) -> datetime:
     return natal_dt.replace(year=target_year, day=day)
 
 
-def _solar_return_v1(natal_lon: float, approx_dt: datetime) -> datetime:
-    window_start = approx_dt - timedelta(days=2)
+def _solar_return_v1(
+    natal_lon: float,
+    approx_dt: datetime,
+    window_days: int = 2,
+    step_hours: int = 1,
+) -> datetime:
+    window_start = approx_dt - timedelta(days=window_days)
     best_dt = window_start
     best_delta = 360.0
-    for hour in range(0, 97):
-        candidate = window_start + timedelta(hours=hour)
+    total_hours = int((window_days * 2 * 24) / step_hours)
+    for step in range(total_hours + 1):
+        candidate = window_start + timedelta(hours=step * step_hours)
         delta = abs(_angle_delta(_sun_longitude_at(candidate), natal_lon))
         if delta < best_delta:
             best_delta = delta
@@ -271,10 +277,17 @@ def _solar_return_v1(natal_lon: float, approx_dt: datetime) -> datetime:
     return best_dt
 
 
-def _solar_return_v2(natal_lon: float, approx_dt: datetime) -> Optional[datetime]:
-    window_start = approx_dt - timedelta(days=3)
-    window_end = approx_dt + timedelta(days=3)
-    step = timedelta(hours=6)
+def _solar_return_v2(
+    natal_lon: float,
+    approx_dt: datetime,
+    window_days: int = 3,
+    step_hours: int = 6,
+    max_iter: int = 60,
+    tolerance_degrees: float = 1e-6,
+) -> Optional[datetime]:
+    window_start = approx_dt - timedelta(days=window_days)
+    window_end = approx_dt + timedelta(days=window_days)
+    step = timedelta(hours=step_hours)
 
     prev_dt = window_start
     prev_delta = _angle_delta(_sun_longitude_at(prev_dt), natal_lon)
@@ -300,10 +313,10 @@ def _solar_return_v2(natal_lon: float, approx_dt: datetime) -> Optional[datetime
     left_delta = _angle_delta(_sun_longitude_at(left_dt), natal_lon)
     right_delta = _angle_delta(_sun_longitude_at(right_dt), natal_lon)
 
-    for _ in range(60):
+    for _ in range(max_iter):
         midpoint = left_dt + (right_dt - left_dt) / 2
         mid_delta = _angle_delta(_sun_longitude_at(midpoint), natal_lon)
-        if abs(mid_delta) < 1e-6 or (right_dt - left_dt).total_seconds() <= 1:
+        if abs(mid_delta) < tolerance_degrees or (right_dt - left_dt).total_seconds() <= 1:
             return midpoint
         if left_delta * mid_delta < 0:
             right_dt = midpoint
@@ -320,6 +333,10 @@ def solar_return_datetime(
     target_year: int,
     tz_offset_minutes: int = 0,
     engine: Literal["v1", "v2"] = "v1",
+    window_days: Optional[int] = None,
+    step_hours: Optional[int] = None,
+    max_iter: Optional[int] = None,
+    tolerance_degrees: Optional[float] = None,
 ) -> datetime:
     natal_utc = natal_dt - timedelta(minutes=tz_offset_minutes)
     natal_lon = _sun_longitude_at(natal_utc)
@@ -327,8 +344,20 @@ def solar_return_datetime(
     approx_utc = approx_local - timedelta(minutes=tz_offset_minutes)
 
     if engine == "v2":
-        result = _solar_return_v2(natal_lon, approx_utc)
+        result = _solar_return_v2(
+            natal_lon,
+            approx_utc,
+            window_days=window_days or 3,
+            step_hours=step_hours or 6,
+            max_iter=max_iter or 60,
+            tolerance_degrees=tolerance_degrees or 1e-6,
+        )
         if result is not None:
             return result
 
-    return _solar_return_v1(natal_lon, approx_utc)
+    return _solar_return_v1(
+        natal_lon,
+        approx_utc,
+        window_days=window_days or 2,
+        step_hours=step_hours or 1,
+    )

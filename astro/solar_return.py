@@ -69,6 +69,10 @@ class SolarReturnInputs:
     zodiac_type: ZodiacType
     ayanamsa: Optional[str]
     engine: Literal["v1", "v2"]
+    window_days: Optional[int] = None
+    step_hours: Optional[int] = None
+    max_iter: Optional[int] = None
+    tolerance_degrees: Optional[float] = None
     tz_offset_minutes: Optional[int] = None
     natal_time_missing: bool = False
 
@@ -452,6 +456,10 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
         target_year=inputs.target_year,
         tz_offset_minutes=natal_offset,
         engine=inputs.engine,
+        window_days=inputs.window_days,
+        step_hours=inputs.step_hours,
+        max_iter=inputs.max_iter,
+        tolerance_degrees=inputs.tolerance_degrees,
     )
 
     target_offset = _tz_offset_minutes(
@@ -504,7 +512,14 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
     destaques = _build_destaques(solar_return_chart, aspects)
 
     metodo_refino = "bissecao" if inputs.engine == "v2" else "grade-horaria"
-    iteracoes = 60 if inputs.engine == "v2" else 97
+    window_days = inputs.window_days or (3 if inputs.engine == "v2" else 2)
+    step_hours = inputs.step_hours or (6 if inputs.engine == "v2" else 1)
+    if inputs.engine == "v2":
+        iteracoes = inputs.max_iter or 60
+        tolerancia_graus = inputs.tolerance_degrees or 1e-6
+    else:
+        iteracoes = int((window_days * 2 * 24) / step_hours) + 1
+        tolerancia_graus = None
 
     return {
         "metadados_tecnicos": {
@@ -515,9 +530,11 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "diferenca_longitude_graus": round(delta_longitude, 6),
             "idioma": "pt-BR",
             "fonte_traducao": "backend",
-            "tolerancia_graus": 1e-6 if inputs.engine == "v2" else None,
+            "tolerancia_graus": tolerancia_graus,
             "metodo_refino": metodo_refino,
             "iteracoes": iteracoes,
+            "janela_dias": window_days,
+            "passo_horas": step_hours,
         },
         "mapa_revolucao": {
             "planetas": solar_return_chart["planets"],
