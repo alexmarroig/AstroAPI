@@ -20,6 +20,7 @@ from astro.i18n_ptbr import (
     sign_to_ptbr,
 )
 from astro.utils import angle_diff, deg_to_sign, to_julian_day
+from services.time_utils import localize_with_zoneinfo, parse_local_datetime, to_utc
 
 
 ZodiacType = Literal["tropical", "sidereal"]
@@ -100,8 +101,16 @@ def compute_natal_sun_longitude(
     ayanamsa: Optional[str] = None,
     allow_sidereal: bool = False,
 ) -> dict:
-    local_dt = datetime(year, month, day, hour, minute, second)
-    utc_dt = local_dt - timedelta(minutes=tz_offset_minutes)
+    local_dt = parse_local_datetime(
+        year=year,
+        month=month,
+        day=day,
+        hour=hour,
+        minute=minute,
+        second=second,
+    )
+    localized = localize_with_zoneinfo(local_dt, None, tz_offset_minutes)
+    utc_dt = to_utc(localized.datetime_local, localized.tz_offset_minutes)
     jd_ut = to_julian_day(utc_dt)
 
     config = SolarReturnConfig(
@@ -143,8 +152,16 @@ def find_solar_return_instant(
     )
     _, flags = _resolve_zodiac(config)
 
-    base_local_dt = datetime(target_year, birth_month, birth_day, 12, 0, 0)
-    base_utc_dt = base_local_dt - timedelta(minutes=tz_offset_minutes)
+    base_local_dt = parse_local_datetime(
+        year=target_year,
+        month=birth_month,
+        day=birth_day,
+        hour=12,
+        minute=0,
+        second=0,
+    )
+    base_localized = localize_with_zoneinfo(base_local_dt, None, tz_offset_minutes)
+    base_utc_dt = to_utc(base_localized.datetime_local, base_localized.tz_offset_minutes)
 
     start_dt = base_utc_dt - timedelta(days=window_days)
     end_dt = base_utc_dt + timedelta(days=window_days)
@@ -444,9 +461,12 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
 
 
 def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
-    natal_offset = _tz_offset_minutes(
-        inputs.natal_date, inputs.natal_timezone, inputs.tz_offset_minutes
+    natal_local = parse_local_datetime(datetime_local=inputs.natal_date)
+    natal_localized = localize_with_zoneinfo(
+        natal_local, inputs.natal_timezone, inputs.tz_offset_minutes
     )
+    natal_offset = natal_localized.tz_offset_minutes
+    natal_utc = to_utc(natal_localized.datetime_local, natal_offset)
     solar_return_utc = solar_return_datetime(
         natal_dt=inputs.natal_date,
         target_year=inputs.target_year,
@@ -454,11 +474,15 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
         engine=inputs.engine,
     )
 
-    target_offset = _tz_offset_minutes(
-        solar_return_utc.replace(tzinfo=timezone.utc),
-        inputs.target_timezone,
-        None,
+    target_tzinfo = ZoneInfo(inputs.target_timezone)
+    target_local_naive = (
+        solar_return_utc.replace(tzinfo=timezone.utc)
+        .astimezone(target_tzinfo)
+        .replace(tzinfo=None)
     )
+    target_local = parse_local_datetime(datetime_local=target_local_naive)
+    target_localized = localize_with_zoneinfo(target_local, inputs.target_timezone, None)
+    target_offset = target_localized.tz_offset_minutes
     solar_return_local = solar_return_utc + timedelta(minutes=target_offset)
 
     natal_chart = compute_chart(
@@ -518,6 +542,12 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "tolerancia_graus": 1e-6 if inputs.engine == "v2" else None,
             "metodo_refino": metodo_refino,
             "iteracoes": iteracoes,
+            "timezone_resolvida": natal_localized.timezone_resolved,
+            "tz_offset_minutes_usado": natal_localized.tz_offset_minutes,
+            "fold_usado": natal_localized.fold,
+            "datetime_local_usado": natal_localized.datetime_local.isoformat(),
+            "datetime_utc_usado": natal_utc.isoformat(),
+            "avisos": natal_localized.warnings,
         },
         "mapa_revolucao": {
             "planetas": solar_return_chart["planets"],

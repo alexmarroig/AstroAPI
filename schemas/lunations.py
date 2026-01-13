@@ -32,3 +32,9 @@ class LunationCalculateResponse(BaseModel):
     moon_sign_pt: str
     sun_sign: str
     sun_sign_pt: str
+    timezone_resolvida: Optional[str] = None
+    tz_offset_minutes_usado: Optional[int] = None
+    fold_usado: Optional[int] = None
+    datetime_local_usado: Optional[str] = None
+    datetime_utc_usado: Optional[str] = None
+    avisos: Optional[list[str]] = None
