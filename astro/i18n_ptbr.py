@@ -23,6 +23,10 @@ ASPECT_PTBR = {
     "square": "Quadratura",
     "trine": "Trígono",
     "sextile": "Sextil",
+    "quincunx": "Quincúncio",
+    "semisextile": "Semissextil",
+    "semisquare": "Semiquadratura",
+    "sesquisquare": "Sesquiquadratura",
 }
 
 SIGN_LOOKUP = {sign.lower(): pt for sign, pt in zip(ZODIAC_SIGNS, ZODIAC_SIGNS_PT)}

@@ -56,9 +56,44 @@ class SolarReturnPreferencias(BaseModel):
         default=None,
         description="Ayanamsa para zodíaco sideral (ex.: lahiri).",
     )
+    aspectos_habilitados: Optional[List[str]] = Field(
+        default=None,
+        description="Lista de aspectos habilitados (ex.: ['conj', 'opos', 'quad', 'tri', 'sext']).",
+    )
+    orbes: Optional[Dict[str, float]] = Field(
+        default=None,
+        description="Orbes por aspecto, ex.: {'conj': 8, 'opos': 6}.",
+    )
     timezone_estrito: bool = Field(
         default=False,
         description="Quando true, rejeita horários ambíguos em transições de DST.",
+    )
+    janela_dias: Optional[int] = Field(
+        default=None,
+        description="Janela em dias para busca do retorno solar.",
+        ge=1,
+    )
+    passo_horas: Optional[int] = Field(
+        default=None,
+        description="Passo em horas para busca do retorno solar.",
+        ge=1,
+    )
+    max_iteracoes: Optional[int] = Field(
+        default=None,
+        description="Iterações máximas no refinamento do retorno solar.",
+        ge=1,
+    )
+    tolerancia_graus: Optional[float] = Field(
+        default=None,
+        description="Tolerância em graus para refinamento do retorno solar.",
+        gt=0,
+    aspectos_habilitados: Optional[List[str]] = Field(
+        default=None,
+        description="Lista de aspectos habilitados (ex.: conjunction, square).",
+    )
+    orbes: Optional[Dict[str, float]] = Field(
+        default=None,
+        description="Orbes personalizados por aspecto (ex.: {'conjunction': 5}).",
     )
 
 
