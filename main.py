@@ -765,6 +765,125 @@ def _build_cosmic_weather_ptbr(payload: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+ELEMENT_MAP = {
+    "Aries": "Fogo",
+    "Leo": "Fogo",
+    "Sagittarius": "Fogo",
+    "Taurus": "Terra",
+    "Virgo": "Terra",
+    "Capricorn": "Terra",
+    "Gemini": "Ar",
+    "Libra": "Ar",
+    "Aquarius": "Ar",
+    "Cancer": "Água",
+    "Scorpio": "Água",
+    "Pisces": "Água",
+}
+
+MODALITY_MAP = {
+    "Aries": "Cardinal",
+    "Cancer": "Cardinal",
+    "Libra": "Cardinal",
+    "Capricorn": "Cardinal",
+    "Taurus": "Fixo",
+    "Leo": "Fixo",
+    "Scorpio": "Fixo",
+    "Aquarius": "Fixo",
+    "Gemini": "Mutável",
+    "Virgo": "Mutável",
+    "Sagittarius": "Mutável",
+    "Pisces": "Mutável",
+}
+
+RULER_MAP = {
+    "Aries": "Mars",
+    "Taurus": "Venus",
+    "Gemini": "Mercury",
+    "Cancer": "Moon",
+    "Leo": "Sun",
+    "Virgo": "Mercury",
+    "Libra": "Venus",
+    "Scorpio": "Mars",
+    "Sagittarius": "Jupiter",
+    "Capricorn": "Saturn",
+    "Aquarius": "Saturn",
+    "Pisces": "Jupiter",
+}
+
+
+def _house_for_lon(cusps: List[float], lon: float) -> int:
+    if not cusps:
+        return 1
+    lon_mod = lon % 360
+    for idx in range(12):
+        start = float(cusps[idx])
+        end = float(cusps[(idx + 1) % 12])
+        start_mod = start
+        end_mod = end
+        lon_check = lon_mod
+        if end_mod < start_mod:
+            end_mod += 360
+            if lon_check < start_mod:
+                lon_check += 360
+        if start_mod <= lon_check < end_mod:
+            return idx + 1
+    return 12
+
+
+def _distributions_payload(chart: Dict[str, Any]) -> Dict[str, Any]:
+    elements = {"Fogo": 0, "Terra": 0, "Ar": 0, "Água": 0}
+    modalities = {"Cardinal": 0, "Fixo": 0, "Mutável": 0}
+    houses_counts = {house: {"casa": house, "contagem": 0, "planetas": []} for house in range(1, 13)}
+    avisos: List[str] = []
+
+    cusps = chart.get("houses", {}).get("cusps") or []
+    planets = chart.get("planets", {})
+
+    for name in PLANETS.keys():
+        planet = planets.get(name)
+        if not planet:
+            avisos.append(f"Planeta ausente: {name}.")
+            continue
+        sign = planet.get("sign")
+        lon = planet.get("lon")
+        if sign is None or lon is None:
+            avisos.append(f"Sem signo/longitude para {name}.")
+            continue
+        element = ELEMENT_MAP.get(sign)
+        modality = MODALITY_MAP.get(sign)
+        if element:
+            elements[element] += 1
+        else:
+            avisos.append(f"Elemento não mapeado para {name}.")
+        if modality:
+            modalities[modality] += 1
+        else:
+            avisos.append(f"Modalidade não mapeada para {name}.")
+
+        house = _house_for_lon(cusps, float(lon))
+        houses_counts[house]["contagem"] += 1
+        houses_counts[house]["planetas"].append(planet_key_to_ptbr(name))
+
+    dominant_element = max(elements.items(), key=lambda item: item[1])[0]
+    dominant_modality = max(modalities.items(), key=lambda item: item[1])[0]
+    houses_sorted = sorted(houses_counts.values(), key=lambda item: item["contagem"], reverse=True)
+    top_houses = [item["casa"] for item in houses_sorted[:3]]
+
+    payload = {
+        "elementos": elements,
+        "modalidades": modalities,
+        "casas": list(houses_counts.values()),
+        "dominancias": {
+            "elemento_dominante": dominant_element,
+            "modalidade_dominante": dominant_modality,
+            "casas_mais_ativadas": top_houses,
+        },
+        "metadados": {"fonte": "natal", "version": "v1"},
+    }
+    if avisos:
+        payload["avisos"] = avisos
+    return payload
+
 def _solar_return_datetime(
     natal_dt: datetime,
     target_year: int,
@@ -1608,6 +1727,48 @@ async def natal(
         )
         raise HTTPException(status_code=500, detail=f"Erro ao calcular mapa natal: {str(e)}")
 
+@app.post("/v1/chart/distributions")
+async def chart_distributions(
+    body: NatalChartRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    try:
+        dt = datetime(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+        )
+        tz_offset_minutes = _tz_offset_for(
+            dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        )
+        chart = compute_chart(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+            lat=body.lat,
+            lng=body.lng,
+            tz_offset_minutes=tz_offset_minutes,
+            house_system=body.house_system.value,
+            zodiac_type=body.zodiac_type.value,
+            ayanamsa=body.ayanamsa,
+        )
+        payload = _distributions_payload(chart)
+        return payload
+    except Exception as e:
+        logger.error(
+            "distributions_error",
+            exc_info=True,
+            extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
+        )
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular distribuições: {str(e)}")
+
 @app.post("/v1/chart/transits")
 async def transits(
     body: TransitsRequest,
@@ -1718,6 +1879,139 @@ async def transits(
             extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
         )
         raise HTTPException(status_code=500, detail=f"Erro ao calcular trânsitos: {str(e)}")
+
+@app.post("/v1/interpretation/natal")
+async def interpretation_natal(
+    body: NatalChartRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    try:
+        dt = datetime(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+        )
+        tz_offset_minutes = _tz_offset_for(
+            dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        )
+        chart = compute_chart(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+            lat=body.lat,
+            lng=body.lng,
+            tz_offset_minutes=tz_offset_minutes,
+            house_system=body.house_system.value,
+            zodiac_type=body.zodiac_type.value,
+            ayanamsa=body.ayanamsa,
+        )
+        distributions = _distributions_payload(chart)
+
+        planets = chart.get("planets", {})
+        houses = chart.get("houses", {})
+        cusps = houses.get("cusps") or []
+        asc = float(houses.get("asc", 0.0))
+        mc = float(houses.get("mc", 0.0))
+        dsc = (asc + 180.0) % 360
+        ic = (mc + 180.0) % 360
+
+        avisos: List[str] = []
+        angular_points = [asc, mc, dsc, ic]
+
+        planet_weights: List[Dict[str, Any]] = []
+        for name in PLANETS.keys():
+            planet = planets.get(name)
+            if not planet:
+                continue
+            lon = planet.get("lon")
+            if lon is None:
+                continue
+            house = _house_for_lon(cusps, float(lon))
+            angularity = min(angle_diff(float(lon), pt) for pt in angular_points)
+            angular_score = 1.0 if angularity <= 5 else 0.4 if angularity <= 10 else 0.1
+            house_score = 0.8 if house in {1, 4, 7, 10} else 0.4 if house in {2, 5, 8, 11} else 0.2
+            weight = round(0.2 + angular_score + house_score, 2)
+            planet_weights.append(
+                {
+                    "planeta": planet_key_to_ptbr(name),
+                    "peso": min(weight, 1.0),
+                    "porque": f"Casa {house} com influência de ângulos ({angularity:.1f}°).",
+                }
+            )
+
+        planet_weights.sort(key=lambda item: item["peso"], reverse=True)
+        top_planets = planet_weights[:3] if planet_weights else []
+
+        sun = planets.get("Sun", {})
+        moon = planets.get("Moon", {})
+        sun_sign = sign_to_ptbr(sun.get("sign", ""))
+        moon_sign = sign_to_ptbr(moon.get("sign", ""))
+        sun_house = _house_for_lon(cusps, float(sun.get("lon", 0.0))) if sun else None
+        moon_house = _house_for_lon(cusps, float(moon.get("lon", 0.0))) if moon else None
+
+        asc_sign = sign_to_ptbr(sign_for_longitude(asc))
+        ruler = RULER_MAP.get(sign_for_longitude(asc))
+        ruler_house = None
+        if ruler and planets.get(ruler) and planets[ruler].get("lon") is not None:
+            ruler_house = _house_for_lon(cusps, float(planets[ruler]["lon"]))
+        else:
+            avisos.append("Casa do regente do Ascendente indisponível.")
+
+        sintese = [
+            f"Sol em {sun_sign} aponta foco em temas de vida mais visíveis.",
+            f"Lua em {moon_sign} indica estilo emocional e necessidades afetivas.",
+            f"Ascendente em {asc_sign} sugere um jeito direto de se apresentar.",
+        ]
+
+        temas_principais = [
+            {
+                "titulo": "Foco solar",
+                "porque": f"Sol em {sun_sign} na casa {sun_house}.",
+            },
+            {
+                "titulo": "Tom emocional",
+                "porque": f"Lua em {moon_sign} na casa {moon_house}.",
+            },
+        ]
+        if ruler_house:
+            temas_principais.append(
+                {
+                    "titulo": "Estilo de ação",
+                    "porque": f"Regente do Ascendente em casa {ruler_house}.",
+                }
+            )
+        else:
+            temas_principais.append(
+                {
+                    "titulo": "Estilo de ação",
+                    "porque": "Regente do Ascendente não disponível no momento.",
+                }
+            )
+
+        payload = {
+            "titulo": "Resumo Geral do Mapa",
+            "sintese": sintese,
+            "temas_principais": temas_principais,
+            "planetas_com_maior_peso": top_planets,
+            "distribuicao": distributions,
+            "avisos": avisos,
+            "metadados": {"version": "v1", "fonte": "regras"},
+        }
+        return payload
+    except Exception as e:
+        logger.error(
+            "interpretation_natal_error",
+            exc_info=True,
+            extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
+        )
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar resumo do mapa: {str(e)}")
 
 @app.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
 async def cosmic_weather(

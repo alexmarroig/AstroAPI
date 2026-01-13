@@ -126,4 +126,44 @@ curl -X POST "$API_URL/v1/solar-return/calculate" \
   }'
 ```
 
+## Distribuições do mapa natal
+
+```bash
+curl -X POST "$API_URL/v1/chart/distributions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123" \
+  -d '{
+    "natal_year": 1995,
+    "natal_month": 11,
+    "natal_day": 7,
+    "natal_hour": 22,
+    "natal_minute": 56,
+    "natal_second": 0,
+    "lat": -23.5505,
+    "lng": -46.6333,
+    "timezone": "America/Sao_Paulo"
+  }'
+```
+
+## Resumo Geral do Mapa
+
+```bash
+curl -X POST "$API_URL/v1/interpretation/natal" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123" \
+  -d '{
+    "natal_year": 1995,
+    "natal_month": 11,
+    "natal_day": 7,
+    "natal_hour": 22,
+    "natal_minute": 56,
+    "natal_second": 0,
+    "lat": -23.5505,
+    "lng": -46.6333,
+    "timezone": "America/Sao_Paulo"
+  }'
+```
+
 > Proxy/Edge: não normalize payloads de `/v1/solar-return/calculate` para `natal_*`. Esse endpoint espera os campos de revolução solar conforme o schema acima.
