@@ -22,6 +22,48 @@ def parse_date_yyyy_mm_dd(date_str: str) -> tuple[int, int, int]:
     return parsed.year, parsed.month, parsed.day
 
 
+def parse_time_hh_mm_ss(time_str: str) -> tuple[int, int, int]:
+    for fmt in ("%H:%M:%S", "%H:%M"):
+        try:
+            parsed = datetime.strptime(time_str, fmt)
+            return parsed.hour, parsed.minute, parsed.second
+        except ValueError:
+            continue
+    raise HTTPException(status_code=400, detail="Hora inválida. Use HH:MM ou HH:MM:SS.")
+
+
+def analyze_local_datetime(date_time: datetime, timezone_name: str) -> dict:
+    try:
+        tzinfo = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(status_code=400, detail=f"Timezone inválido: {timezone_name}")
+
+    aware_fold0 = date_time.replace(tzinfo=tzinfo, fold=0)
+    aware_fold1 = date_time.replace(tzinfo=tzinfo, fold=1)
+    offset_fold0 = aware_fold0.utcoffset()
+    offset_fold1 = aware_fold1.utcoffset()
+
+    def _roundtrip_local(aware_dt: datetime) -> datetime:
+        return aware_dt.astimezone(timezone.utc).astimezone(tzinfo).replace(tzinfo=None)
+
+    valid_fold0 = _roundtrip_local(aware_fold0) == date_time
+    valid_fold1 = _roundtrip_local(aware_fold1) == date_time
+
+    is_nonexistent = not valid_fold0 and not valid_fold1
+    is_ambiguous = valid_fold0 and valid_fold1 and offset_fold0 != offset_fold1
+
+    return {
+        "tzinfo": tzinfo,
+        "offset_fold0": offset_fold0,
+        "offset_fold1": offset_fold1,
+        "is_ambiguous": is_ambiguous,
+        "is_nonexistent": is_nonexistent,
+    }
+
+
+def resolve_tz_offset(
+    date_time: datetime,
+    timezone: Optional[str],
 def parse_local_datetime(
     *,
     datetime_local: Optional[datetime] = None,

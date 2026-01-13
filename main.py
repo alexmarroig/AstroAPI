@@ -49,6 +49,7 @@ from core.plans import is_trial_or_premium
 from services.timezone_utils import resolve_local_datetime
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
+from routes.time import router as time_router
 from services import timezone_utils
 
 # -----------------------------
@@ -149,6 +150,7 @@ app.add_middleware(
 # -----------------------------
 app.include_router(lunations_router)
 app.include_router(progressions_router)
+app.include_router(time_router)
 
 # -----------------------------
 # Middleware: request_id + logging
