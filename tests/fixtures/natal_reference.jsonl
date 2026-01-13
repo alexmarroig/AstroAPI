@@ -1,0 +1,3 @@
+{"natal":{"date":"1995-11-07","time":"22:56:00","timezone":"America/Sao_Paulo","local":{"nome":"São Paulo, BR","lat":-23.5505,"lon":-46.6333}},"expected":{"utc":"1995-11-08T00:56:00","sun_lon":225.139656,"tolerance_deg":1e-06}}
+{"natal":{"date":"1988-05-23","time":"05:15:00","timezone":"Asia/Tokyo","local":{"nome":"Tokyo, JP","lat":35.6762,"lon":139.6503}},"expected":{"utc":"1988-05-22T20:15:00","sun_lon":61.935833,"tolerance_deg":1e-06}}
+{"natal":{"date":"2001-09-12","time":"13:45:00","timezone":"Europe/Paris","local":{"nome":"Paris, FR","lat":48.8566,"lon":2.3522}},"expected":{"utc":"2001-09-12T11:45:00","sun_lon":169.777593,"tolerance_deg":1e-06}}
