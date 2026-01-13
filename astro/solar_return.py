@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+import logging
 from typing import Callable, Dict, List, Literal, Optional
 from core.timezone_utils import TimezoneResolutionError, resolve_timezone_offset
 
@@ -50,6 +51,8 @@ ASPECT_PTBR = {
     "trine": "Trígono",
     "sextile": "Sextil",
 }
+
+logger = logging.getLogger("astro-api")
 
 
 @dataclass(frozen=True)
@@ -351,12 +354,106 @@ def build_interpretation_ptbr(
     }
 
 
-def _tz_offset_minutes(dt: datetime, timezone_name: str, fallback_minutes: Optional[int]) -> int:
+def _tz_offset_minutes(
+    dt: datetime,
+    timezone_name: str,
+    fallback_minutes: Optional[int],
+    request_id: Optional[str],
+    context: str,
+) -> int:
+    warnings: List[str] = []
     if not timezone_name:
         if fallback_minutes is None:
+            logger.warning(
+                "solar_return_timezone_missing",
+                extra={
+                    "request_id": request_id,
+                    "context": context,
+                    "timezone": None,
+                    "local_datetime": dt.isoformat(),
+                    "warnings": ["timezone_missing"],
+                },
+            )
             raise ValueError("Timezone não informado.")
+        warnings.append("fallback_offset_used")
+        utc_dt = dt - timedelta(minutes=fallback_minutes)
+        logger.info(
+            "solar_return_timezone_resolved",
+            extra={
+                "request_id": request_id,
+                "context": context,
+                "timezone": None,
+                "offset_minutes": fallback_minutes,
+                "offset_fold0_minutes": None,
+                "offset_fold1_minutes": None,
+                "fold": None,
+                "local_datetime": dt.isoformat(),
+                "utc_datetime": utc_dt.isoformat(),
+                "warnings": warnings,
+            },
+        )
         return fallback_minutes
     try:
+        tzinfo = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError as exc:
+        logger.warning(
+            "solar_return_timezone_invalid",
+            extra={
+                "request_id": request_id,
+                "context": context,
+                "timezone": timezone_name,
+                "local_datetime": dt.isoformat(),
+                "warnings": ["invalid_timezone"],
+            },
+        )
+        raise ValueError(f"Timezone inválido: {timezone_name}") from exc
+
+    if dt.tzinfo is None:
+        offset_fold0 = dt.replace(tzinfo=tzinfo, fold=0).utcoffset()
+        offset_fold1 = dt.replace(tzinfo=tzinfo, fold=1).utcoffset()
+        offset = offset_fold0 or offset_fold1
+        fold = 0 if offset_fold0 is not None else 1
+        local_dt = dt
+        if offset_fold0 and offset_fold1 and offset_fold0 != offset_fold1:
+            warnings.append("ambiguous_time")
+    else:
+        offset = dt.astimezone(tzinfo).utcoffset()
+        offset_fold0 = None
+        offset_fold1 = None
+        fold = None
+        local_dt = dt.astimezone(tzinfo)
+
+    if offset is None:
+        logger.warning(
+            "solar_return_timezone_offset_missing",
+            extra={
+                "request_id": request_id,
+                "context": context,
+                "timezone": timezone_name,
+                "local_datetime": dt.isoformat(),
+                "warnings": ["missing_offset"],
+            },
+        )
+        raise ValueError(f"Timezone sem offset disponível: {timezone_name}")
+
+    offset_minutes = int(offset.total_seconds() // 60)
+    utc_dt = local_dt - timedelta(minutes=offset_minutes)
+    logger.info(
+        "solar_return_timezone_resolved",
+        extra={
+            "request_id": request_id,
+            "context": context,
+            "timezone": timezone_name,
+            "offset_minutes": offset_minutes,
+            "offset_fold0_minutes": int(offset_fold0.total_seconds() // 60) if offset_fold0 else None,
+            "offset_fold1_minutes": int(offset_fold1.total_seconds() // 60) if offset_fold1 else None,
+            "fold": fold,
+            "local_datetime": local_dt.isoformat(),
+            "utc_datetime": utc_dt.isoformat(),
+            "warnings": warnings,
+        },
+    )
+    return offset_minutes
         resolved = resolve_timezone_offset(
             date_time=dt,
             timezone=timezone_name,
@@ -500,6 +597,12 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
 
 
 def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
+    natal_offset = _tz_offset_minutes(
+        inputs.natal_date,
+        inputs.natal_timezone,
+        inputs.tz_offset_minutes,
+        inputs.request_id,
+        "natal",
     natal_local = parse_local_datetime(datetime_local=inputs.natal_date)
     natal_localized = localize_with_zoneinfo(
         natal_local, inputs.natal_timezone, inputs.tz_offset_minutes
@@ -514,6 +617,12 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
         engine=inputs.engine,
     )
 
+    target_offset = _tz_offset_minutes(
+        solar_return_utc.replace(tzinfo=timezone.utc),
+        inputs.target_timezone,
+        None,
+        inputs.request_id,
+        "target",
     target_tzinfo = ZoneInfo(inputs.target_timezone)
     target_local_naive = (
         solar_return_utc.replace(tzinfo=timezone.utc)
