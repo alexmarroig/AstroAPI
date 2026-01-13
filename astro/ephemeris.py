@@ -332,3 +332,46 @@ def solar_return_datetime(
             return result
 
     return _solar_return_v1(natal_lon, approx_utc)
+
+
+def solar_return_datetime_with_metadata(
+    natal_dt: datetime,
+    target_year: int,
+    tz_offset_minutes: int = 0,
+    engine: Literal["v1", "v2"] = "v1",
+) -> tuple[datetime, dict]:
+    natal_utc = natal_dt - timedelta(minutes=tz_offset_minutes)
+    natal_lon = _sun_longitude_at(natal_utc)
+    approx_local = _target_year_datetime(natal_dt, target_year)
+    approx_utc = approx_local - timedelta(minutes=tz_offset_minutes)
+
+    if engine == "v2":
+        result = _solar_return_v2(natal_lon, approx_utc)
+        if result is not None:
+            return result, {
+                "metodo_refino": "bissecao",
+                "iteracoes": 60,
+                "tolerancia_graus": 1e-6,
+                "bracket_encontrado": True,
+                "janela_usada_dias": 6,
+                "passo_usado_horas": 6,
+            }
+        fallback_dt = _solar_return_v1(natal_lon, approx_utc)
+        return fallback_dt, {
+            "metodo_refino": "fallback_v1",
+            "iteracoes": 97,
+            "tolerancia_graus": None,
+            "bracket_encontrado": False,
+            "janela_usada_dias": 4,
+            "passo_usado_horas": 1,
+        }
+
+    result = _solar_return_v1(natal_lon, approx_utc)
+    return result, {
+        "metodo_refino": "grade_horaria",
+        "iteracoes": 97,
+        "tolerancia_graus": None,
+        "bracket_encontrado": None,
+        "janela_usada_dias": 4,
+        "passo_usado_horas": 1,
+    }
