@@ -45,6 +45,49 @@ def resolve_aspects_profile(profile: Optional[str]) -> Tuple[str, Dict[str, dict
 def get_aspects_profile() -> Tuple[str, Dict[str, dict]]:
     return resolve_aspects_profile(os.getenv("ASPECTS_PROFILE"))
 
+ASPECTS_MODERN = {
+    "conjunction": {"angle": 0, "orb": 6, "influence": "intense"},
+    "opposition": {"angle": 180, "orb": 5, "influence": "challenging"},
+    "square": {"angle": 90, "orb": 4, "influence": "challenging"},
+    "trine": {"angle": 120, "orb": 4, "influence": "supportive"},
+    "sextile": {"angle": 60, "orb": 3, "influence": "supportive"},
+}
+
+ASPECTS_STRICT = {
+    "conjunction": {"angle": 0, "orb": 4, "influence": "intense"},
+    "opposition": {"angle": 180, "orb": 4, "influence": "challenging"},
+    "square": {"angle": 90, "orb": 3, "influence": "challenging"},
+    "trine": {"angle": 120, "orb": 3, "influence": "supportive"},
+    "sextile": {"angle": 60, "orb": 2, "influence": "supportive"},
+}
+
+ASPECTS_PROFILES = {
+    "legacy": ASPECTS_LEGACY,
+    "modern": ASPECTS_MODERN,
+    "strict": ASPECTS_STRICT,
+}
+
+
+def resolve_aspects(
+    aspects_profile: Optional[str] = None,
+    aspectos_habilitados: Optional[List[str]] = None,
+    orbes: Optional[Dict[str, float]] = None,
+) -> Dict[str, Dict[str, object]]:
+    profile = (aspects_profile or os.getenv("ASPECTS_PROFILE", "legacy")).lower()
+    base = ASPECTS_PROFILES.get(profile, ASPECTS_LEGACY)
+    aspects = {name: info.copy() for name, info in base.items()}
+
+    if aspectos_habilitados:
+        enabled = {aspect for aspect in aspectos_habilitados if aspect in aspects}
+        aspects = {name: info for name, info in aspects.items() if name in enabled}
+
+    if orbes:
+        for aspect_name, orb in orbes.items():
+            if aspect_name in aspects:
+                aspects[aspect_name]["orb"] = float(orb)
+
+    return aspects
+
 
 def compute_transit_aspects(
     transit_planets: Dict[str, dict],
