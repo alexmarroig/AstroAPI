@@ -5,6 +5,75 @@
 - `X-User-Id: user_123`
 - `Content-Type: application/json`
 
+## /v1/time/validate-local-datetime
+
+### Horário ambíguo (fim do DST) com `strict=true`
+
+**cURL**
+```bash
+curl -X POST "$API_URL/v1/time/validate-local-datetime" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "datetime_local": "2024-11-03T01:30:00",
+    "timezone": "America/New_York",
+    "strict": true
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "detail": {
+    "detail": "Horário ambíguo na transição de horário de verão.",
+    "offset_options_minutes": [-300, -240],
+    "hint": "Envie tz_offset_minutes explicitamente ou ajuste o horário local."
+  }
+}
+```
+
+### Horário ambíguo (fim do DST) com `strict=false`
+
+**cURL**
+```bash
+curl -X POST "$API_URL/v1/time/validate-local-datetime" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "datetime_local": "2024-11-03T01:30:00",
+    "timezone": "America/New_York",
+    "strict": false
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "datetime_local": "2024-11-03T01:30:00",
+  "timezone": "America/New_York",
+  "tz_offset_minutes": -240,
+  "status": "ok"
+}
+```
+
+### Horário inexistente (início do DST)
+
+**cURL**
+```bash
+curl -X POST "$API_URL/v1/time/validate-local-datetime" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "datetime_local": "2024-03-10T02:30:00",
+    "timezone": "America/New_York",
+    "strict": true
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "detail": "Horário inexistente na transição de horário de verão."
+}
+```
+
 ## /v1/chart/natal
 
 **cURL**
