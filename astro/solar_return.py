@@ -8,6 +8,11 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import swisseph as swe
 
 from astro.aspects import ASPECTS
+from astro.ephemeris import (
+    AYANAMSA_MAP,
+    compute_chart,
+    solar_return_datetime_with_metadata,
+)
 from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime, sun_longitude_at
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
@@ -501,6 +506,7 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
     natal_localized = localize_with_zoneinfo(
         natal_local, inputs.natal_timezone, inputs.tz_offset_minutes
     )
+    solar_return_utc, solar_return_metadata = solar_return_datetime_with_metadata(
     natal_offset = natal_localized.tz_offset_minutes
     natal_utc = to_utc(natal_localized.datetime_local, natal_offset)
     solar_return_utc = solar_return_datetime(
@@ -572,8 +578,20 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
     areas_ativadas = _build_areas_ativadas(solar_return_chart, aspects)
     destaques = _build_destaques(solar_return_chart, aspects)
 
-    metodo_refino = "bissecao" if inputs.engine == "v2" else "grade-horaria"
-    iteracoes = 60 if inputs.engine == "v2" else 97
+    metodo_refino = solar_return_metadata["metodo_refino"]
+    iteracoes = solar_return_metadata["iteracoes"]
+    tolerancia_graus = solar_return_metadata["tolerancia_graus"]
+    bracket_encontrado = solar_return_metadata["bracket_encontrado"]
+    janela_usada_dias = solar_return_metadata["janela_usada_dias"]
+    passo_usado_horas = solar_return_metadata["passo_usado_horas"]
+
+    timezone_resolvida = inputs.target_timezone or None
+    fold_usado = None
+    datetime_local_usado = None
+    datetime_utc_usado = None
+    if timezone_resolvida:
+        datetime_local_usado = solar_return_local.isoformat()
+        datetime_utc_usado = solar_return_utc.isoformat()
 
     return {
         "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
@@ -585,7 +603,7 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "diferenca_longitude_graus": round(delta_longitude, 6),
             "idioma": "pt-BR",
             "fonte_traducao": "backend",
-            "tolerancia_graus": 1e-6 if inputs.engine == "v2" else None,
+            "tolerancia_graus": tolerancia_graus,
             "metodo_refino": metodo_refino,
             "iteracoes": iteracoes,
             "timezone_resolvida": natal_localized.timezone_resolved,
