@@ -355,6 +355,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             "area": house_theme_ptbr(sun_house),
             "level": "high",
             "score": 78,
+            "metodo": "heuristico",
             "reason": f"Sol em destaque na casa {sun_house}.",
         }
     )
@@ -363,6 +364,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             "area": house_theme_ptbr(moon_house),
             "level": "medium",
             "score": 65,
+            "metodo": "heuristico",
             "reason": f"Lua ativando a casa {moon_house}.",
         }
     )
@@ -374,6 +376,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             "area": "Direção",
             "level": "medium",
             "score": 62,
+            "metodo": "heuristico",
             "reason": f"Ângulos ASC/MC em {format_position_ptbr(float(asc) % 30, sign_to_ptbr(deg_to_sign(float(asc))['sign']))} e {format_position_ptbr(float(mc) % 30, sign_to_ptbr(deg_to_sign(float(mc))['sign']))}.",
         }
     )
@@ -385,6 +388,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
                 "area": "Relacionamentos",
                 "level": "high",
                 "score": 72,
+                "metodo": "heuristico",
                 "reason": (
                     f"{planet_key_to_ptbr(top.get('transit_planet'))} "
                     f"{aspect_to_ptbr(top.get('aspect'))} "
@@ -399,6 +403,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
                 "area": "Rotina",
                 "level": "medium",
                 "score": 58,
+                "metodo": "heuristico",
                 "reason": "Equilíbrio entre demandas pessoais e objetivos anuais.",
             }
         )
@@ -413,10 +418,12 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
     highlights = [
         {
             "titulo": "Tema solar do ano",
+            "metodo": "heuristico",
             "descricao": f"Sol em {sun_sign} favorece foco em identidade e visibilidade.",
         },
         {
             "titulo": "Clima emocional",
+            "metodo": "heuristico",
             "descricao": f"Lua em {moon_sign} indica sensibilidade e ajustes afetivos.",
         },
     ]
@@ -425,6 +432,7 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
         highlights.append(
             {
                 "titulo": "Aspecto dominante",
+                "metodo": "heuristico",
                 "descricao": (
                     f"{planet_key_to_ptbr(top.get('transit_planet'))} "
                     f"{aspect_to_ptbr(top.get('aspect'))} "
@@ -436,6 +444,7 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
         highlights.append(
             {
                 "titulo": "Integração gradual",
+                "metodo": "heuristico",
                 "descricao": "Poucos aspectos exatos: tendência a mudanças progressivas.",
             }
         )

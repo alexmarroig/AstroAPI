@@ -2248,6 +2248,7 @@ async def interpretation_natal(
             "planetas_com_maior_peso": top_planets,
             "distribuicao": distributions,
             "avisos": avisos,
+            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
             "metadados": {"version": "v1", "fonte": "regras"},
         }
         return payload
