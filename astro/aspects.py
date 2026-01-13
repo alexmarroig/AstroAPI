@@ -67,6 +67,63 @@ ASPECTS_PROFILES = {
     "strict": ASPECTS_STRICT,
 }
 
+ASPECT_ALIASES = {
+    "conj": "conjunction",
+    "conjunction": "conjunction",
+    "opos": "opposition",
+    "opposition": "opposition",
+    "quad": "square",
+    "square": "square",
+    "tri": "trine",
+    "trine": "trine",
+    "sext": "sextile",
+    "sextile": "sextile",
+}
+
+ASPECT_ABBREVIATIONS = {
+    "conjunction": "conj",
+    "opposition": "opos",
+    "square": "quad",
+    "trine": "tri",
+    "sextile": "sext",
+}
+
+
+def _normalize_aspect_key(value: str) -> Optional[str]:
+    if not value:
+        return None
+    key = value.strip().lower()
+    return ASPECT_ALIASES.get(key)
+
+
+def resolve_aspects_config(
+    aspectos_habilitados: Optional[List[str]] = None,
+    orbes: Optional[Dict[str, float]] = None,
+) -> Tuple[Dict[str, dict], List[str], Dict[str, float]]:
+    aspects = {key: {**info} for key, info in ASPECTS.items()}
+
+    if orbes:
+        for aspect_key, orb_value in orbes.items():
+            normalized = _normalize_aspect_key(aspect_key)
+            if normalized and normalized in aspects:
+                aspects[normalized] = {**aspects[normalized], "orb": float(orb_value)}
+
+    if aspectos_habilitados is not None:
+        selected: List[str] = []
+        seen = set()
+        for aspect_key in aspectos_habilitados:
+            normalized = _normalize_aspect_key(aspect_key)
+            if normalized and normalized in aspects and normalized not in seen:
+                selected.append(normalized)
+                seen.add(normalized)
+        aspects = {key: aspects[key] for key in selected}
+
+    aspectos_usados = [ASPECT_ABBREVIATIONS.get(key, key) for key in aspects.keys()]
+    orbes_usados = {
+        ASPECT_ABBREVIATIONS.get(key, key): float(info["orb"]) for key, info in aspects.items()
+    }
+    return aspects, aspectos_usados, orbes_usados
+
 
 def resolve_aspects(
     aspects_profile: Optional[str] = None,
