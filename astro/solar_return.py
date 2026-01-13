@@ -469,6 +469,50 @@ def _tz_offset_minutes(
     return resolved.offset_minutes
 
 
+def _resolve_fold_for(
+    date_time: Optional[datetime],
+    timezone_name: Optional[str],
+    tz_offset_minutes: Optional[int],
+) -> Optional[int]:
+    if date_time is None or not timezone_name or tz_offset_minutes is None:
+        return None
+    try:
+        tzinfo = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError:
+        return None
+
+    target_offset = timedelta(minutes=tz_offset_minutes)
+    offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
+    offset_fold1 = date_time.replace(tzinfo=tzinfo, fold=1).utcoffset()
+    if offset_fold0 == target_offset:
+        return 0
+    if offset_fold1 == target_offset:
+        return 1
+    return None
+
+
+def _build_time_metadata(
+    *,
+    timezone_name: Optional[str],
+    tz_offset_minutes: Optional[int],
+    local_dt: Optional[datetime],
+    avisos: Optional[List[str]] = None,
+) -> Dict[str, Optional[object]]:
+    utc_dt = (
+        local_dt - timedelta(minutes=tz_offset_minutes)
+        if local_dt is not None and tz_offset_minutes is not None
+        else None
+    )
+    return {
+        "timezone_resolvida": timezone_name,
+        "tz_offset_minutes_usado": tz_offset_minutes,
+        "fold_usado": _resolve_fold_for(local_dt, timezone_name, tz_offset_minutes),
+        "datetime_local_usado": local_dt.isoformat() if local_dt else None,
+        "datetime_utc_usado": utc_dt.isoformat() if utc_dt else None,
+        "avisos": avisos or [],
+    }
+
+
 def _house_for_lon(cusps: List[float], lon: float) -> int:
     if not cusps:
         return 1
@@ -730,6 +774,11 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "tolerancia_graus": tolerancia_graus,
             "metodo_refino": metodo_refino,
             "iteracoes": iteracoes,
+            **_build_time_metadata(
+                timezone_name=inputs.target_timezone,
+                tz_offset_minutes=target_offset,
+                local_dt=solar_return_local,
+            ),
             "janela_dias": window_days,
             "passo_horas": step_hours,
             "bracket_encontrado": bracket_encontrado,

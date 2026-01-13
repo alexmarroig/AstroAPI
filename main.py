@@ -913,7 +913,10 @@ def _house_for_lon(cusps: List[float], lon: float) -> int:
     return 12
 
 
-def _distributions_payload(chart: Dict[str, Any]) -> Dict[str, Any]:
+def _distributions_payload(
+    chart: Dict[str, Any],
+    metadata: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     elements = {"Fogo": 0, "Terra": 0, "Ar": 0, "Água": 0}
     modalities = {"Cardinal": 0, "Fixo": 0, "Mutável": 0}
     houses_counts = {house: {"casa": house, "contagem": 0, "planetas": []} for house in range(1, 13)}
@@ -963,6 +966,11 @@ def _distributions_payload(chart: Dict[str, Any]) -> Dict[str, Any]:
         },
         "metadados": {"fonte": "natal", "version": "v1"},
     }
+    payload["metadados"].update(
+        metadata
+        if metadata is not None
+        else _build_time_metadata(timezone=None, tz_offset_minutes=None, local_dt=None)
+    )
     if avisos:
         payload["avisos"] = avisos
     return payload
@@ -1377,6 +1385,52 @@ def _tz_offset_for(
     return resolved.offset_minutes
 
 
+def _resolve_fold_for(
+    date_time: Optional[datetime],
+    timezone: Optional[str],
+    tz_offset_minutes: Optional[int],
+) -> Optional[int]:
+    if date_time is None or not timezone or tz_offset_minutes is None:
+        return None
+
+    try:
+        tzinfo = ZoneInfo(timezone)
+    except ZoneInfoNotFoundError:
+        return None
+
+    target_offset = timedelta(minutes=tz_offset_minutes)
+    offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
+    offset_fold1 = date_time.replace(tzinfo=tzinfo, fold=1).utcoffset()
+
+    if offset_fold0 == target_offset:
+        return 0
+    if offset_fold1 == target_offset:
+        return 1
+    return None
+
+
+def _build_time_metadata(
+    *,
+    timezone: Optional[str],
+    tz_offset_minutes: Optional[int],
+    local_dt: Optional[datetime],
+    avisos: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    utc_dt = (
+        local_dt - timedelta(minutes=tz_offset_minutes)
+        if local_dt is not None and tz_offset_minutes is not None
+        else None
+    )
+    return {
+        "timezone_resolvida": timezone,
+        "tz_offset_minutes_usado": tz_offset_minutes,
+        "fold_usado": _resolve_fold_for(local_dt, timezone, tz_offset_minutes),
+        "datetime_local_usado": local_dt.isoformat() if local_dt else None,
+        "datetime_utc_usado": utc_dt.isoformat() if utc_dt else None,
+        "avisos": avisos or [],
+    }
+
+
 # -----------------------------
 # Cache TTLs
 # -----------------------------
@@ -1435,6 +1489,13 @@ def _cosmic_weather_payload(
         "idioma": "pt-BR",
         "fonte_traducao": "backend",
     }
+    payload["metadados_tecnicos"].update(
+        _build_time_metadata(
+            timezone=timezone,
+            tz_offset_minutes=resolved_offset,
+            local_dt=dt,
+        )
+    )
 
     cache.set(cache_key, payload, ttl_seconds=TTL_COSMIC_WEATHER_SECONDS)
     return payload
@@ -1721,7 +1782,11 @@ async def roadmap():
     """Visão rápida do andamento das próximas funcionalidades."""
     return {
         "features": ROADMAP_FEATURES,
-        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            **_build_time_metadata(timezone=None, tz_offset_minutes=None, local_dt=None),
+        },
     }
 
 @app.get("/v1/system/endpoints")
@@ -1730,7 +1795,11 @@ async def system_endpoints():
         raise HTTPException(status_code=404, detail="Endpoint não disponível.")
     return {
         "endpoints": ENDPOINTS_CATALOG,
-        "metadados": {"version": "v1", "ambiente": "dev"},
+        "metadados": {
+            "version": "v1",
+            "ambiente": "dev",
+            **_build_time_metadata(timezone=None, tz_offset_minutes=None, local_dt=None),
+        },
     }
 
 
@@ -1754,7 +1823,15 @@ async def resolve_timezone(body: TimezoneResolveRequest, request: Request):
     )
     return {
         "tz_offset_minutes": resolved_offset,
-        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            **_build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=resolved_offset,
+                local_dt=dt,
+            ),
+        },
     }
 
 
@@ -1838,7 +1915,15 @@ async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=De
         "datetime_utc_usado": utc_dt.isoformat(),
         "avisos": localized.warnings,
         "items": items,
-        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            **_build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=body.datetime_local,
+            ),
+        },
     }
 
 @app.post("/v1/insights/mercury-retrograde")
@@ -2276,6 +2361,13 @@ async def natal(
             "idioma": "pt-BR",
             "fonte_traducao": "backend",
         }
+        chart["metadados_tecnicos"].update(
+            _build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=dt,
+            )
+        )
 
         cache.set(cache_key, chart, ttl_seconds=TTL_NATAL_SECONDS)
         return chart
@@ -2324,7 +2416,14 @@ async def chart_distributions(
             zodiac_type=body.zodiac_type.value,
             ayanamsa=body.ayanamsa,
         )
-        payload = _distributions_payload(chart)
+        payload = _distributions_payload(
+            chart,
+            metadata=_build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=dt,
+            ),
+        )
         return payload
     except Exception as e:
         logger.error(
@@ -2493,7 +2592,14 @@ async def interpretation_natal(
             zodiac_type=body.zodiac_type.value,
             ayanamsa=body.ayanamsa,
         )
-        distributions = _distributions_payload(chart)
+        distributions = _distributions_payload(
+            chart,
+            metadata=_build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=dt,
+            ),
+        )
 
         planets = chart.get("planets", {})
         houses = chart.get("houses", {})
@@ -2587,6 +2693,13 @@ async def interpretation_natal(
             "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
             "metadados": {"version": "v1", "fonte": "regras"},
         }
+        payload["metadados"].update(
+            _build_time_metadata(
+                timezone=body.timezone,
+                tz_offset_minutes=tz_offset_minutes,
+                local_dt=dt,
+            )
+        )
         return payload
     except Exception as e:
         logger.error(
@@ -2958,7 +3071,11 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
                 "completion_tokens": response.usage.completion_tokens,
                 "total_tokens": response.usage.total_tokens,
             },
-            "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+            "metadados_tecnicos": {
+                "idioma": "pt-BR",
+                "fonte_traducao": "backend",
+                **_build_time_metadata(timezone=None, tz_offset_minutes=None, local_dt=None),
+            },
         }
 
     except Exception as e:
