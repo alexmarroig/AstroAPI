@@ -38,6 +38,7 @@ from astro.i18n_ptbr import (
 )
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
+from timezone_utils import parse_local_datetime
 
 from core.security import require_api_key_and_user
 from core.cache import cache
@@ -548,6 +549,7 @@ class SolarReturnPreferencias(BaseModel):
     ayanamsa: Optional[str] = None
     sistema_casas: HouseSystem = Field(default=HouseSystem.PLACIDUS)
     modo: Optional[Literal["geocentrico", "topocentrico"]] = Field(default="geocentrico")
+    aspectos_habilitados: Optional[List[str]] = None
     orbes: Optional[Dict[str, float]] = None
 
 
@@ -1321,7 +1323,7 @@ ENDPOINTS_CATALOG = [
         "headers_required": [],
         "request_model": "ValidateLocalDatetimeRequest",
         "response_model": None,
-        "description": "Valida data/hora local e resolve UTC/offset.",
+        "description": "Valida data/hora local e resolve UTC com tratamento de DST.",
     },
     {
         "method": "POST",
@@ -1573,20 +1575,28 @@ async def resolve_timezone(body: TimezoneResolveRequest):
 
 @app.post("/v1/time/validate-local-datetime")
 async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
-    validation = timezone_utils.validate_local_datetime(
-        date_str=body.date,
-        time_str=body.time,
-        timezone_name=body.timezone,
-        strict=body.strict,
-        prefer_fold=body.prefer_fold,
+    result = timezone_utils.validate_local_datetime(
+        body.datetime_local, body.timezone, strict=body.strict
     )
-    return {
-        "utc_datetime": validation.utc_datetime.isoformat(),
-        "tz_offset_minutes": validation.tz_offset_minutes,
-        "flags": validation.flags,
-        "warnings": validation.warnings,
-        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+    payload = {
+        "input_datetime_local": result.input_datetime.isoformat(),
+        "datetime_local": result.resolved_datetime.isoformat(),
+        "timezone": result.timezone,
+        "tz_offset_minutes": result.tz_offset_minutes,
+        "utc_datetime": result.utc_datetime.isoformat(),
+        "fold": result.fold,
+        "warning": result.warning,
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            "timezone": result.timezone,
+            "tz_offset_minutes": result.tz_offset_minutes,
+            "fold": result.fold,
+        },
     }
+    if result.adjustment_minutes:
+        payload["metadados_tecnicos"]["ajuste_minutos"] = result.adjustment_minutes
+    return payload
 
 @app.post("/v1/diagnostics/ephemeris-check")
 async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
@@ -2286,6 +2296,7 @@ async def interpretation_natal(
             )
 
         payload = {
+            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
             "titulo": "Resumo Geral do Mapa",
             "sintese": sintese,
             "temas_principais": temas_principais,
@@ -2519,29 +2530,13 @@ async def solar_return_calculate(
         )
 
     try:
-        natal_y, natal_m, natal_d = _parse_date_yyyy_mm_dd(body.natal.data)
+        natal_dt, warnings, natal_time_missing = parse_local_datetime(
+            body.natal.data, body.natal.hora
+        )
     except HTTPException:
         raise
     except Exception:
         raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
-
-    natal_time_missing = body.natal.hora is None
-    if body.natal.hora:
-        try:
-            natal_hour, natal_minute, natal_second = map(int, body.natal.hora.split(":"))
-        except Exception:
-            raise HTTPException(status_code=422, detail="Hora natal inválida. Use HH:MM:SS.")
-    else:
-        natal_hour, natal_minute, natal_second = 12, 0, 0
-
-    natal_dt = datetime(
-        year=natal_y,
-        month=natal_m,
-        day=natal_d,
-        hour=natal_hour,
-        minute=natal_minute,
-        second=natal_second,
-    )
 
     prefs = body.preferencias or SolarReturnPreferencias()
     engine = (os.getenv("SOLAR_RETURN_ENGINE") or "v1").lower()
@@ -2563,6 +2558,8 @@ async def solar_return_calculate(
         engine=engine,  # type: ignore[arg-type]
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
+        aspectos_habilitados=prefs.aspectos_habilitados,
+        orbes=prefs.orbes,
     )
 
     try:
@@ -2602,6 +2599,9 @@ async def solar_return_calculate(
         latency_ms=None,
         user_id=auth.get("user_id"),
     )
+
+    if warnings:
+        payload["warnings"] = warnings
 
     return payload
 

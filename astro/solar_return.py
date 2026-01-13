@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import swisseph as swe
 
 from astro.aspects import ASPECTS
-from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime
+from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime, sun_longitude_at
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
     build_aspects_ptbr,
@@ -71,6 +71,9 @@ class SolarReturnInputs:
     engine: Literal["v1", "v2"]
     tz_offset_minutes: Optional[int] = None
     natal_time_missing: bool = False
+    aspectos_habilitados: Optional[List[str]] = None
+    orbes: Optional[Dict[str, float]] = None
+    aspects_profile: Optional[str] = None
 
 
 def _resolve_zodiac(config: SolarReturnConfig) -> tuple[ZodiacType, int]:
@@ -214,6 +217,30 @@ def find_solar_return_instant(
     }
 
 
+def compute_solar_return_reference(
+    natal_dt: datetime,
+    target_year: int,
+    tz_offset_minutes: int = 0,
+    engine: Literal["v1", "v2"] = "v2",
+) -> dict:
+    solar_return_utc = solar_return_datetime(
+        natal_dt=natal_dt,
+        target_year=target_year,
+        tz_offset_minutes=tz_offset_minutes,
+        engine=engine,
+    )
+    natal_utc = natal_dt - timedelta(minutes=tz_offset_minutes)
+    natal_lon = sun_longitude_at(natal_utc)
+    return_lon = sun_longitude_at(solar_return_utc)
+    delta_longitude = abs(angle_diff(return_lon, natal_lon))
+    return {
+        "solar_return_utc": solar_return_utc.isoformat(),
+        "natal_sun_lon": round(natal_lon, 6),
+        "solar_return_sun_lon": round(return_lon, 6),
+        "delta_longitude": round(delta_longitude, 6),
+    }
+
+
 def compute_solar_return_chart(
     solar_return_utc: datetime,
     lat: float,
@@ -258,7 +285,7 @@ def compute_aspects(
     aspects: Optional[Dict[str, dict]] = None,
 ) -> List[dict]:
     aspects_found: List[dict] = []
-    aspects = aspects or ASPECTS
+    aspects = aspects or resolve_aspects()
 
     for t_name, t_data in transit_planets.items():
         t_lon = t_data["lon"]
@@ -356,6 +383,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             "level": "high",
             "score": 78,
             "reason": f"Sol em destaque na casa {sun_house}.",
+            "metodo": "heuristico",
         }
     )
     areas.append(
@@ -364,6 +392,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             "level": "medium",
             "score": 65,
             "reason": f"Lua ativando a casa {moon_house}.",
+            "metodo": "heuristico",
         }
     )
 
@@ -375,6 +404,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             "level": "medium",
             "score": 62,
             "reason": f"Ângulos ASC/MC em {format_position_ptbr(float(asc) % 30, sign_to_ptbr(deg_to_sign(float(asc))['sign']))} e {format_position_ptbr(float(mc) % 30, sign_to_ptbr(deg_to_sign(float(mc))['sign']))}.",
+            "metodo": "heuristico",
         }
     )
 
@@ -390,6 +420,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
                     f"{aspect_to_ptbr(top.get('aspect'))} "
                     f"{planet_key_to_ptbr(top.get('natal_planet'))}."
                 ),
+                "metodo": "heuristico",
             }
         )
 
@@ -400,6 +431,7 @@ def _build_areas_ativadas(solar_chart: dict, aspects: List[dict]) -> List[dict]:
                 "level": "medium",
                 "score": 58,
                 "reason": "Equilíbrio entre demandas pessoais e objetivos anuais.",
+                "metodo": "heuristico",
             }
         )
 
@@ -414,10 +446,12 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
         {
             "titulo": "Tema solar do ano",
             "descricao": f"Sol em {sun_sign} favorece foco em identidade e visibilidade.",
+            "metodo": "heuristico",
         },
         {
             "titulo": "Clima emocional",
             "descricao": f"Lua em {moon_sign} indica sensibilidade e ajustes afetivos.",
+            "metodo": "heuristico",
         },
     ]
     if aspects:
@@ -430,6 +464,7 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
                     f"{aspect_to_ptbr(top.get('aspect'))} "
                     f"{planet_key_to_ptbr(top.get('natal_planet'))}."
                 ),
+                "metodo": "heuristico",
             }
         )
     else:
@@ -437,6 +472,7 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
             {
                 "titulo": "Integração gradual",
                 "descricao": "Poucos aspectos exatos: tendência a mudanças progressivas.",
+                "metodo": "heuristico",
             }
         )
 
@@ -491,7 +527,16 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
         ayanamsa=inputs.ayanamsa,
     )
 
-    aspects = compute_aspects(solar_return_chart["planets"], natal_chart["planets"])
+    aspects_config = resolve_aspects(
+        aspects_profile=inputs.aspects_profile,
+        aspectos_habilitados=inputs.aspectos_habilitados,
+        orbes=inputs.orbes,
+    )
+    aspects = compute_aspects(
+        solar_return_chart["planets"],
+        natal_chart["planets"],
+        aspects=aspects_config,
+    )
 
     natal_sun_lon = natal_chart["planets"]["Sun"]["lon"]
     return_sun_lon = solar_return_chart["planets"]["Sun"]["lon"]
@@ -507,6 +552,7 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
     iteracoes = 60 if inputs.engine == "v2" else 97
 
     return {
+        "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
         "metadados_tecnicos": {
             "engine": inputs.engine,
             "solar_return_utc": solar_return_utc.isoformat(),
@@ -518,6 +564,8 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "tolerancia_graus": 1e-6 if inputs.engine == "v2" else None,
             "metodo_refino": metodo_refino,
             "iteracoes": iteracoes,
+            "aspectos_usados": list(aspects_config.keys()),
+            "orbes_usados": {name: info["orb"] for name, info in aspects_config.items()},
         },
         "mapa_revolucao": {
             "planetas": solar_return_chart["planets"],
