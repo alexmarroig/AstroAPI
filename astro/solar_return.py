@@ -505,6 +505,9 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
 
     metodo_refino = "bissecao" if inputs.engine == "v2" else "grade-horaria"
     iteracoes = 60 if inputs.engine == "v2" else 97
+    janela_usada_dias = 3 if inputs.engine == "v2" else 2
+    passo_usado_horas = 6 if inputs.engine == "v2" else 1
+    bracket_encontrado = inputs.engine == "v2"
 
     return {
         "metadados_tecnicos": {
@@ -518,6 +521,9 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
             "tolerancia_graus": 1e-6 if inputs.engine == "v2" else None,
             "metodo_refino": metodo_refino,
             "iteracoes": iteracoes,
+            "bracket_encontrado": bracket_encontrado,
+            "janela_usada_dias": janela_usada_dias,
+            "passo_usado_horas": passo_usado_horas,
         },
         "mapa_revolucao": {
             "planetas": solar_return_chart["planets"],
