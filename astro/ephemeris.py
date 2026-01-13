@@ -249,6 +249,10 @@ def _sun_longitude_at(dt: datetime) -> float:
     return result[0] % 360.0
 
 
+def sun_longitude_at(utc_dt: datetime) -> float:
+    return _sun_longitude_at(utc_dt)
+
+
 def _angle_delta(lon: float, target: float) -> float:
     return ((lon - target + 180.0) % 360.0) - 180.0
 
@@ -290,14 +294,14 @@ def _solar_return_v2(
     step = timedelta(hours=step_hours)
 
     prev_dt = window_start
-    prev_delta = _angle_delta(_sun_longitude_at(prev_dt), natal_lon)
+    prev_delta = _angle_delta(sun_longitude_at(prev_dt), natal_lon)
     if prev_delta == 0:
         return prev_dt
 
     current = window_start + step
     bracket = None
     while current <= window_end:
-        current_delta = _angle_delta(_sun_longitude_at(current), natal_lon)
+        current_delta = _angle_delta(sun_longitude_at(current), natal_lon)
         if current_delta == 0:
             return current
         if prev_delta * current_delta < 0:
@@ -310,13 +314,13 @@ def _solar_return_v2(
         return None
 
     left_dt, right_dt = bracket
-    left_delta = _angle_delta(_sun_longitude_at(left_dt), natal_lon)
-    right_delta = _angle_delta(_sun_longitude_at(right_dt), natal_lon)
+    left_delta = _angle_delta(sun_longitude_at(left_dt), natal_lon)
+    right_delta = _angle_delta(sun_longitude_at(right_dt), natal_lon)
 
     for _ in range(max_iter):
         midpoint = left_dt + (right_dt - left_dt) / 2
-        mid_delta = _angle_delta(_sun_longitude_at(midpoint), natal_lon)
-        if abs(mid_delta) < tolerance_degrees or (right_dt - left_dt).total_seconds() <= 1:
+        mid_delta = _angle_delta(sun_longitude_at(midpoint), natal_lon)
+        if abs(mid_delta) < 1e-6 or (right_dt - left_dt).total_seconds() <= 1:
             return midpoint
         if left_delta * mid_delta < 0:
             right_dt = midpoint

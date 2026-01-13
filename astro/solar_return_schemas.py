@@ -79,6 +79,13 @@ class SolarReturnPreferencias(BaseModel):
         default=None,
         description="Tolerância em graus para refinamento do retorno solar.",
         gt=0,
+    aspectos_habilitados: Optional[List[str]] = Field(
+        default=None,
+        description="Lista de aspectos habilitados (ex.: conjunction, square).",
+    )
+    orbes: Optional[Dict[str, float]] = Field(
+        default=None,
+        description="Orbes personalizados por aspecto (ex.: {'conjunction': 5}).",
     )
 
 
