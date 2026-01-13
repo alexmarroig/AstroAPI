@@ -11,6 +11,8 @@ from pathlib import Path
 import subprocess
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from core.timezone_utils import TimezoneResolutionError, resolve_timezone_offset
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Depends, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -1143,7 +1145,11 @@ def _daily_notifications_payload(date: str, lat: float, lng: float, tz_offset_mi
 
 
 def _tz_offset_for(
-    date_time: datetime, timezone: Optional[str], fallback_minutes: Optional[int], strict: bool = False
+    date_time: datetime,
+    timezone: Optional[str],
+    fallback_minutes: Optional[int],
+    strict: bool = False,
+    prefer_fold: Optional[int] = None,
 ) -> int:
     """Resolve timezone: prefer IANA name; fallback to explicit offset or UTC.
 
@@ -1152,38 +1158,18 @@ def _tz_offset_for(
     resolvido.
     """
 
-    if timezone:
-        try:
-            tzinfo = ZoneInfo(timezone)
-        except ZoneInfoNotFoundError:
-            raise HTTPException(status_code=400, detail=f"Timezone inválido: {timezone}")
+    try:
+        resolved = resolve_timezone_offset(
+            date_time=date_time,
+            timezone=timezone,
+            fallback_minutes=fallback_minutes,
+            strict=strict,
+            prefer_fold=prefer_fold,
+        )
+    except TimezoneResolutionError as exc:
+        raise HTTPException(status_code=400, detail=exc.detail) from exc
 
-        offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
-        offset_fold1 = date_time.replace(tzinfo=tzinfo, fold=1).utcoffset()
-
-        # Escolhe o offset padrão (compatível com o comportamento anterior)
-        offset = offset_fold0 or offset_fold1
-        if offset is None:
-            raise HTTPException(status_code=400, detail=f"Timezone sem offset disponível: {timezone}")
-
-        if strict and offset_fold0 and offset_fold1 and offset_fold0 != offset_fold1:
-            # horário ambíguo na virada de DST
-            opts = sorted({int(offset_fold0.total_seconds() // 60), int(offset_fold1.total_seconds() // 60)})
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "detail": "Horário ambíguo na transição de horário de verão.",
-                    "offset_options_minutes": opts,
-                    "hint": "Envie tz_offset_minutes explicitamente ou ajuste o horário local.",
-                },
-            )
-
-        return int(offset.total_seconds() // 60)
-
-    if fallback_minutes is not None:
-        return fallback_minutes
-
-    return 0
+    return resolved.offset_minutes
 
 
 # -----------------------------

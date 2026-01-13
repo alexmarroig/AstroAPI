@@ -52,7 +52,7 @@ def secondary_progressions_calculate(
         body.natal_minute,
         body.natal_second,
     )
-    tz_offset_minutes = resolve_tz_offset(
+    tz_resolution = resolve_tz_offset(
         natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
     )
     result = calculate_secondary_progressions(
@@ -60,7 +60,7 @@ def secondary_progressions_calculate(
         target_date=target_dt,
         lat=body.lat,
         lng=body.lng,
-        tz_offset_minutes=tz_offset_minutes,
+        tz_offset_minutes=tz_resolution.offset_minutes,
         house_system=body.house_system.value,
         zodiac_type=body.zodiac_type.value,
         ayanamsa=body.ayanamsa,

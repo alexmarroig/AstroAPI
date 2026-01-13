@@ -29,8 +29,8 @@ def get_auth(
 def lunations_calculate(body: LunationCalculateRequest, auth=Depends(get_auth)):
     year, month, day = parse_date_yyyy_mm_dd(body.date)
     local_dt = datetime(year, month, day, 12, 0, 0)
-    tz_offset_minutes = resolve_tz_offset(
+    tz_resolution = resolve_tz_offset(
         local_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
     )
-    result = calculate_lunation(local_dt, tz_offset_minutes, body.timezone)
+    result = calculate_lunation(local_dt, tz_resolution.offset_minutes, body.timezone)
     return LunationCalculateResponse(**result.__dict__)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, List, Literal, Optional
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from core.timezone_utils import TimezoneResolutionError, resolve_timezone_offset
 
 import swisseph as swe
 
@@ -308,17 +308,15 @@ def _tz_offset_minutes(dt: datetime, timezone_name: str, fallback_minutes: Optio
             raise ValueError("Timezone não informado.")
         return fallback_minutes
     try:
-        tzinfo = ZoneInfo(timezone_name)
-    except ZoneInfoNotFoundError as exc:
-        raise ValueError(f"Timezone inválido: {timezone_name}") from exc
+        resolved = resolve_timezone_offset(
+            date_time=dt,
+            timezone=timezone_name,
+            fallback_minutes=fallback_minutes,
+        )
+    except TimezoneResolutionError as exc:
+        raise ValueError(str(exc)) from exc
 
-    if dt.tzinfo is None:
-        offset = dt.replace(tzinfo=tzinfo).utcoffset()
-    else:
-        offset = dt.astimezone(tzinfo).utcoffset()
-    if offset is None:
-        raise ValueError(f"Timezone sem offset disponível: {timezone_name}")
-    return int(offset.total_seconds() // 60)
+    return resolved.offset_minutes
 
 
 def _house_for_lon(cusps: List[float], lon: float) -> int:
