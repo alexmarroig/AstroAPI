@@ -6,6 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header, Request
 
 from core.security import require_api_key_and_user
+from astro.i18n_ptbr import build_houses_ptbr, build_planets_ptbr
 from schemas.progressions import (
     SecondaryProgressionCalculateRequest,
     SecondaryProgressionCalculateResponse,
@@ -64,4 +65,8 @@ def secondary_progressions_calculate(
         zodiac_type=body.zodiac_type.value,
         ayanamsa=body.ayanamsa,
     )
-    return SecondaryProgressionCalculateResponse(**result.__dict__)
+    chart_ptbr = {
+        "planetas_ptbr": build_planets_ptbr(result.chart.get("planets", {})),
+        "casas_ptbr": build_houses_ptbr(result.chart.get("houses", {})),
+    }
+    return SecondaryProgressionCalculateResponse(**result.__dict__, chart_ptbr=chart_ptbr)

@@ -60,11 +60,11 @@ def test_range_rejects_over_90_days():
     client = TestClient(main.app)
     resp = client.get(
         "/v1/cosmic-weather/range",
-        params={"from": "2024-01-01", "to": "2024-02-15", "timezone": "Etc/UTC"},
+        params={"from": "2024-01-01", "to": "2024-04-05", "timezone": "Etc/UTC"},
         headers=_auth_headers(),
     )
     assert resp.status_code == 422
-    assert resp.json()["detail"] == "Range too large. Max 31 days. Use smaller windows."
+    assert resp.json()["detail"] == "Range too large. Max 90 days. Use smaller windows."
 
 
 def test_range_accepts_manual_tz_offset():

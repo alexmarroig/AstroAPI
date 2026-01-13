@@ -24,6 +24,18 @@ from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_mo
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only
 from astro.solar_return import SolarReturnInputs, compute_solar_return_payload
 from astro.aspects import compute_transit_aspects
+from astro.retrogrades import retrograde_alerts
+from astro.i18n_ptbr import (
+    aspect_to_ptbr,
+    build_aspects_ptbr,
+    build_houses_ptbr,
+    build_planets_ptbr,
+    format_degree_ptbr,
+    format_position_ptbr,
+    planet_key_to_ptbr,
+    sign_to_ptbr,
+    sign_for_longitude,
+)
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
 
@@ -443,8 +455,16 @@ class CosmicWeatherResponse(BaseModel):
     moon_phase: str
     moon_sign: str
     moon_sign_pt: Optional[str] = None
+    deg_in_sign: Optional[float] = None
     headline: str
     text: str
+    moon_phase_ptbr: Optional[str] = None
+    moon_sign_ptbr: Optional[str] = None
+    headline_ptbr: Optional[str] = None
+    text_ptbr: Optional[str] = None
+    resumo_ptbr: Optional[str] = None
+    moon_ptbr: Optional[Dict[str, Any]] = None
+    metadados_tecnicos: Optional[Dict[str, Any]] = None
 
 
 class CosmicWeatherRangeResponse(BaseModel):
@@ -453,6 +473,7 @@ class CosmicWeatherRangeResponse(BaseModel):
     from_: str = Field(alias="from")
     to: str
     items: List[CosmicWeatherResponse]
+    items_ptbr: Optional[List[Dict[str, Any]]] = None
 
 class RenderDataRequest(BaseModel):
     year: int
@@ -559,6 +580,10 @@ class TimezoneResolveRequest(BaseModel):
                 status_code=422,
                 detail="Use year/month/day/hour/minute/second for resolve-tz (not natal_*).",
             )
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
     def coerce_datetime_local(cls, data: Any):
         if not isinstance(data, dict):
             return data
@@ -622,22 +647,30 @@ class SystemAlert(BaseModel):
     title: str
     body: str
     technical: Dict[str, Any] = Field(default_factory=dict)
+    severity_ptbr: Optional[str] = None
+    title_ptbr: Optional[str] = None
+    body_ptbr: Optional[str] = None
 
 
 class SystemAlertsResponse(BaseModel):
     date: str
     alerts: List[SystemAlert]
+    alertas_ptbr: Optional[List[Dict[str, Any]]] = None
+    tipos_ptbr: Optional[Dict[str, str]] = None
 
 
 class NotificationsDailyResponse(BaseModel):
     date: str
     items: List[Dict[str, Any]]
+    items_ptbr: Optional[List[Dict[str, Any]]] = None
 
 
 class SolarReturnResponse(BaseModel):
     target_year: int
     solar_return_utc: str
     solar_return_local: str
+    idioma: Optional[str] = None
+    fonte_traducao: Optional[str] = None
 
 # -----------------------------
 # Helpers
@@ -702,6 +735,154 @@ def _apply_moon_localization(payload: Dict[str, Any], lang: Optional[str]) -> Di
                 payload["headline"] = payload["headline"].replace(sign, sign_pt)
     return payload
 
+
+def _build_chart_ptbr(chart: Dict[str, Any]) -> Dict[str, Any]:
+    planets = chart.get("planets", {})
+    houses = chart.get("houses", {})
+    return {
+        "planetas_ptbr": build_planets_ptbr(planets),
+        "casas_ptbr": build_houses_ptbr(houses),
+    }
+
+
+def _build_cosmic_weather_ptbr(payload: Dict[str, Any]) -> Dict[str, Any]:
+    moon_sign = payload.get("moon_sign", "")
+    phase = payload.get("moon_phase", "")
+    phase_label = _moon_phase_label_pt(phase) if phase else ""
+    deg_in_sign = payload.get("deg_in_sign")
+    return {
+        "moon_phase_ptbr": phase_label,
+        "moon_sign_ptbr": sign_to_ptbr(moon_sign),
+        "headline_ptbr": payload.get("headline", ""),
+        "text_ptbr": payload.get("text", ""),
+        "moon_ptbr": {
+            "signo_ptbr": sign_to_ptbr(moon_sign),
+            "fase_ptbr": phase_label,
+            "grau_formatado_ptbr": format_degree_ptbr(float(deg_in_sign))
+            if deg_in_sign is not None
+            else None,
+        },
+    }
+
+
+ELEMENT_MAP = {
+    "Aries": "Fogo",
+    "Leo": "Fogo",
+    "Sagittarius": "Fogo",
+    "Taurus": "Terra",
+    "Virgo": "Terra",
+    "Capricorn": "Terra",
+    "Gemini": "Ar",
+    "Libra": "Ar",
+    "Aquarius": "Ar",
+    "Cancer": "Água",
+    "Scorpio": "Água",
+    "Pisces": "Água",
+}
+
+MODALITY_MAP = {
+    "Aries": "Cardinal",
+    "Cancer": "Cardinal",
+    "Libra": "Cardinal",
+    "Capricorn": "Cardinal",
+    "Taurus": "Fixo",
+    "Leo": "Fixo",
+    "Scorpio": "Fixo",
+    "Aquarius": "Fixo",
+    "Gemini": "Mutável",
+    "Virgo": "Mutável",
+    "Sagittarius": "Mutável",
+    "Pisces": "Mutável",
+}
+
+RULER_MAP = {
+    "Aries": "Mars",
+    "Taurus": "Venus",
+    "Gemini": "Mercury",
+    "Cancer": "Moon",
+    "Leo": "Sun",
+    "Virgo": "Mercury",
+    "Libra": "Venus",
+    "Scorpio": "Mars",
+    "Sagittarius": "Jupiter",
+    "Capricorn": "Saturn",
+    "Aquarius": "Saturn",
+    "Pisces": "Jupiter",
+}
+
+
+def _house_for_lon(cusps: List[float], lon: float) -> int:
+    if not cusps:
+        return 1
+    lon_mod = lon % 360
+    for idx in range(12):
+        start = float(cusps[idx])
+        end = float(cusps[(idx + 1) % 12])
+        start_mod = start
+        end_mod = end
+        lon_check = lon_mod
+        if end_mod < start_mod:
+            end_mod += 360
+            if lon_check < start_mod:
+                lon_check += 360
+        if start_mod <= lon_check < end_mod:
+            return idx + 1
+    return 12
+
+
+def _distributions_payload(chart: Dict[str, Any]) -> Dict[str, Any]:
+    elements = {"Fogo": 0, "Terra": 0, "Ar": 0, "Água": 0}
+    modalities = {"Cardinal": 0, "Fixo": 0, "Mutável": 0}
+    houses_counts = {house: {"casa": house, "contagem": 0, "planetas": []} for house in range(1, 13)}
+    avisos: List[str] = []
+
+    cusps = chart.get("houses", {}).get("cusps") or []
+    planets = chart.get("planets", {})
+
+    for name in PLANETS.keys():
+        planet = planets.get(name)
+        if not planet:
+            avisos.append(f"Planeta ausente: {name}.")
+            continue
+        sign = planet.get("sign")
+        lon = planet.get("lon")
+        if sign is None or lon is None:
+            avisos.append(f"Sem signo/longitude para {name}.")
+            continue
+        element = ELEMENT_MAP.get(sign)
+        modality = MODALITY_MAP.get(sign)
+        if element:
+            elements[element] += 1
+        else:
+            avisos.append(f"Elemento não mapeado para {name}.")
+        if modality:
+            modalities[modality] += 1
+        else:
+            avisos.append(f"Modalidade não mapeada para {name}.")
+
+        house = _house_for_lon(cusps, float(lon))
+        houses_counts[house]["contagem"] += 1
+        houses_counts[house]["planetas"].append(planet_key_to_ptbr(name))
+
+    dominant_element = max(elements.items(), key=lambda item: item[1])[0]
+    dominant_modality = max(modalities.items(), key=lambda item: item[1])[0]
+    houses_sorted = sorted(houses_counts.values(), key=lambda item: item["contagem"], reverse=True)
+    top_houses = [item["casa"] for item in houses_sorted[:3]]
+
+    payload = {
+        "elementos": elements,
+        "modalidades": modalities,
+        "casas": list(houses_counts.values()),
+        "dominancias": {
+            "elemento_dominante": dominant_element,
+            "modalidade_dominante": dominant_modality,
+            "casas_mais_ativadas": top_houses,
+        },
+        "metadados": {"fonte": "natal", "version": "v1"},
+    }
+    if avisos:
+        payload["avisos"] = avisos
+    return payload
 
 def _solar_return_datetime(
     natal_dt: datetime,
@@ -958,7 +1139,7 @@ def _daily_notifications_payload(date: str, lat: float, lng: float, tz_offset_mi
             }
         )
 
-    return NotificationsDailyResponse(date=date, items=items)
+    return NotificationsDailyResponse(date=date, items=items, items_ptbr=items)
 
 
 def _tz_offset_for(
@@ -1042,11 +1223,19 @@ def _cosmic_weather_payload(
         "date": date_str,
         "moon_phase": phase,
         "moon_sign": sign,
+        "deg_in_sign": moon.get("deg_in_sign"),
         "headline": f"Lua {phase_label} em {sign}",
         "text": _cw_text(phase, sign),
     }
 
     payload = _apply_moon_localization(payload, lang)
+    payload.update(_build_cosmic_weather_ptbr(payload))
+    payload["headline_ptbr"] = payload.get("headline")
+    payload["resumo_ptbr"] = payload.get("text")
+    payload["metadados_tecnicos"] = {
+        "idioma": "pt-BR",
+        "fonte_traducao": "backend",
+    }
 
     cache.set(cache_key, payload, ttl_seconds=TTL_COSMIC_WEATHER_SECONDS)
     return payload
@@ -1061,6 +1250,243 @@ ROADMAP_FEATURES = {
     "auto_timezone": {"status": "beta", "notes": "usa timezone IANA no payload ou resolver via endpoint"},
     "tests": {"status": "in_progress", "notes": "priorizar casos críticos de cálculo"},
 }
+
+ENDPOINTS_CATALOG = [
+    {
+        "method": "GET",
+        "path": "/",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": None,
+        "response_model": None,
+        "description": "Status básico do serviço.",
+    },
+    {
+        "method": "GET",
+        "path": "/health",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": None,
+        "response_model": None,
+        "description": "Health check simples.",
+    },
+    {
+        "method": "GET",
+        "path": "/v1/system/roadmap",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": None,
+        "response_model": None,
+        "description": "Roadmap do produto.",
+    },
+    {
+        "method": "GET",
+        "path": "/v1/system/endpoints",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": None,
+        "response_model": None,
+        "description": "Lista de endpoints (dev-only).",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/time/resolve-tz",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": "TimezoneResolveRequest",
+        "response_model": None,
+        "description": "Resolve offset de timezone.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/diagnostics/ephemeris-check",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "EphemerisCheckRequest",
+        "response_model": None,
+        "description": "Diagnóstico do Swiss Ephemeris.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/insights/mercury-retrograde",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "MercuryRetrogradeRequest",
+        "response_model": None,
+        "description": "Insight sobre retrogradação de Mercúrio.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/insights/dominant-theme",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "TransitsRequest",
+        "response_model": None,
+        "description": "Tema dominante do período.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/insights/areas-activated",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "TransitsRequest",
+        "response_model": None,
+        "description": "Áreas ativadas do mapa.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/insights/care-suggestion",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "TransitsRequest",
+        "response_model": None,
+        "description": "Sugestões de cuidado.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/insights/life-cycles",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "TransitsRequest",
+        "response_model": None,
+        "description": "Ciclos de vida.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/insights/solar-return",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "TransitsRequest",
+        "response_model": "SolarReturnResponse",
+        "description": "Retorno solar (insight).",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/chart/natal",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "NatalChartRequest",
+        "response_model": None,
+        "description": "Mapa natal completo.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/chart/transits",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "TransitsRequest",
+        "response_model": None,
+        "description": "Mapa de trânsitos.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/chart/render-data",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "RenderDataRequest",
+        "response_model": None,
+        "description": "Dados simplificados para renderização.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/chart/distributions",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "NatalChartRequest",
+        "response_model": None,
+        "description": "Distribuições de elementos/modalidades/casas.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/interpretation/natal",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "NatalChartRequest",
+        "response_model": None,
+        "description": "Resumo geral do mapa natal.",
+    },
+    {
+        "method": "GET",
+        "path": "/v1/cosmic-weather",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": None,
+        "response_model": "CosmicWeatherResponse",
+        "description": "Clima cósmico do dia.",
+    },
+    {
+        "method": "GET",
+        "path": "/v1/cosmic-weather/range",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": None,
+        "response_model": "CosmicWeatherRangeResponse",
+        "description": "Clima cósmico em intervalo.",
+    },
+    {
+        "method": "GET",
+        "path": "/v1/alerts/system",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": None,
+        "response_model": "SystemAlertsResponse",
+        "description": "Alertas sistêmicos.",
+    },
+    {
+        "method": "GET",
+        "path": "/v1/alerts/retrogrades",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": None,
+        "response_model": None,
+        "description": "Alertas de retrogradação.",
+    },
+    {
+        "method": "GET",
+        "path": "/v1/notifications/daily",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": None,
+        "response_model": "NotificationsDailyResponse",
+        "description": "Notificações diárias.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/solar-return/calculate",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "SolarReturnRequest",
+        "response_model": None,
+        "description": "Cálculo completo de revolução solar.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/ai/cosmic-chat",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "CosmicChatRequest",
+        "response_model": None,
+        "description": "Chat interpretativo com IA.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/lunations/calculate",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "LunationCalculateRequest",
+        "response_model": "LunationCalculateResponse",
+        "description": "Cálculo de lunação.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/progressions/secondary/calculate",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "SecondaryProgressionCalculateRequest",
+        "response_model": "SecondaryProgressionCalculateResponse",
+        "description": "Progressões secundárias.",
+    },
+]
 
 # -----------------------------
 # Routes
@@ -1085,7 +1511,19 @@ async def health_check():
 @app.get("/v1/system/roadmap")
 async def roadmap():
     """Visão rápida do andamento das próximas funcionalidades."""
-    return {"features": ROADMAP_FEATURES}
+    return {
+        "features": ROADMAP_FEATURES,
+        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+    }
+
+@app.get("/v1/system/endpoints")
+async def system_endpoints():
+    if os.getenv("ENABLE_ENDPOINTS_LIST") != "1":
+        raise HTTPException(status_code=404, detail="Endpoint não disponível.")
+    return {
+        "endpoints": ENDPOINTS_CATALOG,
+        "metadados": {"version": "v1", "ambiente": "dev"},
+    }
 
 
 @app.post("/v1/time/resolve-tz")
@@ -1101,7 +1539,10 @@ async def resolve_timezone(body: TimezoneResolveRequest):
     resolved_offset = _tz_offset_for(
         dt, body.timezone, fallback_minutes=None, strict=body.strict_birth
     )
-    return {"tz_offset_minutes": resolved_offset}
+    return {
+        "tz_offset_minutes": resolved_offset,
+        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
+    }
 
 @app.post("/v1/diagnostics/ephemeris-check")
 async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
@@ -1143,6 +1584,7 @@ async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=De
         "utc_datetime": utc_dt.isoformat(),
         "tz_offset_minutes": tz_offset_minutes,
         "items": items,
+        "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
     }
 
 @app.post("/v1/insights/mercury-retrograde")
@@ -1180,6 +1622,13 @@ async def mercury_retrograde(
         "speed": speed,
         "planet": "Mercury",
         "note": "Baseado na velocidade aparente da efeméride no horário local de referência.",
+        "status_ptbr": "Retrógrado" if retrograde else "Direto",
+        "planeta_ptbr": "Mercúrio",
+        "bullets_ptbr": [
+            "Revisões e checagens ganham prioridade.",
+            "Comunicações pedem clareza extra.",
+            "Ajustes de cronograma ajudam a manter o ritmo.",
+        ],
     }
 
 @app.post("/v1/insights/dominant-theme")
@@ -1212,6 +1661,14 @@ async def dominant_theme(
             "summary": "Poucos aspectos relevantes no período.",
             "counts": {},
             "sample_aspects": [],
+            "theme_ptbr": "Influência tranquila",
+            "summary_ptbr": "Poucos aspectos relevantes no período.",
+            "bullets_ptbr": [
+                "Clima geral mais neutro.",
+                "Bom momento para ajustes finos.",
+                "Atenção aos detalhes do cotidiano.",
+            ],
+            "sample_aspects_ptbr": [],
         }
 
     dominant_influence = max(influence_counts.items(), key=lambda item: item[1])[0]
@@ -1227,6 +1684,20 @@ async def dominant_theme(
         "summary": summary_map.get(dominant_influence, "Influência predominante do período."),
         "counts": influence_counts,
         "sample_aspects": sample_aspects,
+        "sample_aspects_ptbr": build_aspects_ptbr(sample_aspects),
+        "theme_ptbr": {
+            "Intense influence": "Influência intensa",
+            "Challenging influence": "Influência desafiadora",
+            "Fluid influence": "Influência fluida",
+        }.get(dominant_influence, "Influência predominante"),
+        "summary_ptbr": summary_map.get(
+            dominant_influence, "Influência predominante do período."
+        ),
+        "bullets_ptbr": [
+            "Observe os padrões dos aspectos principais.",
+            "Priorize ações alinhadas ao tom dominante.",
+            "Ajuste expectativas conforme a intensidade do período.",
+        ],
     }
 
 @app.post("/v1/insights/areas-activated")
@@ -1267,6 +1738,20 @@ async def areas_activated(
         "Fluid influence": 1,
     }
 
+    if not aspects:
+        return {
+            "items": [
+                {"area": "Identidade e propósito", "score": 50, "aspects": []},
+                {"area": "Relacionamentos e afeto", "score": 45, "aspects": []},
+                {"area": "Rotina e bem-estar", "score": 40, "aspects": []},
+            ],
+            "bullets_ptbr": [
+                "Poucos aspectos exatos: tendência a estabilidade.",
+                "Priorize consistência nas decisões.",
+                "Atenção aos sinais sutis do cotidiano.",
+            ],
+        }
+
     scores: Dict[str, Dict[str, Any]] = {}
     for asp in aspects:
         planet = asp.get("natal_planet")
@@ -1278,7 +1763,17 @@ async def areas_activated(
             scores[area]["aspects"].append(asp)
 
     items = sorted(scores.values(), key=lambda item: item["score"], reverse=True)
-    return {"items": items[:5]}
+    items = items[:5]
+    while len(items) < 3:
+        items.append({"area": "Tema geral", "score": 35, "aspects": []})
+    return {
+        "items": items,
+        "bullets_ptbr": [
+            "As áreas com maior score ganham prioridade.",
+            "Busque equilíbrio entre temas ativos.",
+            "Use pequenas ações para ajustar o foco.",
+        ],
+    }
 
 @app.post("/v1/insights/care-suggestion")
 async def care_suggestion(
@@ -1296,7 +1791,6 @@ async def care_suggestion(
         second=body.natal_second,
     )
     tz_offset_minutes = _tz_offset_for(natal_dt, body.timezone, body.tz_offset_minutes)
-    context = _build_transits_context(body, tz_offset_minutes)
     context = _build_transits_context(body, tz_offset_minutes, lang)
     aspects = context["aspects"]
 
@@ -1328,6 +1822,12 @@ async def care_suggestion(
         "moon_sign": sign_pt if _is_pt_br(lang) else sign,
         "theme": dominant_influence,
         "suggestion": suggestion_map.get(dominant_influence, "Mantenha o equilíbrio e a presença."),
+        "suggestion_ptbr": suggestion_map.get(dominant_influence, "Mantenha o equilíbrio e a presença."),
+        "bullets_ptbr": [
+            "Respeite seus limites do dia.",
+            "Ajustes pequenos geram consistência.",
+            "Evite decisões impulsivas.",
+        ],
     }
 
 @app.post("/v1/insights/life-cycles")
@@ -1359,16 +1859,26 @@ async def life_cycles(
         cycle_years = cycle["cycle_years"]
         nearest = round(age_years / cycle_years) * cycle_years
         delta = age_years - nearest
+        status = "active" if abs(delta) < 0.5 else "out_of_window"
         items.append(
             {
                 "cycle": cycle["name"],
                 "approx_age_years": round(nearest, 2),
                 "distance_years": round(delta, 2),
-                "status": "active" if abs(delta) < 0.5 else "out_of_window",
+                "status": status,
+                "status_ptbr": "ativo" if status == "active" else "fora_da_janela",
             }
         )
 
-    return {"age_years": round(age_years, 2), "items": items}
+    return {
+        "age_years": round(age_years, 2),
+        "items": items,
+        "bullets_ptbr": [
+            "Ciclos indicam janelas aproximadas de ativação.",
+            "Use como referência para planejamento.",
+            "As datas são estimadas por proximidade.",
+        ],
+    }
 
 @app.post("/v1/insights/solar-return", response_model=SolarReturnResponse)
 async def solar_return(
@@ -1400,6 +1910,8 @@ async def solar_return(
         target_year=target_y,
         solar_return_utc=solar_return_utc.isoformat(),
         solar_return_local=solar_return_local.isoformat(),
+        idioma="pt-BR",
+        fonte_traducao="backend",
     )
 
 @app.post("/v1/chart/natal")
@@ -1444,6 +1956,12 @@ async def natal(
         )
 
         chart = _apply_sign_localization(chart, lang)
+        chart_ptbr = _build_chart_ptbr(chart)
+        chart.update(chart_ptbr)
+        chart["metadados_tecnicos"] = {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+        }
 
         cache.set(cache_key, chart, ttl_seconds=TTL_NATAL_SECONDS)
         return chart
@@ -1454,6 +1972,48 @@ async def natal(
             extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
         )
         raise HTTPException(status_code=500, detail=f"Erro ao calcular mapa natal: {str(e)}")
+
+@app.post("/v1/chart/distributions")
+async def chart_distributions(
+    body: NatalChartRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    try:
+        dt = datetime(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+        )
+        tz_offset_minutes = _tz_offset_for(
+            dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+        )
+        chart = compute_chart(
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
+            lat=body.lat,
+            lng=body.lng,
+            tz_offset_minutes=tz_offset_minutes,
+            house_system=body.house_system.value,
+            zodiac_type=body.zodiac_type.value,
+            ayanamsa=body.ayanamsa,
+        )
+        payload = _distributions_payload(chart)
+        return payload
+    except Exception as e:
+        logger.error(
+            "distributions_error",
+            exc_info=True,
+            extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
+        )
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular distribuições: {str(e)}")
 
 @app.post("/v1/chart/transits")
 async def transits(
@@ -1530,16 +2090,28 @@ async def transits(
             "moon_sign": sign,
             "headline": f"Lua {phase} em {sign}",
             "text": _cw_text(phase, sign),
+            "deg_in_sign": moon.get("deg_in_sign"),
         }
         cosmic_weather = _apply_moon_localization(cosmic_weather, lang)
         cosmic_weather["headline"] = f"Lua {phase} em {cosmic_weather['moon_sign']}"
 
+        natal_ptbr = _build_chart_ptbr(natal_chart)
+        transits_ptbr = _build_chart_ptbr(transit_chart)
+        aspectos_ptbr = build_aspects_ptbr(aspects)
+        cosmic_weather_ptbr = _build_cosmic_weather_ptbr(
+            {**cosmic_weather, "moon_phase": phase, "moon_sign": cosmic_weather["moon_sign"]}
+        )
+
         response = {
             "date": body.target_date,
             "cosmic_weather": cosmic_weather,
+            "cosmic_weather_ptbr": cosmic_weather_ptbr,
             "natal": natal_chart,
+            "natal_ptbr": natal_ptbr,
             "transits": transit_chart,
+            "transits_ptbr": transits_ptbr,
             "aspects": aspects,
+            "aspectos_ptbr": aspectos_ptbr,
             "areas_activated": _areas_activated(aspects, phase),
         }
 
@@ -1554,18 +2126,14 @@ async def transits(
         )
         raise HTTPException(status_code=500, detail=f"Erro ao calcular trânsitos: {str(e)}")
 
-@app.post("/v1/solar-return/calculate")
-async def solar_return_calculate(
-    body: SolarReturnRequest,
+@app.post("/v1/interpretation/natal")
+async def interpretation_natal(
+    body: NatalChartRequest,
     request: Request,
     auth=Depends(get_auth),
 ):
     try:
-        if body.zodiac_type == ZodiacType.SIDEREAL:
-            swe.set_sid_mode(
-                AYANAMSA_MAP.get((body.ayanamsa or "lahiri").lower(), swe.SIDM_LAHIRI)
-            )
-        natal_dt = datetime(
+        dt = datetime(
             year=body.natal_year,
             month=body.natal_month,
             day=body.natal_day,
@@ -1574,32 +2142,15 @@ async def solar_return_calculate(
             second=body.natal_second,
         )
         tz_offset_minutes = _tz_offset_for(
-            natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
+            dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
         )
-        natal_jd = to_julian_day(natal_dt - timedelta(minutes=tz_offset_minutes))
-        natal_sun_lon = _sun_longitude_at_jd(natal_jd)
-
-        try:
-            target_local = natal_dt.replace(year=body.target_year)
-        except ValueError:
-            target_local = natal_dt.replace(year=body.target_year, day=28)
-
-        start_local = target_local - timedelta(days=5)
-        end_local = target_local + timedelta(days=5)
-        start_jd = to_julian_day(start_local - timedelta(minutes=tz_offset_minutes))
-        end_jd = to_julian_day(end_local - timedelta(minutes=tz_offset_minutes))
-
-        return_jd = _solar_return_jd(natal_sun_lon, start_jd, end_jd)
-        return_utc_dt = _datetime_from_jd_utc(return_jd)
-        return_local_dt = return_utc_dt + timedelta(minutes=tz_offset_minutes)
-
         chart = compute_chart(
-            year=return_local_dt.year,
-            month=return_local_dt.month,
-            day=return_local_dt.day,
-            hour=return_local_dt.hour,
-            minute=return_local_dt.minute,
-            second=return_local_dt.second,
+            year=body.natal_year,
+            month=body.natal_month,
+            day=body.natal_day,
+            hour=body.natal_hour,
+            minute=body.natal_minute,
+            second=body.natal_second,
             lat=body.lat,
             lng=body.lng,
             tz_offset_minutes=tz_offset_minutes,
@@ -1607,29 +2158,106 @@ async def solar_return_calculate(
             zodiac_type=body.zodiac_type.value,
             ayanamsa=body.ayanamsa,
         )
-        chart = _apply_sign_localization(chart, "pt-BR")
-        chart_pt = _chart_to_pt(chart)
+        distributions = _distributions_payload(chart)
 
-        return_sun_lon = _sun_longitude_at_jd(return_jd)
+        planets = chart.get("planets", {})
+        houses = chart.get("houses", {})
+        cusps = houses.get("cusps") or []
+        asc = float(houses.get("asc", 0.0))
+        mc = float(houses.get("mc", 0.0))
+        dsc = (asc + 180.0) % 360
+        ic = (mc + 180.0) % 360
+
+        avisos: List[str] = []
+        angular_points = [asc, mc, dsc, ic]
+
+        planet_weights: List[Dict[str, Any]] = []
+        for name in PLANETS.keys():
+            planet = planets.get(name)
+            if not planet:
+                continue
+            lon = planet.get("lon")
+            if lon is None:
+                continue
+            house = _house_for_lon(cusps, float(lon))
+            angularity = min(angle_diff(float(lon), pt) for pt in angular_points)
+            angular_score = 1.0 if angularity <= 5 else 0.4 if angularity <= 10 else 0.1
+            house_score = 0.8 if house in {1, 4, 7, 10} else 0.4 if house in {2, 5, 8, 11} else 0.2
+            weight = round(0.2 + angular_score + house_score, 2)
+            planet_weights.append(
+                {
+                    "planeta": planet_key_to_ptbr(name),
+                    "peso": min(weight, 1.0),
+                    "porque": f"Casa {house} com influência de ângulos ({angularity:.1f}°).",
+                }
+            )
+
+        planet_weights.sort(key=lambda item: item["peso"], reverse=True)
+        top_planets = planet_weights[:3] if planet_weights else []
+
+        sun = planets.get("Sun", {})
+        moon = planets.get("Moon", {})
+        sun_sign = sign_to_ptbr(sun.get("sign", ""))
+        moon_sign = sign_to_ptbr(moon.get("sign", ""))
+        sun_house = _house_for_lon(cusps, float(sun.get("lon", 0.0))) if sun else None
+        moon_house = _house_for_lon(cusps, float(moon.get("lon", 0.0))) if moon else None
+
+        asc_sign = sign_to_ptbr(sign_for_longitude(asc))
+        ruler = RULER_MAP.get(sign_for_longitude(asc))
+        ruler_house = None
+        if ruler and planets.get(ruler) and planets[ruler].get("lon") is not None:
+            ruler_house = _house_for_lon(cusps, float(planets[ruler]["lon"]))
+        else:
+            avisos.append("Casa do regente do Ascendente indisponível.")
+
+        sintese = [
+            f"Sol em {sun_sign} aponta foco em temas de vida mais visíveis.",
+            f"Lua em {moon_sign} indica estilo emocional e necessidades afetivas.",
+            f"Ascendente em {asc_sign} sugere um jeito direto de se apresentar.",
+        ]
+
+        temas_principais = [
+            {
+                "titulo": "Foco solar",
+                "porque": f"Sol em {sun_sign} na casa {sun_house}.",
+            },
+            {
+                "titulo": "Tom emocional",
+                "porque": f"Lua em {moon_sign} na casa {moon_house}.",
+            },
+        ]
+        if ruler_house:
+            temas_principais.append(
+                {
+                    "titulo": "Estilo de ação",
+                    "porque": f"Regente do Ascendente em casa {ruler_house}.",
+                }
+            )
+        else:
+            temas_principais.append(
+                {
+                    "titulo": "Estilo de ação",
+                    "porque": "Regente do Ascendente não disponível no momento.",
+                }
+            )
+
         payload = {
-            "ano_alvo": body.target_year,
-            "data_retorno_utc": return_utc_dt.isoformat(),
-            "data_retorno_local": return_local_dt.isoformat(),
-            "posicao_solar_natal": round(natal_sun_lon, 6),
-            "posicao_solar_retorno": round(return_sun_lon, 6),
-            "diferenca_graus": round(angle_diff(natal_sun_lon, return_sun_lon), 6),
-            "mapa_retorno": chart_pt,
+            "titulo": "Resumo Geral do Mapa",
+            "sintese": sintese,
+            "temas_principais": temas_principais,
+            "planetas_com_maior_peso": top_planets,
+            "distribuicao": distributions,
+            "avisos": avisos,
+            "metadados": {"version": "v1", "fonte": "regras"},
         }
         return payload
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(
-            "solar_return_error",
+            "interpretation_natal_error",
             exc_info=True,
             extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
         )
-        raise HTTPException(status_code=500, detail=f"Erro ao calcular retorno solar: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar resumo do mapa: {str(e)}")
 
 @app.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
 async def cosmic_weather(
@@ -1701,14 +2329,23 @@ async def cosmic_weather_range(
     )
 
     items: List[CosmicWeatherResponse] = []
+    items_ptbr: List[Dict[str, Any]] = []
     current = start_date
     for _ in range(interval_days):
         date_str = current.strftime("%Y-%m-%d")
         payload = _cosmic_weather_payload(date_str, timezone, tz_offset_minutes, auth["user_id"], lang)
         items.append(CosmicWeatherResponse(**payload))
+        items_ptbr.append(
+            {
+                **payload,
+                **_build_cosmic_weather_ptbr(payload),
+                "headline_ptbr": payload.get("headline"),
+                "resumo_ptbr": payload.get("text"),
+            }
+        )
         current += timedelta(days=1)
 
-    return CosmicWeatherRangeResponse(from_=from_, to=to, items=items)
+    return CosmicWeatherRangeResponse(from_=from_, to=to, items=items, items_ptbr=items_ptbr)
 
 @app.post("/v1/chart/render-data")
 async def render_data(
@@ -1772,13 +2409,41 @@ async def render_data(
             "angle_deg": p.get("lon"),
         })
 
+    planetas_ptbr = []
+    for planet in planets:
+        name_pt = planet_key_to_ptbr(planet.get("name", ""))
+        sign_pt = sign_to_ptbr(planet.get("sign", ""))
+        deg_in_sign = float(planet.get("deg_in_sign") or 0.0)
+        planetas_ptbr.append(
+            {
+                **planet,
+                "nome_ptbr": name_pt,
+                "signo_ptbr": sign_pt,
+                "grau_formatado_ptbr": format_position_ptbr(deg_in_sign, sign_pt),
+            }
+        )
+
     zodiac = ZODIAC_SIGNS_PT if _is_pt_br(lang) else ZODIAC_SIGNS
+
+    casas_ptbr = [
+        {
+            "house": house["house"],
+            "label_ptbr": (
+                f"Casa {house['house']}: "
+                f"{format_position_ptbr(float(house['start_deg']) % 30, sign_to_ptbr(sign_for_longitude(float(house['start_deg']))))}"
+                f" → {format_position_ptbr(float(house['end_deg']) % 30, sign_to_ptbr(sign_for_longitude(float(house['end_deg']))))}"
+            ),
+        }
+        for house in houses
+    ]
 
     resp = {
         "zodiac": ZODIAC_SIGNS,
         "zodiac": zodiac,
         "houses": houses,
         "planets": planets,
+        "planetas_ptbr": planetas_ptbr,
+        "casas_ptbr": casas_ptbr,
         "premium_aspects": [] if is_trial_or_premium(auth["plan"]) else None,
     }
 
@@ -1934,6 +2599,7 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
                 "completion_tokens": response.usage.completion_tokens,
                 "total_tokens": response.usage.total_tokens,
             },
+            "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
         }
 
     except Exception as e:
@@ -1963,7 +2629,24 @@ async def system_alerts(
     if mercury:
         alerts.append(mercury)
 
-    return SystemAlertsResponse(date=date, alerts=alerts)
+    severity_map = {"low": "baixo", "medium": "médio", "high": "alto"}
+    alertas_ptbr = [
+        {
+            "id": alert.id,
+            "severidade_ptbr": severity_map.get(alert.severity, alert.severity),
+            "titulo_ptbr": alert.title,
+            "mensagem_ptbr": alert.body,
+            "technical": alert.technical,
+        }
+        for alert in alerts
+    ]
+
+    return SystemAlertsResponse(
+        date=date,
+        alerts=alerts,
+        alertas_ptbr=alertas_ptbr,
+        tipos_ptbr=severity_map,
+    )
 
 
 @app.get("/v1/alerts/retrogrades")
@@ -1988,7 +2671,20 @@ async def retrogrades_alerts(
     resolved_offset = _tz_offset_for(local_dt, timezone, tz_offset_minutes)
     utc_dt = local_dt - timedelta(minutes=resolved_offset)
     alerts = retrograde_alerts(utc_dt)
-    return {"retrogrades": alerts}
+    retrogrades_ptbr = [
+        {
+            **alert,
+            "planet_ptbr": planet_key_to_ptbr(str(alert.get("planet", "")).capitalize()),
+            "status_ptbr": "Retrógrado" if alert.get("is_active") else "Direto",
+        }
+        for alert in alerts
+    ]
+    planetas_ptbr = [item["planet_ptbr"] for item in retrogrades_ptbr]
+    return {
+        "retrogrades": alerts,
+        "retrogrades_ptbr": retrogrades_ptbr,
+        "planetas_ptbr": planetas_ptbr,
+    }
 
 
 @app.get("/v1/notifications/daily", response_model=NotificationsDailyResponse)
