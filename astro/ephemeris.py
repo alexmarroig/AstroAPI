@@ -249,6 +249,10 @@ def _sun_longitude_at(dt: datetime) -> float:
     return result[0] % 360.0
 
 
+def sun_longitude_at(utc_dt: datetime) -> float:
+    return _sun_longitude_at(utc_dt)
+
+
 def _angle_delta(lon: float, target: float) -> float:
     return ((lon - target + 180.0) % 360.0) - 180.0
 
@@ -264,7 +268,7 @@ def _solar_return_v1(natal_lon: float, approx_dt: datetime) -> datetime:
     best_delta = 360.0
     for hour in range(0, 97):
         candidate = window_start + timedelta(hours=hour)
-        delta = abs(_angle_delta(_sun_longitude_at(candidate), natal_lon))
+        delta = abs(_angle_delta(sun_longitude_at(candidate), natal_lon))
         if delta < best_delta:
             best_delta = delta
             best_dt = candidate
@@ -277,14 +281,14 @@ def _solar_return_v2(natal_lon: float, approx_dt: datetime) -> Optional[datetime
     step = timedelta(hours=6)
 
     prev_dt = window_start
-    prev_delta = _angle_delta(_sun_longitude_at(prev_dt), natal_lon)
+    prev_delta = _angle_delta(sun_longitude_at(prev_dt), natal_lon)
     if prev_delta == 0:
         return prev_dt
 
     current = window_start + step
     bracket = None
     while current <= window_end:
-        current_delta = _angle_delta(_sun_longitude_at(current), natal_lon)
+        current_delta = _angle_delta(sun_longitude_at(current), natal_lon)
         if current_delta == 0:
             return current
         if prev_delta * current_delta < 0:
@@ -297,12 +301,12 @@ def _solar_return_v2(natal_lon: float, approx_dt: datetime) -> Optional[datetime
         return None
 
     left_dt, right_dt = bracket
-    left_delta = _angle_delta(_sun_longitude_at(left_dt), natal_lon)
-    right_delta = _angle_delta(_sun_longitude_at(right_dt), natal_lon)
+    left_delta = _angle_delta(sun_longitude_at(left_dt), natal_lon)
+    right_delta = _angle_delta(sun_longitude_at(right_dt), natal_lon)
 
     for _ in range(60):
         midpoint = left_dt + (right_dt - left_dt) / 2
-        mid_delta = _angle_delta(_sun_longitude_at(midpoint), natal_lon)
+        mid_delta = _angle_delta(sun_longitude_at(midpoint), natal_lon)
         if abs(mid_delta) < 1e-6 or (right_dt - left_dt).total_seconds() <= 1:
             return midpoint
         if left_delta * mid_delta < 0:
@@ -332,3 +336,46 @@ def solar_return_datetime(
             return result
 
     return _solar_return_v1(natal_lon, approx_utc)
+
+
+def solar_return_datetime_with_metadata(
+    natal_dt: datetime,
+    target_year: int,
+    tz_offset_minutes: int = 0,
+    engine: Literal["v1", "v2"] = "v1",
+) -> tuple[datetime, dict]:
+    natal_utc = natal_dt - timedelta(minutes=tz_offset_minutes)
+    natal_lon = _sun_longitude_at(natal_utc)
+    approx_local = _target_year_datetime(natal_dt, target_year)
+    approx_utc = approx_local - timedelta(minutes=tz_offset_minutes)
+
+    if engine == "v2":
+        result = _solar_return_v2(natal_lon, approx_utc)
+        if result is not None:
+            return result, {
+                "metodo_refino": "bissecao",
+                "iteracoes": 60,
+                "tolerancia_graus": 1e-6,
+                "bracket_encontrado": True,
+                "janela_usada_dias": 6,
+                "passo_usado_horas": 6,
+            }
+        fallback_dt = _solar_return_v1(natal_lon, approx_utc)
+        return fallback_dt, {
+            "metodo_refino": "fallback_v1",
+            "iteracoes": 97,
+            "tolerancia_graus": None,
+            "bracket_encontrado": False,
+            "janela_usada_dias": 4,
+            "passo_usado_horas": 1,
+        }
+
+    result = _solar_return_v1(natal_lon, approx_utc)
+    return result, {
+        "metodo_refino": "grade_horaria",
+        "iteracoes": 97,
+        "tolerancia_graus": None,
+        "bracket_encontrado": None,
+        "janela_usada_dias": 4,
+        "passo_usado_horas": 1,
+    }
