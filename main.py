@@ -44,6 +44,7 @@ from core.cache import cache
 from core.plans import is_trial_or_premium
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
+from services import timezone_utils
 
 # -----------------------------
 # Load env
@@ -601,6 +602,17 @@ class TimezoneResolveRequest(BaseModel):
             data.setdefault("minute", dt.minute)
             data.setdefault("second", dt.second)
         return data
+
+
+class ValidateLocalDatetimeRequest(BaseModel):
+    datetime_local: datetime = Field(
+        ..., description="Data/hora local ISO (ex.: 2025-12-19T14:30:00)"
+    )
+    timezone: str = Field(..., description="Timezone IANA, ex.: America/Sao_Paulo")
+    strict: bool = Field(
+        default=False,
+        description="Quando true, acusa horários ambíguos/inexistentes nas transições de DST.",
+    )
 
 
 class EphemerisCheckRequest(BaseModel):
@@ -1299,6 +1311,15 @@ ENDPOINTS_CATALOG = [
     },
     {
         "method": "POST",
+        "path": "/v1/time/validate-local-datetime",
+        "auth_required": False,
+        "headers_required": [],
+        "request_model": "ValidateLocalDatetimeRequest",
+        "response_model": None,
+        "description": "Valida data/hora local e resolve UTC com tratamento de DST.",
+    },
+    {
+        "method": "POST",
         "path": "/v1/diagnostics/ephemeris-check",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
@@ -1543,6 +1564,32 @@ async def resolve_timezone(body: TimezoneResolveRequest):
         "tz_offset_minutes": resolved_offset,
         "metadados_tecnicos": {"idioma": "pt-BR", "fonte_traducao": "backend"},
     }
+
+
+@app.post("/v1/time/validate-local-datetime")
+async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
+    result = timezone_utils.validate_local_datetime(
+        body.datetime_local, body.timezone, strict=body.strict
+    )
+    payload = {
+        "input_datetime_local": result.input_datetime.isoformat(),
+        "datetime_local": result.resolved_datetime.isoformat(),
+        "timezone": result.timezone,
+        "tz_offset_minutes": result.tz_offset_minutes,
+        "utc_datetime": result.utc_datetime.isoformat(),
+        "fold": result.fold,
+        "warning": result.warning,
+        "metadados_tecnicos": {
+            "idioma": "pt-BR",
+            "fonte_traducao": "backend",
+            "timezone": result.timezone,
+            "tz_offset_minutes": result.tz_offset_minutes,
+            "fold": result.fold,
+        },
+    }
+    if result.adjustment_minutes:
+        payload["metadados_tecnicos"]["ajuste_minutos"] = result.adjustment_minutes
+    return payload
 
 @app.post("/v1/diagnostics/ephemeris-check")
 async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
