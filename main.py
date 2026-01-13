@@ -547,6 +547,7 @@ class SolarReturnPreferencias(BaseModel):
     ayanamsa: Optional[str] = None
     sistema_casas: HouseSystem = Field(default=HouseSystem.PLACIDUS)
     modo: Optional[Literal["geocentrico", "topocentrico"]] = Field(default="geocentrico")
+    aspectos_habilitados: Optional[List[str]] = None
     orbes: Optional[Dict[str, float]] = None
 
 
@@ -2519,6 +2520,8 @@ async def solar_return_calculate(
         engine=engine,  # type: ignore[arg-type]
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
+        aspectos_habilitados=prefs.aspectos_habilitados,
+        orbes=prefs.orbes,
     )
 
     try:

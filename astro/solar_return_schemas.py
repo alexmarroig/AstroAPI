@@ -60,6 +60,14 @@ class SolarReturnPreferencias(BaseModel):
         default=False,
         description="Quando true, rejeita horários ambíguos em transições de DST.",
     )
+    aspectos_habilitados: Optional[List[str]] = Field(
+        default=None,
+        description="Lista de aspectos habilitados (ex.: conjunction, square).",
+    )
+    orbes: Optional[Dict[str, float]] = Field(
+        default=None,
+        description="Orbes personalizados por aspecto (ex.: {'conjunction': 5}).",
+    )
 
 
 class SolarReturnRequest(BaseModel):
