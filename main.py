@@ -2,9 +2,10 @@ import os
 import time
 import uuid
 import json
+import hashlib
 from dataclasses import replace
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Optional, Any, Dict, Literal, List
 from pathlib import Path
@@ -277,6 +278,15 @@ class ZodiacType(str, Enum):
     SIDEREAL = "sidereal"
 
 
+class PreferenciasPerfil(BaseModel):
+    perfil: Optional[Literal["padrao", "custom"]] = Field(
+        default=None, description="Perfil de preferências: padrao ou custom."
+    )
+    orb_max_deg: Optional[float] = Field(
+        default=None, ge=0, description="Orb máximo para scoring quando em perfil custom."
+    )
+
+
 class NatalChartRequest(BaseModel):
     natal_year: int = Field(..., ge=1800, le=2100)
     natal_month: int = Field(..., ge=1, le=12)
@@ -430,6 +440,7 @@ class TransitsRequest(BaseModel):
         default=False,
         description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
     )
+    preferencias: Optional[PreferenciasPerfil] = None
 
     @model_validator(mode="after")
     def validate_tz(self):
@@ -509,6 +520,10 @@ class CosmicWeatherResponse(BaseModel):
     text_ptbr: Optional[str] = None
     resumo_ptbr: Optional[str] = None
     moon_ptbr: Optional[Dict[str, Any]] = None
+    top_event: Optional["TransitEvent"] = None
+    trigger_event: Optional["TransitEvent"] = None
+    secondary_events: Optional[List["TransitEvent"]] = None
+    summary: Optional[Dict[str, str]] = None
     metadados_tecnicos: Optional[Dict[str, Any]] = None
 
 
@@ -588,12 +603,18 @@ class SolarReturnTarget(BaseModel):
 
 
 class SolarReturnPreferencias(BaseModel):
+    perfil: Optional[Literal["padrao", "custom"]] = Field(
+        default=None, description="Perfil de preferências (padrao/custom)."
+    )
     zodiaco: ZodiacType = Field(default=ZodiacType.TROPICAL)
     ayanamsa: Optional[str] = None
     sistema_casas: HouseSystem = Field(default=HouseSystem.PLACIDUS)
     modo: Optional[Literal["geocentrico", "topocentrico"]] = Field(default="geocentrico")
     aspectos_habilitados: Optional[List[str]] = None
     orbes: Optional[Dict[str, float]] = None
+    orb_max_deg: Optional[float] = Field(
+        default=None, ge=0, description="Orb máximo para scoring quando em perfil custom."
+    )
     janela_dias: Optional[int] = Field(
         default=None, ge=1, description="Janela em dias para busca do retorno solar."
     )
@@ -611,6 +632,77 @@ class SolarReturnPreferencias(BaseModel):
 class SolarReturnRequest(BaseModel):
     natal: SolarReturnNatal
     alvo: SolarReturnTarget
+    preferencias: Optional[SolarReturnPreferencias] = None
+
+
+class TransitDateRange(BaseModel):
+    from_: str = Field(..., alias="from", description="Data inicial YYYY-MM-DD.")
+    to: str = Field(..., description="Data final YYYY-MM-DD.")
+
+
+class TransitsEventsRequest(TransitsRequest):
+    target_date: Optional[str] = Field(
+        default=None, description="Campo opcional (ignorado quando range é fornecido)."
+    )
+    range: TransitDateRange
+    preferencias: Optional[PreferenciasPerfil] = None
+
+
+class TransitEventDateRange(BaseModel):
+    start_utc: str
+    peak_utc: str
+    end_utc: str
+
+
+class TransitEventCopy(BaseModel):
+    headline: str
+    mecanica: str
+    use_bem: str
+    risco: str
+
+
+class TransitEvent(BaseModel):
+    event_id: str
+    date_range: TransitEventDateRange
+    transitando: str
+    alvo_tipo: Literal["PLANETA_NATAL", "ANGULO_NATAL", "CUSPIDE_CASA_NATAL"]
+    alvo: str
+    aspecto: str
+    orb_graus: float
+    casa_ativada: Optional[int] = None
+    tags: List[str]
+    severidade: Literal["BAIXA", "MEDIA", "ALTA"]
+    impact_score: float
+    copy: TransitEventCopy
+
+
+class TransitEventsResponse(BaseModel):
+    events: List[TransitEvent]
+    metadados: Dict[str, Any]
+    avisos: List[str]
+
+
+class SolarReturnOverlayReference(BaseModel):
+    solar_return_utc: Optional[str] = Field(default=None, description="UTC ISO já calculado.")
+    year: Optional[int] = Field(default=None, ge=1800, le=2200)
+
+    @model_validator(mode="after")
+    def validate_reference(self):
+        if not self.solar_return_utc and not self.year:
+            raise HTTPException(status_code=422, detail="Informe solar_return_utc ou year.")
+        return self
+
+
+class SolarReturnOverlayRequest(BaseModel):
+    natal: SolarReturnNatal
+    alvo: SolarReturnTarget
+    rs: Optional[SolarReturnOverlayReference] = None
+    preferencias: Optional[SolarReturnPreferencias] = None
+
+
+class SolarReturnTimelineRequest(BaseModel):
+    natal: SolarReturnNatal
+    year: int = Field(..., ge=1800, le=2200)
     preferencias: Optional[SolarReturnPreferencias] = None
 
 
@@ -1025,10 +1117,281 @@ def _solar_return_datetime(
 
     return v1_dt
 
+
+PROFILE_DEFAULT_ASPECTS = ["conj", "opos", "quad", "tri", "sext"]
+PROFILE_DEFAULT_ORB_MAX = 5.0
+
+PLANET_WEIGHTS = {
+    "Moon": 1.0,
+    "Mercury": 1.5,
+    "Venus": 1.5,
+    "Sun": 1.5,
+    "Mars": 2.2,
+    "Jupiter": 2.5,
+    "Saturn": 3.3,
+    "Uranus": 3.0,
+    "Neptune": 3.0,
+    "Pluto": 3.6,
+}
+
+ASPECT_WEIGHTS = {
+    "conjunction": 1.0,
+    "opposition": 0.95,
+    "square": 0.95,
+    "trine": 0.70,
+    "sextile": 0.55,
+}
+
+TARGET_WEIGHTS = {
+    "Sun": 1.25,
+    "Moon": 1.25,
+    "ASC": 1.25,
+    "MC": 1.25,
+}
+
+DURATION_FACTORS = {
+    "Moon": 0.85,
+    "Mercury": 0.85,
+    "Venus": 0.85,
+    "Sun": 0.85,
+    "Mars": 0.90,
+    "Jupiter": 1.00,
+    "Saturn": 1.00,
+    "Uranus": 1.00,
+    "Neptune": 1.00,
+    "Pluto": 1.00,
+}
+
+PLANET_TAGS = {
+    "Sun": ["Identidade", "Direção"],
+    "Moon": ["Emoções", "Necessidades"],
+    "Mercury": ["Comunicação", "Decisão"],
+    "Venus": ["Relacionamentos", "Valor"],
+    "Mars": ["Ação", "Coragem"],
+    "Jupiter": ["Expansão", "Oportunidade"],
+    "Saturn": ["Estrutura", "Responsabilidade"],
+    "Uranus": ["Mudança", "Ruptura"],
+    "Neptune": ["Inspiração", "Sensibilidade"],
+    "Pluto": ["Transformação", "Intensidade"],
+}
+
+ASPECT_TAGS = {
+    "conjunction": ["Intensidade"],
+    "opposition": ["Tensão"],
+    "square": ["Ajuste"],
+    "trine": ["Fluxo"],
+    "sextile": ["Abertura"],
+}
+
+
+def _resolve_preferencias_profile(preferencias: Optional[PreferenciasPerfil]) -> str:
+    if preferencias is None:
+        return "padrao"
+    if preferencias.perfil is None:
+        return "custom"
+    return preferencias.perfil
+
+
+def _resolve_orb_max(
+    orbes: Optional[Dict[str, float]], preferencias: Optional[PreferenciasPerfil]
+) -> float:
+    if preferencias and preferencias.orb_max_deg is not None:
+        return float(preferencias.orb_max_deg)
+    if orbes:
+        return max(float(value) for value in orbes.values())
+    return PROFILE_DEFAULT_ORB_MAX
+
+
+def _apply_profile_defaults(
+    aspectos_habilitados: Optional[List[str]],
+    orbes: Optional[Dict[str, float]],
+    preferencias: Optional[PreferenciasPerfil],
+) -> tuple[Optional[List[str]], Optional[Dict[str, float]], float, str]:
+    profile = _resolve_preferencias_profile(preferencias)
+    orb_max = _resolve_orb_max(orbes, preferencias)
+    if profile == "padrao":
+        if aspectos_habilitados is None:
+            aspectos_habilitados = list(PROFILE_DEFAULT_ASPECTS)
+        if orbes is None:
+            orbes = {aspecto: PROFILE_DEFAULT_ORB_MAX for aspecto in aspectos_habilitados}
+        orb_max = PROFILE_DEFAULT_ORB_MAX
+    return aspectos_habilitados, orbes, orb_max, profile
+
+
+def _apply_solar_return_profile(
+    preferencias: Optional[SolarReturnPreferencias],
+) -> tuple[Optional[List[str]], Optional[Dict[str, float]], float, str]:
+    if preferencias is None:
+        perfil = "padrao"
+    elif preferencias.perfil is None:
+        perfil = "custom"
+    else:
+        perfil = preferencias.perfil
+    aspectos_habilitados = preferencias.aspectos_habilitados if preferencias else None
+    orbes = preferencias.orbes if preferencias else None
+    orb_max = (
+        float(preferencias.orb_max_deg)
+        if preferencias and preferencias.orb_max_deg is not None
+        else _resolve_orb_max(orbes, None)
+    )
+    if perfil == "padrao":
+        if aspectos_habilitados is None:
+            aspectos_habilitados = list(PROFILE_DEFAULT_ASPECTS)
+        if orbes is None:
+            orbes = {aspecto: PROFILE_DEFAULT_ORB_MAX for aspecto in aspectos_habilitados}
+        orb_max = PROFILE_DEFAULT_ORB_MAX
+    return aspectos_habilitados, orbes, orb_max, perfil
+
+
+def _house_for_lon(cusps: List[float], lon: float) -> int:
+    if not cusps:
+        return 1
+    lon_mod = lon % 360
+    for idx in range(12):
+        start = float(cusps[idx])
+        end = float(cusps[(idx + 1) % 12])
+        start_mod = start
+        end_mod = end
+        lon_check = lon_mod
+        if end_mod < start_mod:
+            end_mod += 360
+            if lon_check < start_mod:
+                lon_check += 360
+        if start_mod <= lon_check < end_mod:
+            return idx + 1
+    return 12
+
+
+def _impact_score(
+    transit_planet: str,
+    aspect: str,
+    target: str,
+    orb_deg: float,
+    orb_max: float,
+) -> float:
+    if orb_max <= 0:
+        orb_max = PROFILE_DEFAULT_ORB_MAX
+    planet_weight = PLANET_WEIGHTS.get(transit_planet, 1.0)
+    aspect_weight = ASPECT_WEIGHTS.get(aspect, 0.5)
+    target_weight = TARGET_WEIGHTS.get(target, 1.0)
+    duration_factor = DURATION_FACTORS.get(transit_planet, 1.0)
+    orb_factor = max(0.0, min(1.0, 1.0 - (orb_deg / orb_max)))
+    return round(100 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor, 2)
+
+
+def _severity_for(score: float) -> str:
+    if score >= 70:
+        return "ALTA"
+    if score >= 45:
+        return "MEDIA"
+    return "BAIXA"
+
+
+def _event_tags(transit_planet: str, aspect: str) -> List[str]:
+    tags = []
+    tags.extend(PLANET_TAGS.get(transit_planet, []))
+    tags.extend(ASPECT_TAGS.get(aspect, []))
+    seen = set()
+    result = []
+    for tag in tags:
+        if tag not in seen:
+            result.append(tag)
+            seen.add(tag)
+    return result[:4]
+
+
+def _build_event_copy(transitando: str, aspecto: str, alvo: str, tags: List[str]) -> TransitEventCopy:
+    tag_base = tags[0] if tags else "foco"
+    return TransitEventCopy(
+        headline=f"{transitando} em {aspecto} com {alvo}",
+        mecanica=f"Trânsito enfatiza {tag_base.lower()} em temas ligados a {alvo}.",
+        use_bem="Tendência a favorecer clareza e ação prática quando você organiza prioridades.",
+        risco="Pede atenção a impulsos e excesso de carga; ajuste o ritmo com consistência.",
+    )
+
+
+def _build_transit_event(
+    aspect: Dict[str, Any],
+    date_str: str,
+    natal_chart: Dict[str, Any],
+    orb_max: float,
+) -> TransitEvent:
+    transit_planet = aspect["transit_planet"]
+    natal_planet = aspect["natal_planet"]
+    aspect_key = aspect["aspect"]
+    orb_deg = float(aspect.get("orb", 0.0))
+    transitando_pt = planet_key_to_ptbr(transit_planet)
+    alvo_pt = planet_key_to_ptbr(natal_planet)
+    aspect_pt = aspect_to_ptbr(aspect_key)
+    tags = _event_tags(transit_planet, aspect_key)
+    score = _impact_score(transit_planet, aspect_key, natal_planet, orb_deg, orb_max)
+    event_hash = hashlib.sha1(
+        f"{date_str}:{transit_planet}:{natal_planet}:{aspect_key}:{round(orb_deg,2)}".encode("utf-8")
+    ).hexdigest()
+    date_start = f"{date_str}T00:00:00Z"
+    date_peak = f"{date_str}T12:00:00Z"
+    date_end = f"{date_str}T23:59:59Z"
+    natal_cusps = natal_chart.get("houses", {}).get("cusps", [])
+    natal_lon = float(natal_chart.get("planets", {}).get(natal_planet, {}).get("lon", 0.0))
+    return TransitEvent(
+        event_id=event_hash,
+        date_range=TransitEventDateRange(start_utc=date_start, peak_utc=date_peak, end_utc=date_end),
+        transitando=transitando_pt,
+        alvo_tipo="PLANETA_NATAL",
+        alvo=alvo_pt,
+        aspecto=aspect_pt,
+        orb_graus=round(orb_deg, 2),
+        casa_ativada=_house_for_lon(natal_cusps, natal_lon) if natal_cusps else None,
+        tags=tags,
+        severidade=_severity_for(score),
+        impact_score=score,
+        copy=_build_event_copy(transitando_pt, aspect_pt, alvo_pt, tags),
+    )
+
+
+def _daily_summary(phase: str, sign: str) -> Dict[str, str]:
+    sign_pt = sign_to_ptbr(sign)
+    templates = {
+        "new_moon": {
+            "tom": "Início de ciclo com foco em intenção e organização.",
+            "gatilho": f"Tendência a priorizar decisões ligadas a {sign_pt}.",
+            "acao": "Defina uma ação simples e mantenha o ritmo ao longo do dia.",
+        },
+        "waxing": {
+            "tom": "Fase de avanço com energia de construção.",
+            "gatilho": f"Tendência a buscar progresso em temas de {sign_pt}.",
+            "acao": "Escolha uma meta prática e execute em etapas curtas.",
+        },
+        "full_moon": {
+            "tom": "Pico de visibilidade e ajustes de equilíbrio.",
+            "gatilho": f"Tendência a perceber resultados em assuntos de {sign_pt}.",
+            "acao": "Revisite o que já foi iniciado e faça correções objetivas.",
+        },
+        "waning": {
+            "tom": "Fase de depuração e reorganização.",
+            "gatilho": f"Tendência a limpar excessos em temas de {sign_pt}.",
+            "acao": "Finalize pendências e reduza ruídos antes de seguir.",
+        },
+    }
+    return templates.get(phase, templates["waxing"])
+
 def _build_transits_context(
-    body: TransitsRequest, tz_offset_minutes: int, lang: Optional[str]
+    body: TransitsRequest,
+    tz_offset_minutes: int,
+    lang: Optional[str],
+    date_override: Optional[str] = None,
+    preferencias: Optional[PreferenciasPerfil] = None,
 ) -> Dict[str, Any]:
-    target_y, target_m, target_d = _parse_date_yyyy_mm_dd(body.target_date)
+    target_date = date_override or body.target_date
+    if not target_date:
+        raise HTTPException(status_code=422, detail="Informe target_date ou range.")
+    target_y, target_m, target_d = _parse_date_yyyy_mm_dd(target_date)
+    aspectos_habilitados, orbes, orb_max, profile = _apply_profile_defaults(
+        body.aspectos_habilitados,
+        body.orbes,
+        preferencias if preferencias is not None else body.preferencias,
+    )
+
     natal_chart = compute_chart(
         year=body.natal_year,
         month=body.natal_month,
@@ -1059,8 +1422,8 @@ def _build_transits_context(
     transit_chart = _apply_sign_localization(transit_chart, lang)
 
     aspects_config, aspectos_usados, orbes_usados = resolve_aspects_config(
-        body.aspectos_habilitados,
-        body.orbes,
+        aspectos_habilitados,
+        orbes,
     )
     aspects = compute_transit_aspects(
         transit_planets=transit_chart["planets"],
@@ -1074,7 +1437,18 @@ def _build_transits_context(
         "aspects": aspects,
         "aspectos_usados": aspectos_usados,
         "orbes_usados": orbes_usados,
+        "orb_max": orb_max,
+        "profile": profile,
     }
+
+
+def _build_transit_events_for_date(date_str: str, context: Dict[str, Any]) -> List[TransitEvent]:
+    events: List[TransitEvent] = []
+    natal_chart = context["natal"]
+    for aspect in context["aspects"]:
+        events.append(_build_transit_event(aspect, date_str, natal_chart, context["orb_max"]))
+    events.sort(key=lambda item: item.impact_score, reverse=True)
+    return events
 
 def _areas_activated(aspects: List[Dict[str, Any]], moon_phase: Optional[str] = None) -> List[Dict[str, Any]]:
     base_score = 50.0
@@ -1425,7 +1799,9 @@ def _build_time_metadata(
     )
     return {
         "timezone_resolvida": timezone,
+        "timezone_usada": timezone,
         "tz_offset_minutes_usado": tz_offset_minutes,
+        "tz_offset_minutes": tz_offset_minutes,
         "fold_usado": _resolve_fold_for(local_dt, timezone, tz_offset_minutes),
         "datetime_local_usado": local_dt.isoformat() if local_dt else None,
         "datetime_utc_usado": utc_dt.isoformat() if utc_dt else None,
@@ -1481,6 +1857,10 @@ def _cosmic_weather_payload(
         "deg_in_sign": moon.get("deg_in_sign"),
         "headline": f"Lua {phase_label} em {sign}",
         "text": _cw_text(phase, sign),
+        "top_event": None,
+        "trigger_event": None,
+        "secondary_events": [],
+        "summary": _daily_summary(phase, sign),
     }
 
     payload = _apply_moon_localization(payload, lang)
@@ -1651,6 +2031,15 @@ ENDPOINTS_CATALOG = [
     },
     {
         "method": "POST",
+        "path": "/v1/transits/events",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "TransitsEventsRequest",
+        "response_model": "TransitEventsResponse",
+        "description": "Eventos de trânsito curados (determinístico).",
+    },
+    {
+        "method": "POST",
         "path": "/v1/chart/render-data",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
@@ -1729,6 +2118,24 @@ ENDPOINTS_CATALOG = [
         "request_model": "SolarReturnRequest",
         "response_model": None,
         "description": "Cálculo completo de revolução solar.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/solar-return/overlay",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "SolarReturnOverlayRequest",
+        "response_model": None,
+        "description": "Sobreposição RS × Natal.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/solar-return/timeline",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "SolarReturnTimelineRequest",
+        "response_model": None,
+        "description": "Timeline anual (Sol em aspectos).",
     },
     {
         "method": "POST",
@@ -2703,6 +3110,87 @@ async def interpretation_natal(
             )
         )
         return payload
+
+
+@app.post("/v1/transits/events", response_model=TransitEventsResponse)
+async def transits_events(
+    body: TransitsEventsRequest,
+    request: Request,
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
+
+    start_y, start_m, start_d = _parse_date_yyyy_mm_dd(body.range.from_)
+    end_y, end_m, end_d = _parse_date_yyyy_mm_dd(body.range.to)
+    start_date = datetime(year=start_y, month=start_m, day=start_d)
+    end_date = datetime(year=end_y, month=end_m, day=end_d)
+    if end_date < start_date:
+        raise HTTPException(status_code=400, detail="Intervalo inválido: 'from' deve ser <= 'to'.")
+    interval_days = (end_date - start_date).days + 1
+    if interval_days > 30:
+        raise HTTPException(
+            status_code=400,
+            detail="Intervalo máximo de 30 dias para eventos de trânsito.",
+        )
+
+    lang_key = (lang or "").lower()
+    cache_key = f"transit-events:{auth['user_id']}:{hash(body.model_dump_json())}:{lang_key}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    events: List[TransitEvent] = []
+    current = start_date
+    first_context = None
+    for _ in range(interval_days):
+        date_str = current.strftime("%Y-%m-%d")
+        context = _build_transits_context(
+            body,
+            tz_offset_minutes,
+            lang,
+            date_override=date_str,
+            preferencias=body.preferencias,
+        )
+        if first_context is None:
+            first_context = context
+        events.extend(_build_transit_events_for_date(date_str, context))
+        current += timedelta(days=1)
+
+    events.sort(key=lambda item: (item.date_range.peak_utc, -item.impact_score))
+    avisos: List[str] = []
+    metadata = {
+        "range": {"from": body.range.from_, "to": body.range.to},
+        "perfil": (first_context or {}).get("profile", "custom"),
+        "aspectos_usados": (first_context or {}).get("aspectos_usados", []),
+        "orbes_usados": (first_context or {}).get("orbes_usados", {}),
+    }
+    metadata.update(
+        _build_time_metadata(
+            timezone=body.timezone,
+            tz_offset_minutes=tz_offset_minutes,
+            local_dt=natal_dt,
+        )
+    )
+
+    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
+    return payload
     except Exception as e:
         logger.error(
             "interpretation_natal_error",
@@ -2957,11 +3445,12 @@ async def solar_return_calculate(
     except Exception:
         raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
 
-    prefs = body.preferencias or SolarReturnPreferencias()
+    prefs = body.preferencias or SolarReturnPreferencias(perfil="padrao")
     engine = (os.getenv("SOLAR_RETURN_ENGINE") or "v1").lower()
     if engine not in ("v1", "v2"):
         engine = "v1"
 
+    aspectos_habilitados, orbes, _, _ = _apply_solar_return_profile(prefs)
     inputs = SolarReturnInputs(
         natal_date=natal_dt,
         natal_lat=body.natal.local.lat,
@@ -2974,8 +3463,8 @@ async def solar_return_calculate(
         house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
         zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
         ayanamsa=prefs.ayanamsa,
-        aspectos_habilitados=prefs.aspectos_habilitados,
-        orbes=prefs.orbes,
+        aspectos_habilitados=aspectos_habilitados,
+        orbes=orbes,
         engine=engine,  # type: ignore[arg-type]
         window_days=prefs.janela_dias,
         step_hours=prefs.passo_horas,
@@ -2984,8 +3473,8 @@ async def solar_return_calculate(
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
         request_id=getattr(request.state, "request_id", None),
-        aspectos_habilitados=prefs.aspectos_habilitados,
-        orbes=prefs.orbes,
+        aspectos_habilitados=aspectos_habilitados,
+        orbes=orbes,
     )
 
     try:
@@ -3034,6 +3523,264 @@ async def solar_return_calculate(
         payload["warnings"] = warnings
 
     return payload
+
+
+@app.post("/v1/solar-return/overlay")
+async def solar_return_overlay(
+    body: SolarReturnOverlayRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    try:
+        ZoneInfo(body.natal.timezone)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(
+            status_code=422,
+            detail="Timezone natal inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
+        )
+
+    target_timezone = body.alvo.timezone or body.natal.timezone
+    try:
+        ZoneInfo(target_timezone)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(
+            status_code=422,
+            detail="Timezone do alvo inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
+        )
+
+    natal_dt, warnings, time_missing = parse_local_datetime(body.natal.data, body.natal.hora)
+    avisos = list(warnings)
+    if time_missing:
+        avisos.append("Hora natal ausente: assumindo 12:00 local.")
+
+    localized = localize_with_zoneinfo(
+        natal_dt, body.natal.timezone, None, strict=False
+    )
+    avisos.extend(localized.warnings)
+    natal_offset = localized.tz_offset_minutes
+
+    rs_reference = body.rs or SolarReturnOverlayReference(year=body.alvo.ano)
+    if rs_reference.solar_return_utc:
+        parsed = datetime.fromisoformat(rs_reference.solar_return_utc.replace("Z", "+00:00"))
+        if parsed.tzinfo is not None:
+            solar_return_utc = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        else:
+            solar_return_utc = parsed
+    else:
+        solar_return_utc = _solar_return_datetime(
+            natal_dt=natal_dt,
+            target_year=rs_reference.year or body.alvo.ano,
+            tz_offset_minutes=natal_offset,
+            request=request,
+            user_id=auth.get("user_id"),
+        )
+
+    target_tzinfo = ZoneInfo(target_timezone)
+    solar_return_local_aware = solar_return_utc.replace(tzinfo=timezone.utc).astimezone(target_tzinfo)
+    solar_return_local = solar_return_local_aware.replace(tzinfo=None)
+    target_offset = int(solar_return_local_aware.utcoffset().total_seconds() // 60)
+
+    prefs = body.preferencias or SolarReturnPreferencias(perfil="padrao")
+    aspectos_habilitados, orbes, _, perfil = _apply_solar_return_profile(prefs)
+
+    natal_chart = compute_chart(
+        year=natal_dt.year,
+        month=natal_dt.month,
+        day=natal_dt.day,
+        hour=natal_dt.hour,
+        minute=natal_dt.minute,
+        second=natal_dt.second,
+        lat=body.natal.local.lat,
+        lng=body.natal.local.lon,
+        tz_offset_minutes=natal_offset,
+        house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
+        zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
+        ayanamsa=prefs.ayanamsa,
+    )
+
+    rs_chart = compute_chart(
+        year=solar_return_local.year,
+        month=solar_return_local.month,
+        day=solar_return_local.day,
+        hour=solar_return_local.hour,
+        minute=solar_return_local.minute,
+        second=solar_return_local.second,
+        lat=body.alvo.local.lat,
+        lng=body.alvo.local.lon,
+        tz_offset_minutes=target_offset,
+        house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
+        zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
+        ayanamsa=prefs.ayanamsa,
+    )
+
+    aspects_config, aspectos_usados, orbes_usados = resolve_aspects_config(
+        aspectos_habilitados,
+        orbes,
+    )
+    aspects = compute_transit_aspects(
+        transit_planets=rs_chart["planets"],
+        natal_planets=natal_chart["planets"],
+        aspects=aspects_config,
+    )
+    aspectos_rs_x_natal = [
+        {
+            "transitando": planet_key_to_ptbr(item["transit_planet"]),
+            "alvo": planet_key_to_ptbr(item["natal_planet"]),
+            "aspecto": aspect_to_ptbr(item["aspect"]),
+            "orb_graus": float(item["orb"]),
+        }
+        for item in aspects
+    ]
+
+    rs_em_casas_natais = [
+        {
+            "planeta_rs": planet_key_to_ptbr(name),
+            "casa_natal": _house_for_lon(natal_chart.get("houses", {}).get("cusps", []), data["lon"]),
+        }
+        for name, data in rs_chart.get("planets", {}).items()
+    ]
+    natal_em_casas_rs = [
+        {
+            "planeta_natal": planet_key_to_ptbr(name),
+            "casa_rs": _house_for_lon(rs_chart.get("houses", {}).get("cusps", []), data["lon"]),
+        }
+        for name, data in natal_chart.get("planets", {}).items()
+    ]
+
+    metadados = {
+        "perfil": perfil,
+        "aspectos_usados": aspectos_usados,
+        "orbes_usados": orbes_usados,
+    }
+    metadados.update(
+        _build_time_metadata(
+            timezone=target_timezone,
+            tz_offset_minutes=target_offset,
+            local_dt=solar_return_local,
+            avisos=avisos,
+        )
+    )
+
+    return {
+        "rs_em_casas_natais": rs_em_casas_natais,
+        "natal_em_casas_rs": natal_em_casas_rs,
+        "aspectos_rs_x_natal": aspectos_rs_x_natal,
+        "avisos": avisos,
+        "metadados": metadados,
+    }
+
+
+@app.post("/v1/solar-return/timeline")
+async def solar_return_timeline(
+    body: SolarReturnTimelineRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    try:
+        ZoneInfo(body.natal.timezone)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(
+            status_code=422,
+            detail="Timezone natal inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
+        )
+
+    natal_dt, warnings, time_missing = parse_local_datetime(body.natal.data, body.natal.hora)
+    avisos = list(warnings)
+    if time_missing:
+        avisos.append("Hora natal ausente: assumindo 12:00 local.")
+
+    localized = localize_with_zoneinfo(
+        natal_dt, body.natal.timezone, None, strict=False
+    )
+    avisos.extend(localized.warnings)
+    natal_offset = localized.tz_offset_minutes
+
+    prefs = body.preferencias or SolarReturnPreferencias(perfil="padrao")
+    aspectos_habilitados, orbes, orb_max, perfil = _apply_solar_return_profile(prefs)
+
+    natal_chart = compute_chart(
+        year=natal_dt.year,
+        month=natal_dt.month,
+        day=natal_dt.day,
+        hour=natal_dt.hour,
+        minute=natal_dt.minute,
+        second=natal_dt.second,
+        lat=body.natal.local.lat,
+        lng=body.natal.local.lon,
+        tz_offset_minutes=natal_offset,
+        house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
+        zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
+        ayanamsa=prefs.ayanamsa,
+    )
+
+    targets = {
+        "Sol": natal_chart["planets"]["Sun"]["lon"],
+        "Lua": natal_chart["planets"]["Moon"]["lon"],
+        "ASC": natal_chart["houses"]["asc"],
+        "MC": natal_chart["houses"]["mc"],
+    }
+    aspect_angles = {
+        "conjunction": {"label": "Conjunção", "angle": 0},
+        "sextile": {"label": "Sextil", "angle": 60},
+        "square": {"label": "Quadratura", "angle": 90},
+        "trine": {"label": "Trígono", "angle": 120},
+        "opposition": {"label": "Oposição", "angle": 180},
+    }
+
+    start_date = datetime(body.year, 1, 1)
+    end_date = datetime(body.year, 12, 31)
+    current = start_date
+    items = []
+    while current <= end_date:
+        date_str = current.strftime("%Y-%m-%d")
+        transit_chart = compute_transits(
+            target_year=current.year,
+            target_month=current.month,
+            target_day=current.day,
+            lat=body.natal.local.lat,
+            lng=body.natal.local.lon,
+            tz_offset_minutes=natal_offset,
+            zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
+            ayanamsa=prefs.ayanamsa,
+        )
+        sun_lon = transit_chart["planets"]["Sun"]["lon"]
+        for alvo, natal_lon in targets.items():
+            separation = angle_diff(sun_lon, natal_lon)
+            for aspecto_key, aspect_info in aspect_angles.items():
+                orb = abs(separation - aspect_info["angle"])
+                if orb <= orb_max:
+                    score = _impact_score(
+                        "Sun",
+                        aspecto_key,
+                        alvo if alvo in TARGET_WEIGHTS else "Sun",
+                        orb,
+                        orb_max,
+                    )
+                    items.append(
+                        {
+                            "start": (current - timedelta(days=1)).strftime("%Y-%m-%d"),
+                            "peak": date_str,
+                            "end": (current + timedelta(days=1)).strftime("%Y-%m-%d"),
+                            "method": "solar_aspects",
+                            "trigger": f"Sol em {aspect_info['label']} com {alvo}",
+                            "tags": ["Ano", "Direção", "Ajuste"],
+                            "score": round(score, 2),
+                        }
+                    )
+        current += timedelta(days=1)
+
+    items.sort(key=lambda item: item["peak"])
+    return {
+        "year_timeline": items,
+        "avisos": avisos,
+        "metadados": {
+            "perfil": perfil,
+            "aspectos_usados": aspectos_habilitados or [],
+            "orbes_usados": orbes or {},
+            "timezone_usada": body.natal.timezone,
+            "tz_offset_minutes": natal_offset,
+        },
+    }
 
 @app.post("/v1/ai/cosmic-chat")
 async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(get_auth)):
