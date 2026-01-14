@@ -1408,6 +1408,43 @@ def _daily_summary(phase: str, sign: str) -> Dict[str, str]:
     }
     return templates.get(phase, templates["waxing"])
 
+
+def _summary_from_event(event: TransitEvent) -> Dict[str, str]:
+    tags = event.tags or []
+    tag = tags[0] if tags else "foco"
+    return {
+        "tom": f"Tendência a concentrar energia em {tag.lower()}.",
+        "gatilho": f"{event.transitando} em {event.aspecto} com {event.alvo} pede atenção a prioridades.",
+        "acao": "Aja com consistência e ajuste o ritmo conforme o contexto.",
+    }
+
+
+def _curate_daily_events(events: List[TransitEvent]) -> Dict[str, Any]:
+    if not events:
+        return {
+            "top_event": None,
+            "trigger_event": None,
+            "secondary_events": [],
+            "summary": None,
+        }
+    ordered = sorted(events, key=lambda item: item.impact_score, reverse=True)
+    top_event = ordered[0]
+    trigger_event = next(
+        (item for item in ordered if item.transitando == "Marte" and item.impact_score >= 55),
+        None,
+    )
+    if trigger_event is None and len(ordered) > 1:
+        trigger_event = ordered[1]
+    secondary_pool = [item for item in ordered[1:] if item != trigger_event]
+    secondary_events = secondary_pool[:2]
+    summary = _summary_from_event(top_event)
+    return {
+        "top_event": top_event,
+        "trigger_event": trigger_event,
+        "secondary_events": secondary_events,
+        "summary": summary,
+    }
+
 def _build_transits_context(
     body: TransitsRequest,
     tz_offset_minutes: int,
@@ -3287,6 +3324,18 @@ async def cosmic_weather(
     tz_offset_minutes: Optional[int] = Query(
         None, ge=-840, le=840, description="Offset manual em minutos; ignorado se timezone for enviado."
     ),
+    natal_year: Optional[int] = Query(None, ge=1800, le=2100),
+    natal_month: Optional[int] = Query(None, ge=1, le=12),
+    natal_day: Optional[int] = Query(None, ge=1, le=31),
+    natal_hour: Optional[int] = Query(None, ge=0, le=23),
+    natal_minute: int = Query(0, ge=0, le=59),
+    natal_second: int = Query(0, ge=0, le=59),
+    lat: Optional[float] = Query(None, ge=-89.9999, le=89.9999),
+    lng: Optional[float] = Query(None, ge=-180, le=180),
+    house_system: HouseSystem = Query(HouseSystem.PLACIDUS),
+    zodiac_type: ZodiacType = Query(ZodiacType.TROPICAL),
+    ayanamsa: Optional[str] = Query(None),
+    preferencias_perfil: Optional[Literal["padrao", "custom"]] = Query(None),
     lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
@@ -3300,6 +3349,52 @@ async def cosmic_weather(
         request_id=getattr(request.state, "request_id", None),
         path=request.url.path,
     )
+    if natal_year and natal_month and natal_day and natal_hour is not None and lat is not None and lng is not None:
+        natal_dt = datetime(
+            year=natal_year,
+            month=natal_month,
+            day=natal_day,
+            hour=natal_hour,
+            minute=natal_minute,
+            second=natal_second,
+        )
+        tz_offset_minutes_resolved = _tz_offset_for(
+            natal_dt,
+            timezone,
+            tz_offset_minutes,
+            request_id=getattr(request.state, "request_id", None),
+            path=request.url.path,
+        )
+        preferencias = (
+            PreferenciasPerfil(perfil=preferencias_perfil) if preferencias_perfil is not None else None
+        )
+        transits_body = TransitsRequest(
+            natal_year=natal_year,
+            natal_month=natal_month,
+            natal_day=natal_day,
+            natal_hour=natal_hour,
+            natal_minute=natal_minute,
+            natal_second=natal_second,
+            lat=lat,
+            lng=lng,
+            tz_offset_minutes=tz_offset_minutes_resolved,
+            timezone=timezone,
+            target_date=d,
+            house_system=house_system,
+            zodiac_type=zodiac_type,
+            ayanamsa=ayanamsa,
+            preferencias=preferencias,
+        )
+        context = _build_transits_context(
+            transits_body,
+            tz_offset_minutes_resolved,
+            lang,
+            date_override=d,
+            preferencias=transits_body.preferencias,
+        )
+        events = _build_transit_events_for_date(d, context)
+        curated = _curate_daily_events(events)
+        payload.update(curated)
     return CosmicWeatherResponse(**payload)
 
 

@@ -265,6 +265,8 @@ curl -X GET "$API_URL/v1/cosmic-weather?date=2024-05-01&timezone=America/Sao_Pau
 }
 ```
 
+**Opcional (curadoria com mapa natal)**: envie `natal_year`, `natal_month`, `natal_day`, `natal_hour`, `lat`, `lng` e `timezone` como query params para preencher `top_event`, `trigger_event` e `secondary_events`.
+
 ## /v1/cosmic-weather/range
 
 **cURL**
