@@ -706,39 +706,6 @@ class SolarReturnTimelineRequest(BaseModel):
     preferencias: Optional[SolarReturnPreferencias] = None
 
 
-class TransitsLiveRequest(BaseModel):
-    target_datetime: datetime = Field(..., description="Data/hora local alvo, ex.: 2025-12-19T14:30:00")
-    lat: float = Field(..., ge=-89.9999, le=89.9999)
-    lng: float = Field(..., ge=-180, le=180)
-    tz_offset_minutes: Optional[int] = Field(
-        None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
-    )
-    timezone: Optional[str] = Field(
-        None,
-        description="Timezone IANA (ex.: America/Sao_Paulo). Se preenchido, substitui tz_offset_minutes",
-    )
-    zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
-    ayanamsa: Optional[str] = Field(
-        default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
-    )
-    strict_timezone: bool = Field(
-        default=False,
-        description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
-    )
-
-    @model_validator(mode="after")
-    def validate_tz(self):
-        offset = None
-        if self.target_datetime.tzinfo is not None:
-            offset = self.target_datetime.utcoffset()
-        if self.tz_offset_minutes is None and not self.timezone and offset is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Informe timezone IANA, tz_offset_minutes ou target_datetime com offset.",
-            )
-        return self
-
-
 class TimezoneResolveRequest(BaseModel):
     datetime_local: Optional[datetime] = Field(
         None, description="Compatibilidade: data/hora local ISO (ex.: 2025-12-19T14:30:00)"
