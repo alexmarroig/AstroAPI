@@ -9,11 +9,6 @@ from core.timezone_utils import TimezoneResolutionError, resolve_timezone_offset
 import swisseph as swe
 
 from astro.aspects import ASPECTS
-from astro.ephemeris import (
-    AYANAMSA_MAP,
-    compute_chart,
-    solar_return_datetime_with_metadata,
-)
 from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime, sun_longitude_at
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
@@ -458,15 +453,6 @@ def _tz_offset_minutes(
         },
     )
     return offset_minutes
-        resolved = resolve_timezone_offset(
-            date_time=dt,
-            timezone=timezone_name,
-            fallback_minutes=fallback_minutes,
-        )
-    except TimezoneResolutionError as exc:
-        raise ValueError(str(exc)) from exc
-
-    return resolved.offset_minutes
 
 
 def _resolve_fold_for(
@@ -654,19 +640,13 @@ def _build_destaques(solar_chart: dict, aspects: List[dict]) -> List[dict]:
 
 
 def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
-    natal_offset = _tz_offset_minutes(
-        inputs.natal_date,
-        inputs.natal_timezone,
-        inputs.tz_offset_minutes,
-        inputs.request_id,
-        "natal",
     natal_local = parse_local_datetime(datetime_local=inputs.natal_date)
     natal_localized = localize_with_zoneinfo(
         natal_local, inputs.natal_timezone, inputs.tz_offset_minutes
     )
-    solar_return_utc, solar_return_metadata = solar_return_datetime_with_metadata(
     natal_offset = natal_localized.tz_offset_minutes
     natal_utc = to_utc(natal_localized.datetime_local, natal_offset)
+
     solar_return_utc = solar_return_datetime(
         natal_dt=inputs.natal_date,
         target_year=inputs.target_year,
@@ -677,23 +657,22 @@ def compute_solar_return_payload(inputs: SolarReturnInputs) -> dict:
         max_iter=inputs.max_iter,
         tolerance_degrees=inputs.tolerance_degrees,
     )
+    solar_return_metadata = {
+        "metodo_refino": "padrao",
+        "iteracoes": inputs.max_iter,
+        "tolerancia_graus": inputs.tolerance_degrees,
+        "bracket_encontrado": None,
+        "janela_usada_dias": inputs.window_days,
+        "passo_usado_horas": inputs.step_hours,
+    }
 
-    target_offset = _tz_offset_minutes(
-        solar_return_utc.replace(tzinfo=timezone.utc),
-        inputs.target_timezone,
-        None,
-        inputs.request_id,
-        "target",
     target_tzinfo = ZoneInfo(inputs.target_timezone)
-    target_local_naive = (
-        solar_return_utc.replace(tzinfo=timezone.utc)
-        .astimezone(target_tzinfo)
-        .replace(tzinfo=None)
-    )
-    target_local = parse_local_datetime(datetime_local=target_local_naive)
-    target_localized = localize_with_zoneinfo(target_local, inputs.target_timezone, None)
-    target_offset = target_localized.tz_offset_minutes
-    solar_return_local = solar_return_utc + timedelta(minutes=target_offset)
+    solar_return_local_aware = solar_return_utc.replace(tzinfo=timezone.utc).astimezone(target_tzinfo)
+    solar_return_local = solar_return_local_aware.replace(tzinfo=None)
+    target_offset = int(solar_return_local_aware.utcoffset().total_seconds() // 60)
+
+    window_days = solar_return_metadata.get("janela_usada_dias", inputs.window_days)
+    step_hours = solar_return_metadata.get("passo_usado_horas", inputs.step_hours)
 
     natal_chart = compute_chart(
         year=inputs.natal_date.year,
