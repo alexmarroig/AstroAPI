@@ -26,7 +26,7 @@ import swisseph as swe
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only, solar_return_datetime
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only
 from astro.solar_return import SolarReturnInputs, compute_solar_return_payload
-from astro.aspects import compute_transit_aspects, get_aspects_profile
+from astro.aspects import compute_transit_aspects, get_aspects_profile, resolve_aspects_config
 from astro.retrogrades import retrograde_alerts
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
@@ -792,12 +792,6 @@ class ValidateLocalDatetimeRequest(BaseModel):
     strict: bool = Field(
         default=True,
         description="Quando true, rejeita horário ambíguo/inexistente nas transições de DST.",
-    date: str = Field(..., description="Data local no formato YYYY-MM-DD.")
-    time: str = Field(..., description="Hora local no formato HH:MM ou HH:MM:SS.")
-    timezone: str = Field(..., description="Timezone IANA (ex.: America/Sao_Paulo).")
-    strict: bool = Field(
-        default=False,
-        description="Quando true, rejeita horários ambíguos/inexistentes em transições de DST.",
     )
     prefer_fold: int = Field(
         default=0,
@@ -2760,6 +2754,7 @@ async def solar_return(
         strict=body.strict_timezone,
         request_id=getattr(request.state, "request_id", None),
         path=request.url.path,
+    )
     natal_local = parse_local_datetime(datetime_local=natal_dt)
     localized = localize_with_zoneinfo(
         natal_local, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
@@ -3315,6 +3310,87 @@ async def transits_events(
             extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
         )
         raise HTTPException(status_code=500, detail=f"Erro ao gerar resumo do mapa: {str(e)}")
+
+
+@app.post("/v1/transits/events", response_model=TransitEventsResponse)
+async def transits_events(
+    body: TransitsEventsRequest,
+    request: Request,
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
+
+    start_y, start_m, start_d = _parse_date_yyyy_mm_dd(body.range.from_)
+    end_y, end_m, end_d = _parse_date_yyyy_mm_dd(body.range.to)
+    start_date = datetime(year=start_y, month=start_m, day=start_d)
+    end_date = datetime(year=end_y, month=end_m, day=end_d)
+    if end_date < start_date:
+        raise HTTPException(status_code=400, detail="Intervalo inválido: 'from' deve ser <= 'to'.")
+    interval_days = (end_date - start_date).days + 1
+    if interval_days > 30:
+        raise HTTPException(
+            status_code=400,
+            detail="Intervalo máximo de 30 dias para eventos de trânsito.",
+        )
+
+    lang_key = (lang or "").lower()
+    cache_key = f"transit-events:{auth['user_id']}:{hash(body.model_dump_json())}:{lang_key}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    events: List[TransitEvent] = []
+    current = start_date
+    first_context = None
+    for _ in range(interval_days):
+        date_str = current.strftime("%Y-%m-%d")
+        context = _build_transits_context(
+            body,
+            tz_offset_minutes,
+            lang,
+            date_override=date_str,
+            preferencias=body.preferencias,
+        )
+        if first_context is None:
+            first_context = context
+        events.extend(_build_transit_events_for_date(date_str, context))
+        current += timedelta(days=1)
+
+    events.sort(key=lambda item: (item.date_range.peak_utc, -item.impact_score))
+    avisos: List[str] = []
+    metadata = {
+        "range": {"from": body.range.from_, "to": body.range.to},
+        "perfil": (first_context or {}).get("profile", "custom"),
+        "aspectos_usados": (first_context or {}).get("aspectos_usados", []),
+        "orbes_usados": (first_context or {}).get("orbes_usados", {}),
+    }
+    metadata.update(
+        _build_time_metadata(
+            timezone=body.timezone,
+            tz_offset_minutes=tz_offset_minutes,
+            local_dt=natal_dt,
+        )
+    )
+
+    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
+    return payload
 
 @app.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
 async def cosmic_weather(
@@ -4014,11 +4090,11 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
 @app.get("/v1/alerts/system", response_model=SystemAlertsResponse)
 async def system_alerts(
     date: str,
+    request: Request,
     lat: float = Query(..., ge=-89.9999, le=89.9999),
     lng: float = Query(..., ge=-180, le=180),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
-    request: Request,
     auth=Depends(get_auth),
 ):
     _parse_date_yyyy_mm_dd(date)
@@ -4058,10 +4134,10 @@ async def system_alerts(
 
 @app.get("/v1/alerts/retrogrades")
 async def retrogrades_alerts(
+    request: Request,
     date: Optional[str] = Query(None, description="YYYY-MM-DD"),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
-    request: Request,
 ):
     if date:
         y, m, d = _parse_date_yyyy_mm_dd(date)
@@ -4112,12 +4188,12 @@ async def retrogrades_alerts(
 
 @app.get("/v1/notifications/daily", response_model=NotificationsDailyResponse)
 async def notifications_daily(
+    request: Request,
     date: Optional[str] = None,
     lat: float = Query(..., ge=-89.9999, le=89.9999),
     lng: float = Query(..., ge=-180, le=180),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
-    request: Request,
     auth=Depends(get_auth),
 ):
     d = date or _now_yyyy_mm_dd()

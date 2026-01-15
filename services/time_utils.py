@@ -61,9 +61,6 @@ def analyze_local_datetime(date_time: datetime, timezone_name: str) -> dict:
     }
 
 
-def resolve_tz_offset(
-    date_time: datetime,
-    timezone: Optional[str],
 def parse_local_datetime(
     *,
     datetime_local: Optional[datetime] = None,

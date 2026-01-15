@@ -5,8 +5,10 @@ All functions are pure and avoid global state.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, time, timedelta, timezone
-from zoneinfo import ZoneInfo
+from typing import Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 def parse_local_datetime(date_str: str, time_str: str | None) -> tuple[datetime, list[str]]:
@@ -100,12 +102,6 @@ def utc_offset_minutes(dt_aware: datetime) -> int:
     if offset is None:
         raise ValueError("Datetime não possui offset UTC.")
     return int(offset.total_seconds() // 60)
-from __future__ import annotations
-
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Optional
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 @dataclass(frozen=True)
