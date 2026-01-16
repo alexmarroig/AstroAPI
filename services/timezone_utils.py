@@ -174,6 +174,7 @@ def validate_local_datetime(
             delta = offset_fold1 - offset_fold0
             adjustment_minutes = int(delta.total_seconds() // 60)
             resolved_local = naive_local + delta
+            fold = 1
             offset = offset_fold1
         else:
             offset = offset_fold0 or offset_fold1
