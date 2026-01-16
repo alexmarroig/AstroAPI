@@ -1268,8 +1268,7 @@ def _impact_score(
     target_weight = TARGET_WEIGHTS.get(target, 1.0)
     duration_factor = DURATION_FACTORS.get(transit_planet, 1.0)
     orb_factor = max(0.0, min(1.0, 1.0 - (orb_deg / orb_max)))
-    score = 100 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor
-    return round(max(0.0, min(100.0, score)), 2)
+    return round(100 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor, 2)
 
 
 def _severity_for(score: float) -> str:
@@ -3004,6 +3003,53 @@ async def transits(
         )
         raise HTTPException(status_code=500, detail=f"Erro ao calcular trânsitos: {str(e)}")
 
+@app.post("/v1/transits/live")
+async def transits_live(body: TransitsLiveRequest, request: Request, auth=Depends(get_auth)):
+    target_dt = body.target_datetime
+    tz_offset_minutes = body.tz_offset_minutes
+
+    if body.timezone or tz_offset_minutes is not None:
+        local_dt = target_dt.replace(tzinfo=None)
+    else:
+        offset = target_dt.utcoffset()
+        if offset is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Informe timezone IANA, tz_offset_minutes ou target_datetime com offset.",
+            )
+        tz_offset_minutes = int(offset.total_seconds() // 60)
+        local_dt = target_dt.replace(tzinfo=None)
+
+    resolved_offset = _tz_offset_for(
+        local_dt, body.timezone, tz_offset_minutes, strict=body.strict_timezone
+    )
+    target_date = local_dt.strftime("%Y-%m-%d")
+
+    try:
+        transit_chart = compute_transits(
+            target_year=local_dt.year,
+            target_month=local_dt.month,
+            target_day=local_dt.day,
+            lat=body.lat,
+            lng=body.lng,
+            tz_offset_minutes=resolved_offset,
+            zodiac_type=body.zodiac_type.value,
+            ayanamsa=body.ayanamsa,
+        )
+
+        return {
+            "date": target_date,
+            "target_datetime": target_dt.isoformat(),
+            "tz_offset_minutes": resolved_offset,
+            "transits": transit_chart,
+        }
+    except Exception as e:
+        logger.error(
+            "transits_live_error",
+            exc_info=True,
+            extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
+        )
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular trânsitos: {str(e)}")
 @app.post("/v1/interpretation/natal")
 async def interpretation_natal(
     body: NatalChartRequest,
@@ -3148,6 +3194,156 @@ async def interpretation_natal(
             local_dt=dt,
         )
     )
+    return payload
+
+
+@app.post("/v1/transits/events", response_model=TransitEventsResponse)
+async def transits_events(
+    body: TransitsEventsRequest,
+    request: Request,
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
+
+    start_y, start_m, start_d = _parse_date_yyyy_mm_dd(body.range.from_)
+    end_y, end_m, end_d = _parse_date_yyyy_mm_dd(body.range.to)
+    start_date = datetime(year=start_y, month=start_m, day=start_d)
+    end_date = datetime(year=end_y, month=end_m, day=end_d)
+    if end_date < start_date:
+        raise HTTPException(status_code=400, detail="Intervalo inválido: 'from' deve ser <= 'to'.")
+    interval_days = (end_date - start_date).days + 1
+    if interval_days > 30:
+        raise HTTPException(
+            status_code=400,
+            detail="Intervalo máximo de 30 dias para eventos de trânsito.",
+        )
+
+    lang_key = (lang or "").lower()
+    cache_key = f"transit-events:{auth['user_id']}:{hash(body.model_dump_json())}:{lang_key}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    events: List[TransitEvent] = []
+    current = start_date
+    first_context = None
+    for _ in range(interval_days):
+        date_str = current.strftime("%Y-%m-%d")
+        context = _build_transits_context(
+            body,
+            tz_offset_minutes,
+            lang,
+            date_override=date_str,
+            preferencias=body.preferencias,
+        )
+        return payload
+
+
+@app.post("/v1/transits/events", response_model=TransitEventsResponse)
+async def transits_events(
+    body: TransitsEventsRequest,
+    request: Request,
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
+
+    start_y, start_m, start_d = _parse_date_yyyy_mm_dd(body.range.from_)
+    end_y, end_m, end_d = _parse_date_yyyy_mm_dd(body.range.to)
+    start_date = datetime(year=start_y, month=start_m, day=start_d)
+    end_date = datetime(year=end_y, month=end_m, day=end_d)
+    if end_date < start_date:
+        raise HTTPException(status_code=400, detail="Intervalo inválido: 'from' deve ser <= 'to'.")
+    interval_days = (end_date - start_date).days + 1
+    if interval_days > 30:
+        raise HTTPException(
+            status_code=400,
+            detail="Intervalo máximo de 30 dias para eventos de trânsito.",
+        )
+
+    lang_key = (lang or "").lower()
+    cache_key = f"transit-events:{auth['user_id']}:{hash(body.model_dump_json())}:{lang_key}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    events: List[TransitEvent] = []
+    current = start_date
+    first_context = None
+    for _ in range(interval_days):
+        date_str = current.strftime("%Y-%m-%d")
+        context = _build_transits_context(
+            body,
+            tz_offset_minutes,
+            lang,
+            date_override=date_str,
+            preferencias=body.preferencias,
+        )
+        if first_context is None:
+            first_context = context
+        events.extend(_build_transit_events_for_date(date_str, context))
+        current += timedelta(days=1)
+
+    events.sort(key=lambda item: (item.date_range.peak_utc, -item.impact_score))
+    avisos: List[str] = []
+    metadata = {
+        "range": {"from": body.range.from_, "to": body.range.to},
+        "perfil": (first_context or {}).get("profile", "custom"),
+        "aspectos_usados": (first_context or {}).get("aspectos_usados", []),
+        "orbes_usados": (first_context or {}).get("orbes_usados", {}),
+    }
+    metadata.update(
+        _build_time_metadata(
+            timezone=body.timezone,
+            tz_offset_minutes=tz_offset_minutes,
+            local_dt=natal_dt,
+        )
+    )
+
+    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
+    return payload
+    except Exception as e:
+        logger.error(
+            "interpretation_natal_error",
+            exc_info=True,
+            extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
+        )
+    )
+
+    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
     return payload
 
 
@@ -3562,6 +3758,9 @@ async def solar_return_calculate(
         tolerance_degrees=prefs.tolerancia_graus,
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
+        request_id=getattr(request.state, "request_id", None),
+        aspectos_habilitados=aspectos_habilitados,
+        orbes=orbes,
     )
 
     try:
@@ -3635,7 +3834,7 @@ async def solar_return_overlay(
             detail="Timezone do alvo inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
         )
 
-    natal_dt, warnings, time_missing = parse_local_datetime_ptbr(body.natal.data, body.natal.hora)
+    natal_dt, warnings, time_missing = parse_local_datetime(body.natal.data, body.natal.hora)
     avisos = list(warnings)
     if time_missing:
         avisos.append("Hora natal ausente: assumindo 12:00 local.")
@@ -3771,7 +3970,7 @@ async def solar_return_timeline(
             detail="Timezone natal inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
         )
 
-    natal_dt, warnings, time_missing = parse_local_datetime_ptbr(body.natal.data, body.natal.hora)
+    natal_dt, warnings, time_missing = parse_local_datetime(body.natal.data, body.natal.hora)
     avisos = list(warnings)
     if time_missing:
         avisos.append("Hora natal ausente: assumindo 12:00 local.")
