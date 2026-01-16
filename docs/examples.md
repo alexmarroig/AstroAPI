@@ -152,6 +152,60 @@ curl -X POST "$API_URL/v1/chart/transits" \
 
 **Notas de normalização**: usar `natal_*` (pass-through).
 
+## /v1/transits/events
+
+**cURL**
+```bash
+curl -X POST "$API_URL/v1/transits/events" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123" \
+  -d '{
+    "natal_year": 1995,
+    "natal_month": 11,
+    "natal_day": 7,
+    "natal_hour": 22,
+    "natal_minute": 56,
+    "natal_second": 0,
+    "lat": -23.5505,
+    "lng": -46.6333,
+    "timezone": "America/Sao_Paulo",
+    "range": { "from": "2026-11-07", "to": "2026-11-08" },
+    "preferencias": { "perfil": "padrao" }
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "events": [
+    {
+      "event_id": "7af5c1b2...",
+      "date_range": { "start_utc": "2026-11-07T00:00:00Z", "peak_utc": "2026-11-07T12:00:00Z", "end_utc": "2026-11-07T23:59:59Z" },
+      "transitando": "Marte",
+      "alvo_tipo": "PLANETA_NATAL",
+      "alvo": "Sol",
+      "aspecto": "Quadratura",
+      "orb_graus": 1.2,
+      "casa_ativada": 10,
+      "tags": ["Ação", "Ajuste"],
+      "severidade": "MEDIA",
+      "impact_score": 58.4,
+      "copy": {
+        "headline": "Marte em Quadratura com Sol",
+        "mecanica": "Trânsito enfatiza ação em temas ligados a Sol.",
+        "use_bem": "Tendência a favorecer clareza e ação prática quando você organiza prioridades.",
+        "risco": "Pede atenção a impulsos e excesso de carga; ajuste o ritmo com consistência."
+      }
+    }
+  ],
+  "metadados": { "range": { "from": "2026-11-07", "to": "2026-11-08" } },
+  "avisos": []
+}
+```
+
+**Notas de normalização**: usar `natal_*` (pass-through).
+
 ## /v1/chart/render-data
 
 **cURL**
@@ -203,9 +257,15 @@ curl -X GET "$API_URL/v1/cosmic-weather?date=2024-05-01&timezone=America/Sao_Pau
   "moon_phase": "waxing",
   "moon_sign": "Aries",
   "headline": "Lua Crescente em Aries",
-  "moon_ptbr": { "signo_ptbr": "Áries", "fase_ptbr": "Crescente" }
+  "moon_ptbr": { "signo_ptbr": "Áries", "fase_ptbr": "Crescente" },
+  "top_event": null,
+  "trigger_event": null,
+  "secondary_events": [],
+  "summary": { "tom": "Fase de avanço com energia de construção.", "gatilho": "Tendência a buscar progresso em temas de Áries.", "acao": "Escolha uma meta prática e execute em etapas curtas." }
 }
 ```
+
+**Opcional (curadoria com mapa natal)**: envie `natal_year`, `natal_month`, `natal_day`, `natal_hour`, `lat`, `lng` e `timezone` como query params para preencher `top_event`, `trigger_event` e `secondary_events`.
 
 ## /v1/cosmic-weather/range
 
@@ -263,6 +323,81 @@ curl -X POST "$API_URL/v1/solar-return/calculate" \
 ```
 
 **Notas de normalização**: PASS-THROUGH (não normalizar).
+
+## /v1/solar-return/overlay
+
+**cURL**
+```bash
+curl -X POST "$API_URL/v1/solar-return/overlay" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123" \
+  -d '{
+    "natal": {
+      "data": "1995-11-07",
+      "hora": "22:56:00",
+      "timezone": "America/Sao_Paulo",
+      "local": { "nome": "São Paulo, BR", "lat": -23.5505, "lon": -46.6333, "alt_m": 760 }
+    },
+    "alvo": {
+      "ano": 2026,
+      "timezone": "America/Sao_Paulo",
+      "local": { "nome": "São Paulo, BR", "lat": -23.5505, "lon": -46.6333, "alt_m": 760 }
+    },
+    "rs": { "year": 2026 },
+    "preferencias": { "perfil": "padrao" }
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "rs_em_casas_natais": [{ "planeta_rs": "Sol", "casa_natal": 10 }],
+  "natal_em_casas_rs": [{ "planeta_natal": "Sol", "casa_rs": 3 }],
+  "aspectos_rs_x_natal": [{ "transitando": "Sol", "alvo": "Lua", "aspecto": "Trígono", "orb_graus": 2.1 }],
+  "avisos": [],
+  "metadados": { "perfil": "padrao" }
+}
+```
+
+## /v1/solar-return/timeline
+
+**cURL**
+```bash
+curl -X POST "$API_URL/v1/solar-return/timeline" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "X-User-Id: user_123" \
+  -d '{
+    "natal": {
+      "data": "1995-11-07",
+      "hora": "22:56:00",
+      "timezone": "America/Sao_Paulo",
+      "local": { "nome": "São Paulo, BR", "lat": -23.5505, "lon": -46.6333, "alt_m": 760 }
+    },
+    "year": 2026,
+    "preferencias": { "perfil": "padrao" }
+  }'
+```
+
+**Response (exemplo)**
+```json
+{
+  "year_timeline": [
+    {
+      "start": "2026-03-20",
+      "peak": "2026-03-21",
+      "end": "2026-03-22",
+      "method": "solar_aspects",
+      "trigger": "Sol em Conjunção com Sol",
+      "tags": ["Ano", "Direção", "Ajuste"],
+      "score": 68.2
+    }
+  ],
+  "avisos": [],
+  "metadados": { "perfil": "padrao" }
+}
+```
 
 ## /v1/chart/distributions
 
