@@ -3056,144 +3056,201 @@ async def interpretation_natal(
     request: Request,
     auth=Depends(get_auth),
 ):
-    try:
-        dt = datetime(
-            year=body.natal_year,
-            month=body.natal_month,
-            day=body.natal_day,
-            hour=body.natal_hour,
-            minute=body.natal_minute,
-            second=body.natal_second,
-        )
-        tz_offset_minutes = _tz_offset_for(
-            dt,
-            body.timezone,
-            body.tz_offset_minutes,
-            strict=body.strict_timezone,
-            request_id=getattr(request.state, "request_id", None),
-            path=request.url.path,
-        )
-        chart = compute_chart(
-            year=body.natal_year,
-            month=body.natal_month,
-            day=body.natal_day,
-            hour=body.natal_hour,
-            minute=body.natal_minute,
-            second=body.natal_second,
-            lat=body.lat,
-            lng=body.lng,
+    dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
+    chart = compute_chart(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+        lat=body.lat,
+        lng=body.lng,
+        tz_offset_minutes=tz_offset_minutes,
+        house_system=body.house_system.value,
+        zodiac_type=body.zodiac_type.value,
+        ayanamsa=body.ayanamsa,
+    )
+    distributions = _distributions_payload(
+        chart,
+        metadata=_build_time_metadata(
+            timezone=body.timezone,
             tz_offset_minutes=tz_offset_minutes,
-            house_system=body.house_system.value,
-            zodiac_type=body.zodiac_type.value,
-            ayanamsa=body.ayanamsa,
-        )
-        distributions = _distributions_payload(
-            chart,
-            metadata=_build_time_metadata(
-                timezone=body.timezone,
-                tz_offset_minutes=tz_offset_minutes,
-                local_dt=dt,
-            ),
-        )
+            local_dt=dt,
+        ),
+    )
 
-        planets = chart.get("planets", {})
-        houses = chart.get("houses", {})
-        cusps = houses.get("cusps") or []
-        asc = float(houses.get("asc", 0.0))
-        mc = float(houses.get("mc", 0.0))
-        dsc = (asc + 180.0) % 360
-        ic = (mc + 180.0) % 360
+    planets = chart.get("planets", {})
+    houses = chart.get("houses", {})
+    cusps = houses.get("cusps") or []
+    asc = float(houses.get("asc", 0.0))
+    mc = float(houses.get("mc", 0.0))
+    dsc = (asc + 180.0) % 360
+    ic = (mc + 180.0) % 360
 
-        avisos: List[str] = []
-        angular_points = [asc, mc, dsc, ic]
+    avisos: List[str] = []
+    angular_points = [asc, mc, dsc, ic]
 
-        planet_weights: List[Dict[str, Any]] = []
-        for name in PLANETS.keys():
-            planet = planets.get(name)
-            if not planet:
-                continue
-            lon = planet.get("lon")
-            if lon is None:
-                continue
-            house = _house_for_lon(cusps, float(lon))
-            angularity = min(angle_diff(float(lon), pt) for pt in angular_points)
-            angular_score = 1.0 if angularity <= 5 else 0.4 if angularity <= 10 else 0.1
-            house_score = 0.8 if house in {1, 4, 7, 10} else 0.4 if house in {2, 5, 8, 11} else 0.2
-            weight = round(0.2 + angular_score + house_score, 2)
-            planet_weights.append(
-                {
-                    "planeta": planet_key_to_ptbr(name),
-                    "peso": min(weight, 1.0),
-                    "porque": f"Casa {house} com influência de ângulos ({angularity:.1f}°).",
-                }
-            )
-
-        planet_weights.sort(key=lambda item: item["peso"], reverse=True)
-        top_planets = planet_weights[:3] if planet_weights else []
-
-        sun = planets.get("Sun", {})
-        moon = planets.get("Moon", {})
-        sun_sign = sign_to_ptbr(sun.get("sign", ""))
-        moon_sign = sign_to_ptbr(moon.get("sign", ""))
-        sun_house = _house_for_lon(cusps, float(sun.get("lon", 0.0))) if sun else None
-        moon_house = _house_for_lon(cusps, float(moon.get("lon", 0.0))) if moon else None
-
-        asc_sign = sign_to_ptbr(sign_for_longitude(asc))
-        ruler = RULER_MAP.get(sign_for_longitude(asc))
-        ruler_house = None
-        if ruler and planets.get(ruler) and planets[ruler].get("lon") is not None:
-            ruler_house = _house_for_lon(cusps, float(planets[ruler]["lon"]))
-        else:
-            avisos.append("Casa do regente do Ascendente indisponível.")
-
-        sintese = [
-            f"Sol em {sun_sign} aponta foco em temas de vida mais visíveis.",
-            f"Lua em {moon_sign} indica estilo emocional e necessidades afetivas.",
-            f"Ascendente em {asc_sign} sugere um jeito direto de se apresentar.",
-        ]
-
-        temas_principais = [
+    planet_weights: List[Dict[str, Any]] = []
+    for name in PLANETS.keys():
+        planet = planets.get(name)
+        if not planet:
+            continue
+        lon = planet.get("lon")
+        if lon is None:
+            continue
+        house = _house_for_lon(cusps, float(lon))
+        angularity = min(angle_diff(float(lon), pt) for pt in angular_points)
+        angular_score = 1.0 if angularity <= 5 else 0.4 if angularity <= 10 else 0.1
+        house_score = 0.8 if house in {1, 4, 7, 10} else 0.4 if house in {2, 5, 8, 11} else 0.2
+        weight = round(0.2 + angular_score + house_score, 2)
+        planet_weights.append(
             {
-                "titulo": "Foco solar",
-                "porque": f"Sol em {sun_sign} na casa {sun_house}.",
-            },
-            {
-                "titulo": "Tom emocional",
-                "porque": f"Lua em {moon_sign} na casa {moon_house}.",
-            },
-        ]
-        if ruler_house:
-            temas_principais.append(
-                {
-                    "titulo": "Estilo de ação",
-                    "porque": f"Regente do Ascendente em casa {ruler_house}.",
-                }
-            )
-        else:
-            temas_principais.append(
-                {
-                    "titulo": "Estilo de ação",
-                    "porque": "Regente do Ascendente não disponível no momento.",
-                }
-            )
+                "planeta": planet_key_to_ptbr(name),
+                "peso": min(weight, 1.0),
+                "porque": f"Casa {house} com influência de ângulos ({angularity:.1f}°).",
+            }
+        )
 
-        payload = {
-            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
-            "titulo": "Resumo Geral do Mapa",
-            "sintese": sintese,
-            "temas_principais": temas_principais,
-            "planetas_com_maior_peso": top_planets,
-            "distribuicao": distributions,
-            "avisos": avisos,
-            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
-            "metadados": {"version": "v1", "fonte": "regras"},
-        }
-        payload["metadados"].update(
-            _build_time_metadata(
-                timezone=body.timezone,
-                tz_offset_minutes=tz_offset_minutes,
-                local_dt=dt,
-            )
+    planet_weights.sort(key=lambda item: item["peso"], reverse=True)
+    top_planets = planet_weights[:3] if planet_weights else []
+
+    sun = planets.get("Sun", {})
+    moon = planets.get("Moon", {})
+    sun_sign = sign_to_ptbr(sun.get("sign", ""))
+    moon_sign = sign_to_ptbr(moon.get("sign", ""))
+    sun_house = _house_for_lon(cusps, float(sun.get("lon", 0.0))) if sun else None
+    moon_house = _house_for_lon(cusps, float(moon.get("lon", 0.0))) if moon else None
+
+    asc_sign = sign_to_ptbr(sign_for_longitude(asc))
+    ruler = RULER_MAP.get(sign_for_longitude(asc))
+    ruler_house = None
+    if ruler and planets.get(ruler) and planets[ruler].get("lon") is not None:
+        ruler_house = _house_for_lon(cusps, float(planets[ruler]["lon"]))
+    else:
+        avisos.append("Casa do regente do Ascendente indisponível.")
+
+    sintese = [
+        f"Sol em {sun_sign} aponta foco em temas de vida mais visíveis.",
+        f"Lua em {moon_sign} indica estilo emocional e necessidades afetivas.",
+        f"Ascendente em {asc_sign} sugere um jeito direto de se apresentar.",
+    ]
+
+    temas_principais = [
+        {
+            "titulo": "Foco solar",
+            "porque": f"Sol em {sun_sign} na casa {sun_house}.",
+        },
+        {
+            "titulo": "Tom emocional",
+            "porque": f"Lua em {moon_sign} na casa {moon_house}.",
+        },
+    ]
+    if ruler_house:
+        temas_principais.append(
+            {
+                "titulo": "Estilo de ação",
+                "porque": f"Regente do Ascendente em casa {ruler_house}.",
+            }
+        )
+    else:
+        temas_principais.append(
+            {
+                "titulo": "Estilo de ação",
+                "porque": "Regente do Ascendente não disponível no momento.",
+            }
+        )
+
+    payload = {
+        "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
+        "titulo": "Resumo Geral do Mapa",
+        "sintese": sintese,
+        "temas_principais": temas_principais,
+        "planetas_com_maior_peso": top_planets,
+        "distribuicao": distributions,
+        "avisos": avisos,
+        "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
+        "metadados": {"version": "v1", "fonte": "regras"},
+    }
+    payload["metadados"].update(
+        _build_time_metadata(
+            timezone=body.timezone,
+            tz_offset_minutes=tz_offset_minutes,
+            local_dt=dt,
+        )
+    )
+    return payload
+
+
+@app.post("/v1/transits/events", response_model=TransitEventsResponse)
+async def transits_events(
+    body: TransitsEventsRequest,
+    request: Request,
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
+
+    start_y, start_m, start_d = _parse_date_yyyy_mm_dd(body.range.from_)
+    end_y, end_m, end_d = _parse_date_yyyy_mm_dd(body.range.to)
+    start_date = datetime(year=start_y, month=start_m, day=start_d)
+    end_date = datetime(year=end_y, month=end_m, day=end_d)
+    if end_date < start_date:
+        raise HTTPException(status_code=400, detail="Intervalo inválido: 'from' deve ser <= 'to'.")
+    interval_days = (end_date - start_date).days + 1
+    if interval_days > 30:
+        raise HTTPException(
+            status_code=400,
+            detail="Intervalo máximo de 30 dias para eventos de trânsito.",
+        )
+
+    lang_key = (lang or "").lower()
+    cache_key = f"transit-events:{auth['user_id']}:{hash(body.model_dump_json())}:{lang_key}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    events: List[TransitEvent] = []
+    current = start_date
+    first_context = None
+    for _ in range(interval_days):
+        date_str = current.strftime("%Y-%m-%d")
+        context = _build_transits_context(
+            body,
+            tz_offset_minutes,
+            lang,
+            date_override=date_str,
+            preferencias=body.preferencias,
         )
         return payload
 
@@ -3283,7 +3340,11 @@ async def transits_events(
             exc_info=True,
             extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
         )
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar resumo do mapa: {str(e)}")
+    )
+
+    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
+    return payload
 
 
 @app.post("/v1/transits/events", response_model=TransitEventsResponse)
