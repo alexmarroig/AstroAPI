@@ -42,7 +42,7 @@ from astro.i18n_ptbr import (
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
 from services.time_utils import localize_with_zoneinfo, parse_local_datetime, to_utc
-from timezone_utils import parse_local_datetime
+from timezone_utils import parse_local_datetime as parse_local_datetime_ptbr
 
 from core.security import require_api_key_and_user
 from core.cache import cache
@@ -50,7 +50,6 @@ from core.plans import is_trial_or_premium
 from services.timezone_utils import resolve_local_datetime
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
-from routes.time import router as time_router
 from services import timezone_utils
 
 # -----------------------------
@@ -151,7 +150,6 @@ app.add_middleware(
 # -----------------------------
 app.include_router(lunations_router)
 app.include_router(progressions_router)
-app.include_router(time_router)
 
 # -----------------------------
 # Middleware: request_id + logging
@@ -2280,6 +2278,11 @@ async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
     result = timezone_utils.validate_local_datetime(
         body.datetime_local, body.timezone, strict=body.strict
     )
+    warnings = []
+    if result.warning:
+        warning_message = result.warning.get("message")
+        if warning_message:
+            warnings.append(warning_message)
     payload = {
         "input_datetime_local": result.input_datetime.isoformat(),
         "datetime_local": result.resolved_datetime.isoformat(),
@@ -2288,6 +2291,10 @@ async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
         "utc_datetime": result.utc_datetime.isoformat(),
         "fold": result.fold,
         "warning": result.warning,
+        "datetime_local_usado": result.resolved_datetime.isoformat(),
+        "datetime_utc_usado": result.utc_datetime.replace(tzinfo=None).isoformat(),
+        "fold_usado": result.fold,
+        "avisos": warnings,
         "metadados_tecnicos": {
             "idioma": "pt-BR",
             "fonte_traducao": "backend",
@@ -3478,10 +3485,10 @@ async def cosmic_weather_range(
         raise HTTPException(status_code=400, detail="Parâmetro 'from' deve ser anterior ou igual a 'to'.")
 
     interval_days = (end_date - start_date).days + 1
-    if interval_days > 31:
+    if interval_days > 90:
         raise HTTPException(
             status_code=422,
-            detail="Range too large. Max 31 days. Use smaller windows.",
+            detail="Range too large. Max 90 days. Use smaller windows.",
         )
 
     _log(
@@ -3655,7 +3662,7 @@ async def solar_return_calculate(
         )
 
     try:
-        natal_dt, warnings, natal_time_missing = parse_local_datetime(
+        natal_dt, warnings, natal_time_missing = parse_local_datetime_ptbr(
             body.natal.data, body.natal.hora
         )
     except HTTPException:

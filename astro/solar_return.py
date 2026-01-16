@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import logging
 from typing import Callable, Dict, List, Literal, Optional
 from core.timezone_utils import TimezoneResolutionError, resolve_timezone_offset
