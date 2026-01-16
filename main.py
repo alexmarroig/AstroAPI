@@ -2,9 +2,10 @@ import os
 import time
 import uuid
 import json
+import hashlib
 from dataclasses import replace
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Optional, Any, Dict, Literal, List
 from pathlib import Path
@@ -25,7 +26,7 @@ import swisseph as swe
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only, solar_return_datetime
 from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only
 from astro.solar_return import SolarReturnInputs, compute_solar_return_payload
-from astro.aspects import compute_transit_aspects, get_aspects_profile
+from astro.aspects import compute_transit_aspects, get_aspects_profile, resolve_aspects_config
 from astro.retrogrades import retrograde_alerts
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
@@ -41,7 +42,7 @@ from astro.i18n_ptbr import (
 from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
 from ai.prompts import build_cosmic_chat_messages
 from services.time_utils import localize_with_zoneinfo, parse_local_datetime, to_utc
-from timezone_utils import parse_local_datetime
+from timezone_utils import parse_local_datetime as parse_local_datetime_ptbr
 
 from core.security import require_api_key_and_user
 from core.cache import cache
@@ -49,7 +50,6 @@ from core.plans import is_trial_or_premium
 from services.timezone_utils import resolve_local_datetime
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
-from routes.time import router as time_router
 from services import timezone_utils
 
 # -----------------------------
@@ -150,7 +150,6 @@ app.add_middleware(
 # -----------------------------
 app.include_router(lunations_router)
 app.include_router(progressions_router)
-app.include_router(time_router)
 
 # -----------------------------
 # Middleware: request_id + logging
@@ -275,6 +274,15 @@ class HouseSystem(str, Enum):
 class ZodiacType(str, Enum):
     TROPICAL = "tropical"
     SIDEREAL = "sidereal"
+
+
+class PreferenciasPerfil(BaseModel):
+    perfil: Optional[Literal["padrao", "custom"]] = Field(
+        default=None, description="Perfil de preferências: padrao ou custom."
+    )
+    orb_max_deg: Optional[float] = Field(
+        default=None, ge=0, description="Orb máximo para scoring quando em perfil custom."
+    )
 
 
 class NatalChartRequest(BaseModel):
@@ -430,6 +438,7 @@ class TransitsRequest(BaseModel):
         default=False,
         description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
     )
+    preferencias: Optional[PreferenciasPerfil] = None
 
     @model_validator(mode="after")
     def validate_tz(self):
@@ -509,6 +518,10 @@ class CosmicWeatherResponse(BaseModel):
     text_ptbr: Optional[str] = None
     resumo_ptbr: Optional[str] = None
     moon_ptbr: Optional[Dict[str, Any]] = None
+    top_event: Optional["TransitEvent"] = None
+    trigger_event: Optional["TransitEvent"] = None
+    secondary_events: Optional[List["TransitEvent"]] = None
+    summary: Optional[Dict[str, str]] = None
     metadados_tecnicos: Optional[Dict[str, Any]] = None
 
 
@@ -588,12 +601,18 @@ class SolarReturnTarget(BaseModel):
 
 
 class SolarReturnPreferencias(BaseModel):
+    perfil: Optional[Literal["padrao", "custom"]] = Field(
+        default=None, description="Perfil de preferências (padrao/custom)."
+    )
     zodiaco: ZodiacType = Field(default=ZodiacType.TROPICAL)
     ayanamsa: Optional[str] = None
     sistema_casas: HouseSystem = Field(default=HouseSystem.PLACIDUS)
     modo: Optional[Literal["geocentrico", "topocentrico"]] = Field(default="geocentrico")
     aspectos_habilitados: Optional[List[str]] = None
     orbes: Optional[Dict[str, float]] = None
+    orb_max_deg: Optional[float] = Field(
+        default=None, ge=0, description="Orb máximo para scoring quando em perfil custom."
+    )
     janela_dias: Optional[int] = Field(
         default=None, ge=1, description="Janela em dias para busca do retorno solar."
     )
@@ -611,6 +630,77 @@ class SolarReturnPreferencias(BaseModel):
 class SolarReturnRequest(BaseModel):
     natal: SolarReturnNatal
     alvo: SolarReturnTarget
+    preferencias: Optional[SolarReturnPreferencias] = None
+
+
+class TransitDateRange(BaseModel):
+    from_: str = Field(..., alias="from", description="Data inicial YYYY-MM-DD.")
+    to: str = Field(..., description="Data final YYYY-MM-DD.")
+
+
+class TransitsEventsRequest(TransitsRequest):
+    target_date: Optional[str] = Field(
+        default=None, description="Campo opcional (ignorado quando range é fornecido)."
+    )
+    range: TransitDateRange
+    preferencias: Optional[PreferenciasPerfil] = None
+
+
+class TransitEventDateRange(BaseModel):
+    start_utc: str
+    peak_utc: str
+    end_utc: str
+
+
+class TransitEventCopy(BaseModel):
+    headline: str
+    mecanica: str
+    use_bem: str
+    risco: str
+
+
+class TransitEvent(BaseModel):
+    event_id: str
+    date_range: TransitEventDateRange
+    transitando: str
+    alvo_tipo: Literal["PLANETA_NATAL", "ANGULO_NATAL", "CUSPIDE_CASA_NATAL"]
+    alvo: str
+    aspecto: str
+    orb_graus: float
+    casa_ativada: Optional[int] = None
+    tags: List[str]
+    severidade: Literal["BAIXA", "MEDIA", "ALTA"]
+    impact_score: float
+    copy: TransitEventCopy
+
+
+class TransitEventsResponse(BaseModel):
+    events: List[TransitEvent]
+    metadados: Dict[str, Any]
+    avisos: List[str]
+
+
+class SolarReturnOverlayReference(BaseModel):
+    solar_return_utc: Optional[str] = Field(default=None, description="UTC ISO já calculado.")
+    year: Optional[int] = Field(default=None, ge=1800, le=2200)
+
+    @model_validator(mode="after")
+    def validate_reference(self):
+        if not self.solar_return_utc and not self.year:
+            raise HTTPException(status_code=422, detail="Informe solar_return_utc ou year.")
+        return self
+
+
+class SolarReturnOverlayRequest(BaseModel):
+    natal: SolarReturnNatal
+    alvo: SolarReturnTarget
+    rs: Optional[SolarReturnOverlayReference] = None
+    preferencias: Optional[SolarReturnPreferencias] = None
+
+
+class SolarReturnTimelineRequest(BaseModel):
+    natal: SolarReturnNatal
+    year: int = Field(..., ge=1800, le=2200)
     preferencias: Optional[SolarReturnPreferencias] = None
 
 
@@ -667,12 +757,6 @@ class ValidateLocalDatetimeRequest(BaseModel):
     strict: bool = Field(
         default=True,
         description="Quando true, rejeita horário ambíguo/inexistente nas transições de DST.",
-    date: str = Field(..., description="Data local no formato YYYY-MM-DD.")
-    time: str = Field(..., description="Hora local no formato HH:MM ou HH:MM:SS.")
-    timezone: str = Field(..., description="Timezone IANA (ex.: America/Sao_Paulo).")
-    strict: bool = Field(
-        default=False,
-        description="Quando true, rejeita horários ambíguos/inexistentes em transições de DST.",
     )
     prefer_fold: int = Field(
         default=0,
@@ -1025,10 +1109,319 @@ def _solar_return_datetime(
 
     return v1_dt
 
+
+PROFILE_DEFAULT_ASPECTS = ["conj", "opos", "quad", "tri", "sext"]
+PROFILE_DEFAULT_ORB_MAX = 5.0
+
+PLANET_WEIGHTS = {
+    "Moon": 1.0,
+    "Mercury": 1.5,
+    "Venus": 1.5,
+    "Sun": 1.5,
+    "Mars": 2.2,
+    "Jupiter": 2.5,
+    "Saturn": 3.3,
+    "Uranus": 3.0,
+    "Neptune": 3.0,
+    "Pluto": 3.6,
+}
+
+ASPECT_WEIGHTS = {
+    "conjunction": 1.0,
+    "opposition": 0.95,
+    "square": 0.95,
+    "trine": 0.70,
+    "sextile": 0.55,
+}
+
+TARGET_WEIGHTS = {
+    "Sun": 1.25,
+    "Moon": 1.25,
+    "ASC": 1.25,
+    "MC": 1.25,
+}
+
+DURATION_FACTORS = {
+    "Moon": 0.85,
+    "Mercury": 0.85,
+    "Venus": 0.85,
+    "Sun": 0.85,
+    "Mars": 0.90,
+    "Jupiter": 1.00,
+    "Saturn": 1.00,
+    "Uranus": 1.00,
+    "Neptune": 1.00,
+    "Pluto": 1.00,
+}
+
+PLANET_TAGS = {
+    "Sun": ["Identidade", "Direção"],
+    "Moon": ["Emoções", "Necessidades"],
+    "Mercury": ["Comunicação", "Decisão"],
+    "Venus": ["Relacionamentos", "Valor"],
+    "Mars": ["Ação", "Coragem"],
+    "Jupiter": ["Expansão", "Oportunidade"],
+    "Saturn": ["Estrutura", "Responsabilidade"],
+    "Uranus": ["Mudança", "Ruptura"],
+    "Neptune": ["Inspiração", "Sensibilidade"],
+    "Pluto": ["Transformação", "Intensidade"],
+}
+
+ASPECT_TAGS = {
+    "conjunction": ["Intensidade"],
+    "opposition": ["Tensão"],
+    "square": ["Ajuste"],
+    "trine": ["Fluxo"],
+    "sextile": ["Abertura"],
+}
+
+
+def _resolve_preferencias_profile(preferencias: Optional[PreferenciasPerfil]) -> str:
+    if preferencias is None:
+        return "padrao"
+    if preferencias.perfil is None:
+        return "custom"
+    return preferencias.perfil
+
+
+def _resolve_orb_max(
+    orbes: Optional[Dict[str, float]], preferencias: Optional[PreferenciasPerfil]
+) -> float:
+    if preferencias and preferencias.orb_max_deg is not None:
+        return float(preferencias.orb_max_deg)
+    if orbes:
+        return max(float(value) for value in orbes.values())
+    return PROFILE_DEFAULT_ORB_MAX
+
+
+def _apply_profile_defaults(
+    aspectos_habilitados: Optional[List[str]],
+    orbes: Optional[Dict[str, float]],
+    preferencias: Optional[PreferenciasPerfil],
+) -> tuple[Optional[List[str]], Optional[Dict[str, float]], float, str]:
+    profile = _resolve_preferencias_profile(preferencias)
+    orb_max = _resolve_orb_max(orbes, preferencias)
+    if profile == "padrao":
+        if aspectos_habilitados is None:
+            aspectos_habilitados = list(PROFILE_DEFAULT_ASPECTS)
+        if orbes is None:
+            orbes = {aspecto: PROFILE_DEFAULT_ORB_MAX for aspecto in aspectos_habilitados}
+        orb_max = PROFILE_DEFAULT_ORB_MAX
+    return aspectos_habilitados, orbes, orb_max, profile
+
+
+def _apply_solar_return_profile(
+    preferencias: Optional[SolarReturnPreferencias],
+) -> tuple[Optional[List[str]], Optional[Dict[str, float]], float, str]:
+    if preferencias is None:
+        perfil = "padrao"
+    elif preferencias.perfil is None:
+        perfil = "custom"
+    else:
+        perfil = preferencias.perfil
+    aspectos_habilitados = preferencias.aspectos_habilitados if preferencias else None
+    orbes = preferencias.orbes if preferencias else None
+    orb_max = (
+        float(preferencias.orb_max_deg)
+        if preferencias and preferencias.orb_max_deg is not None
+        else _resolve_orb_max(orbes, None)
+    )
+    if perfil == "padrao":
+        if aspectos_habilitados is None:
+            aspectos_habilitados = list(PROFILE_DEFAULT_ASPECTS)
+        if orbes is None:
+            orbes = {aspecto: PROFILE_DEFAULT_ORB_MAX for aspecto in aspectos_habilitados}
+        orb_max = PROFILE_DEFAULT_ORB_MAX
+    return aspectos_habilitados, orbes, orb_max, perfil
+
+
+def _house_for_lon(cusps: List[float], lon: float) -> int:
+    if not cusps:
+        return 1
+    lon_mod = lon % 360
+    for idx in range(12):
+        start = float(cusps[idx])
+        end = float(cusps[(idx + 1) % 12])
+        start_mod = start
+        end_mod = end
+        lon_check = lon_mod
+        if end_mod < start_mod:
+            end_mod += 360
+            if lon_check < start_mod:
+                lon_check += 360
+        if start_mod <= lon_check < end_mod:
+            return idx + 1
+    return 12
+
+
+def _impact_score(
+    transit_planet: str,
+    aspect: str,
+    target: str,
+    orb_deg: float,
+    orb_max: float,
+) -> float:
+    if orb_max <= 0:
+        orb_max = PROFILE_DEFAULT_ORB_MAX
+    planet_weight = PLANET_WEIGHTS.get(transit_planet, 1.0)
+    aspect_weight = ASPECT_WEIGHTS.get(aspect, 0.5)
+    target_weight = TARGET_WEIGHTS.get(target, 1.0)
+    duration_factor = DURATION_FACTORS.get(transit_planet, 1.0)
+    orb_factor = max(0.0, min(1.0, 1.0 - (orb_deg / orb_max)))
+    score = 100 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor
+    return round(max(0.0, min(100.0, score)), 2)
+
+
+def _severity_for(score: float) -> str:
+    if score >= 70:
+        return "ALTA"
+    if score >= 45:
+        return "MEDIA"
+    return "BAIXA"
+
+
+def _event_tags(transit_planet: str, aspect: str) -> List[str]:
+    tags = []
+    tags.extend(PLANET_TAGS.get(transit_planet, []))
+    tags.extend(ASPECT_TAGS.get(aspect, []))
+    seen = set()
+    result = []
+    for tag in tags:
+        if tag not in seen:
+            result.append(tag)
+            seen.add(tag)
+    return result[:4]
+
+
+def _build_event_copy(transitando: str, aspecto: str, alvo: str, tags: List[str]) -> TransitEventCopy:
+    tag_base = tags[0] if tags else "foco"
+    return TransitEventCopy(
+        headline=f"{transitando} em {aspecto} com {alvo}",
+        mecanica=f"Trânsito enfatiza {tag_base.lower()} em temas ligados a {alvo}.",
+        use_bem="Tendência a favorecer clareza e ação prática quando você organiza prioridades.",
+        risco="Pede atenção a impulsos e excesso de carga; ajuste o ritmo com consistência.",
+    )
+
+
+def _build_transit_event(
+    aspect: Dict[str, Any],
+    date_str: str,
+    natal_chart: Dict[str, Any],
+    orb_max: float,
+) -> TransitEvent:
+    transit_planet = aspect["transit_planet"]
+    natal_planet = aspect["natal_planet"]
+    aspect_key = aspect["aspect"]
+    orb_deg = float(aspect.get("orb", 0.0))
+    transitando_pt = planet_key_to_ptbr(transit_planet)
+    alvo_pt = planet_key_to_ptbr(natal_planet)
+    aspect_pt = aspect_to_ptbr(aspect_key)
+    tags = _event_tags(transit_planet, aspect_key)
+    score = _impact_score(transit_planet, aspect_key, natal_planet, orb_deg, orb_max)
+    event_hash = hashlib.sha1(
+        f"{date_str}:{transit_planet}:{natal_planet}:{aspect_key}:{round(orb_deg,2)}".encode("utf-8")
+    ).hexdigest()
+    date_start = f"{date_str}T00:00:00Z"
+    date_peak = f"{date_str}T12:00:00Z"
+    date_end = f"{date_str}T23:59:59Z"
+    natal_cusps = natal_chart.get("houses", {}).get("cusps", [])
+    natal_lon = float(natal_chart.get("planets", {}).get(natal_planet, {}).get("lon", 0.0))
+    return TransitEvent(
+        event_id=event_hash,
+        date_range=TransitEventDateRange(start_utc=date_start, peak_utc=date_peak, end_utc=date_end),
+        transitando=transitando_pt,
+        alvo_tipo="PLANETA_NATAL",
+        alvo=alvo_pt,
+        aspecto=aspect_pt,
+        orb_graus=round(orb_deg, 2),
+        casa_ativada=_house_for_lon(natal_cusps, natal_lon) if natal_cusps else None,
+        tags=tags,
+        severidade=_severity_for(score),
+        impact_score=score,
+        copy=_build_event_copy(transitando_pt, aspect_pt, alvo_pt, tags),
+    )
+
+
+def _daily_summary(phase: str, sign: str) -> Dict[str, str]:
+    sign_pt = sign_to_ptbr(sign)
+    templates = {
+        "new_moon": {
+            "tom": "Início de ciclo com foco em intenção e organização.",
+            "gatilho": f"Tendência a priorizar decisões ligadas a {sign_pt}.",
+            "acao": "Defina uma ação simples e mantenha o ritmo ao longo do dia.",
+        },
+        "waxing": {
+            "tom": "Fase de avanço com energia de construção.",
+            "gatilho": f"Tendência a buscar progresso em temas de {sign_pt}.",
+            "acao": "Escolha uma meta prática e execute em etapas curtas.",
+        },
+        "full_moon": {
+            "tom": "Pico de visibilidade e ajustes de equilíbrio.",
+            "gatilho": f"Tendência a perceber resultados em assuntos de {sign_pt}.",
+            "acao": "Revisite o que já foi iniciado e faça correções objetivas.",
+        },
+        "waning": {
+            "tom": "Fase de depuração e reorganização.",
+            "gatilho": f"Tendência a limpar excessos em temas de {sign_pt}.",
+            "acao": "Finalize pendências e reduza ruídos antes de seguir.",
+        },
+    }
+    return templates.get(phase, templates["waxing"])
+
+
+def _summary_from_event(event: TransitEvent) -> Dict[str, str]:
+    tags = event.tags or []
+    tag = tags[0] if tags else "foco"
+    return {
+        "tom": f"Tendência a concentrar energia em {tag.lower()}.",
+        "gatilho": f"{event.transitando} em {event.aspecto} com {event.alvo} pede atenção a prioridades.",
+        "acao": "Aja com consistência e ajuste o ritmo conforme o contexto.",
+    }
+
+
+def _curate_daily_events(events: List[TransitEvent]) -> Dict[str, Any]:
+    if not events:
+        return {
+            "top_event": None,
+            "trigger_event": None,
+            "secondary_events": [],
+            "summary": None,
+        }
+    ordered = sorted(events, key=lambda item: item.impact_score, reverse=True)
+    top_event = ordered[0]
+    trigger_event = next(
+        (item for item in ordered if item.transitando == "Marte" and item.impact_score >= 55),
+        None,
+    )
+    if trigger_event is None and len(ordered) > 1:
+        trigger_event = ordered[1]
+    secondary_pool = [item for item in ordered[1:] if item != trigger_event]
+    secondary_events = secondary_pool[:2]
+    summary = _summary_from_event(top_event)
+    return {
+        "top_event": top_event,
+        "trigger_event": trigger_event,
+        "secondary_events": secondary_events,
+        "summary": summary,
+    }
+
 def _build_transits_context(
-    body: TransitsRequest, tz_offset_minutes: int, lang: Optional[str]
+    body: TransitsRequest,
+    tz_offset_minutes: int,
+    lang: Optional[str],
+    date_override: Optional[str] = None,
+    preferencias: Optional[PreferenciasPerfil] = None,
 ) -> Dict[str, Any]:
-    target_y, target_m, target_d = _parse_date_yyyy_mm_dd(body.target_date)
+    target_date = date_override or body.target_date
+    if not target_date:
+        raise HTTPException(status_code=422, detail="Informe target_date ou range.")
+    target_y, target_m, target_d = _parse_date_yyyy_mm_dd(target_date)
+    aspectos_habilitados, orbes, orb_max, profile = _apply_profile_defaults(
+        body.aspectos_habilitados,
+        body.orbes,
+        preferencias if preferencias is not None else body.preferencias,
+    )
+
     natal_chart = compute_chart(
         year=body.natal_year,
         month=body.natal_month,
@@ -1059,8 +1452,8 @@ def _build_transits_context(
     transit_chart = _apply_sign_localization(transit_chart, lang)
 
     aspects_config, aspectos_usados, orbes_usados = resolve_aspects_config(
-        body.aspectos_habilitados,
-        body.orbes,
+        aspectos_habilitados,
+        orbes,
     )
     aspects = compute_transit_aspects(
         transit_planets=transit_chart["planets"],
@@ -1074,7 +1467,18 @@ def _build_transits_context(
         "aspects": aspects,
         "aspectos_usados": aspectos_usados,
         "orbes_usados": orbes_usados,
+        "orb_max": orb_max,
+        "profile": profile,
     }
+
+
+def _build_transit_events_for_date(date_str: str, context: Dict[str, Any]) -> List[TransitEvent]:
+    events: List[TransitEvent] = []
+    natal_chart = context["natal"]
+    for aspect in context["aspects"]:
+        events.append(_build_transit_event(aspect, date_str, natal_chart, context["orb_max"]))
+    events.sort(key=lambda item: item.impact_score, reverse=True)
+    return events
 
 def _areas_activated(aspects: List[Dict[str, Any]], moon_phase: Optional[str] = None) -> List[Dict[str, Any]]:
     base_score = 50.0
@@ -1425,7 +1829,9 @@ def _build_time_metadata(
     )
     return {
         "timezone_resolvida": timezone,
+        "timezone_usada": timezone,
         "tz_offset_minutes_usado": tz_offset_minutes,
+        "tz_offset_minutes": tz_offset_minutes,
         "fold_usado": _resolve_fold_for(local_dt, timezone, tz_offset_minutes),
         "datetime_local_usado": local_dt.isoformat() if local_dt else None,
         "datetime_utc_usado": utc_dt.isoformat() if utc_dt else None,
@@ -1481,6 +1887,10 @@ def _cosmic_weather_payload(
         "deg_in_sign": moon.get("deg_in_sign"),
         "headline": f"Lua {phase_label} em {sign}",
         "text": _cw_text(phase, sign),
+        "top_event": None,
+        "trigger_event": None,
+        "secondary_events": [],
+        "summary": _daily_summary(phase, sign),
     }
 
     payload = _apply_moon_localization(payload, lang)
@@ -1651,6 +2061,15 @@ ENDPOINTS_CATALOG = [
     },
     {
         "method": "POST",
+        "path": "/v1/transits/events",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "TransitsEventsRequest",
+        "response_model": "TransitEventsResponse",
+        "description": "Eventos de trânsito curados (determinístico).",
+    },
+    {
+        "method": "POST",
         "path": "/v1/chart/render-data",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
@@ -1729,6 +2148,24 @@ ENDPOINTS_CATALOG = [
         "request_model": "SolarReturnRequest",
         "response_model": None,
         "description": "Cálculo completo de revolução solar.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/solar-return/overlay",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "SolarReturnOverlayRequest",
+        "response_model": None,
+        "description": "Sobreposição RS × Natal.",
+    },
+    {
+        "method": "POST",
+        "path": "/v1/solar-return/timeline",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": "SolarReturnTimelineRequest",
+        "response_model": None,
+        "description": "Timeline anual (Sol em aspectos).",
     },
     {
         "method": "POST",
@@ -1842,6 +2279,11 @@ async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
     result = timezone_utils.validate_local_datetime(
         body.datetime_local, body.timezone, strict=body.strict
     )
+    warnings = []
+    if result.warning:
+        warning_message = result.warning.get("message")
+        if warning_message:
+            warnings.append(warning_message)
     payload = {
         "input_datetime_local": result.input_datetime.isoformat(),
         "datetime_local": result.resolved_datetime.isoformat(),
@@ -1850,6 +2292,10 @@ async def validate_local_datetime(body: ValidateLocalDatetimeRequest):
         "utc_datetime": result.utc_datetime.isoformat(),
         "fold": result.fold,
         "warning": result.warning,
+        "datetime_local_usado": result.resolved_datetime.isoformat(),
+        "datetime_utc_usado": result.utc_datetime.replace(tzinfo=None).isoformat(),
+        "fold_usado": result.fold,
+        "avisos": warnings,
         "metadados_tecnicos": {
             "idioma": "pt-BR",
             "fonte_traducao": "backend",
@@ -2283,6 +2729,7 @@ async def solar_return(
         strict=body.strict_timezone,
         request_id=getattr(request.state, "request_id", None),
         path=request.url.path,
+    )
     natal_local = parse_local_datetime(datetime_local=natal_dt)
     localized = localize_with_zoneinfo(
         natal_local, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone
@@ -2563,153 +3010,226 @@ async def interpretation_natal(
     request: Request,
     auth=Depends(get_auth),
 ):
-    try:
-        dt = datetime(
-            year=body.natal_year,
-            month=body.natal_month,
-            day=body.natal_day,
-            hour=body.natal_hour,
-            minute=body.natal_minute,
-            second=body.natal_second,
-        )
-        tz_offset_minutes = _tz_offset_for(
-            dt,
-            body.timezone,
-            body.tz_offset_minutes,
-            strict=body.strict_timezone,
-            request_id=getattr(request.state, "request_id", None),
-            path=request.url.path,
-        )
-        chart = compute_chart(
-            year=body.natal_year,
-            month=body.natal_month,
-            day=body.natal_day,
-            hour=body.natal_hour,
-            minute=body.natal_minute,
-            second=body.natal_second,
-            lat=body.lat,
-            lng=body.lng,
+    dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
+    chart = compute_chart(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+        lat=body.lat,
+        lng=body.lng,
+        tz_offset_minutes=tz_offset_minutes,
+        house_system=body.house_system.value,
+        zodiac_type=body.zodiac_type.value,
+        ayanamsa=body.ayanamsa,
+    )
+    distributions = _distributions_payload(
+        chart,
+        metadata=_build_time_metadata(
+            timezone=body.timezone,
             tz_offset_minutes=tz_offset_minutes,
-            house_system=body.house_system.value,
-            zodiac_type=body.zodiac_type.value,
-            ayanamsa=body.ayanamsa,
-        )
-        distributions = _distributions_payload(
-            chart,
-            metadata=_build_time_metadata(
-                timezone=body.timezone,
-                tz_offset_minutes=tz_offset_minutes,
-                local_dt=dt,
-            ),
-        )
+            local_dt=dt,
+        ),
+    )
 
-        planets = chart.get("planets", {})
-        houses = chart.get("houses", {})
-        cusps = houses.get("cusps") or []
-        asc = float(houses.get("asc", 0.0))
-        mc = float(houses.get("mc", 0.0))
-        dsc = (asc + 180.0) % 360
-        ic = (mc + 180.0) % 360
+    planets = chart.get("planets", {})
+    houses = chart.get("houses", {})
+    cusps = houses.get("cusps") or []
+    asc = float(houses.get("asc", 0.0))
+    mc = float(houses.get("mc", 0.0))
+    dsc = (asc + 180.0) % 360
+    ic = (mc + 180.0) % 360
 
-        avisos: List[str] = []
-        angular_points = [asc, mc, dsc, ic]
+    avisos: List[str] = []
+    angular_points = [asc, mc, dsc, ic]
 
-        planet_weights: List[Dict[str, Any]] = []
-        for name in PLANETS.keys():
-            planet = planets.get(name)
-            if not planet:
-                continue
-            lon = planet.get("lon")
-            if lon is None:
-                continue
-            house = _house_for_lon(cusps, float(lon))
-            angularity = min(angle_diff(float(lon), pt) for pt in angular_points)
-            angular_score = 1.0 if angularity <= 5 else 0.4 if angularity <= 10 else 0.1
-            house_score = 0.8 if house in {1, 4, 7, 10} else 0.4 if house in {2, 5, 8, 11} else 0.2
-            weight = round(0.2 + angular_score + house_score, 2)
-            planet_weights.append(
-                {
-                    "planeta": planet_key_to_ptbr(name),
-                    "peso": min(weight, 1.0),
-                    "porque": f"Casa {house} com influência de ângulos ({angularity:.1f}°).",
-                }
-            )
-
-        planet_weights.sort(key=lambda item: item["peso"], reverse=True)
-        top_planets = planet_weights[:3] if planet_weights else []
-
-        sun = planets.get("Sun", {})
-        moon = planets.get("Moon", {})
-        sun_sign = sign_to_ptbr(sun.get("sign", ""))
-        moon_sign = sign_to_ptbr(moon.get("sign", ""))
-        sun_house = _house_for_lon(cusps, float(sun.get("lon", 0.0))) if sun else None
-        moon_house = _house_for_lon(cusps, float(moon.get("lon", 0.0))) if moon else None
-
-        asc_sign = sign_to_ptbr(sign_for_longitude(asc))
-        ruler = RULER_MAP.get(sign_for_longitude(asc))
-        ruler_house = None
-        if ruler and planets.get(ruler) and planets[ruler].get("lon") is not None:
-            ruler_house = _house_for_lon(cusps, float(planets[ruler]["lon"]))
-        else:
-            avisos.append("Casa do regente do Ascendente indisponível.")
-
-        sintese = [
-            f"Sol em {sun_sign} aponta foco em temas de vida mais visíveis.",
-            f"Lua em {moon_sign} indica estilo emocional e necessidades afetivas.",
-            f"Ascendente em {asc_sign} sugere um jeito direto de se apresentar.",
-        ]
-
-        temas_principais = [
+    planet_weights: List[Dict[str, Any]] = []
+    for name in PLANETS.keys():
+        planet = planets.get(name)
+        if not planet:
+            continue
+        lon = planet.get("lon")
+        if lon is None:
+            continue
+        house = _house_for_lon(cusps, float(lon))
+        angularity = min(angle_diff(float(lon), pt) for pt in angular_points)
+        angular_score = 1.0 if angularity <= 5 else 0.4 if angularity <= 10 else 0.1
+        house_score = 0.8 if house in {1, 4, 7, 10} else 0.4 if house in {2, 5, 8, 11} else 0.2
+        weight = round(0.2 + angular_score + house_score, 2)
+        planet_weights.append(
             {
-                "titulo": "Foco solar",
-                "porque": f"Sol em {sun_sign} na casa {sun_house}.",
-            },
-            {
-                "titulo": "Tom emocional",
-                "porque": f"Lua em {moon_sign} na casa {moon_house}.",
-            },
-        ]
-        if ruler_house:
-            temas_principais.append(
-                {
-                    "titulo": "Estilo de ação",
-                    "porque": f"Regente do Ascendente em casa {ruler_house}.",
-                }
-            )
-        else:
-            temas_principais.append(
-                {
-                    "titulo": "Estilo de ação",
-                    "porque": "Regente do Ascendente não disponível no momento.",
-                }
-            )
+                "planeta": planet_key_to_ptbr(name),
+                "peso": min(weight, 1.0),
+                "porque": f"Casa {house} com influência de ângulos ({angularity:.1f}°).",
+            }
+        )
 
-        payload = {
-            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
-            "titulo": "Resumo Geral do Mapa",
-            "sintese": sintese,
-            "temas_principais": temas_principais,
-            "planetas_com_maior_peso": top_planets,
-            "distribuicao": distributions,
-            "avisos": avisos,
-            "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
-            "metadados": {"version": "v1", "fonte": "regras"},
-        }
-        payload["metadados"].update(
-            _build_time_metadata(
-                timezone=body.timezone,
-                tz_offset_minutes=tz_offset_minutes,
-                local_dt=dt,
-            )
+    planet_weights.sort(key=lambda item: item["peso"], reverse=True)
+    top_planets = planet_weights[:3] if planet_weights else []
+
+    sun = planets.get("Sun", {})
+    moon = planets.get("Moon", {})
+    sun_sign = sign_to_ptbr(sun.get("sign", ""))
+    moon_sign = sign_to_ptbr(moon.get("sign", ""))
+    sun_house = _house_for_lon(cusps, float(sun.get("lon", 0.0))) if sun else None
+    moon_house = _house_for_lon(cusps, float(moon.get("lon", 0.0))) if moon else None
+
+    asc_sign = sign_to_ptbr(sign_for_longitude(asc))
+    ruler = RULER_MAP.get(sign_for_longitude(asc))
+    ruler_house = None
+    if ruler and planets.get(ruler) and planets[ruler].get("lon") is not None:
+        ruler_house = _house_for_lon(cusps, float(planets[ruler]["lon"]))
+    else:
+        avisos.append("Casa do regente do Ascendente indisponível.")
+
+    sintese = [
+        f"Sol em {sun_sign} aponta foco em temas de vida mais visíveis.",
+        f"Lua em {moon_sign} indica estilo emocional e necessidades afetivas.",
+        f"Ascendente em {asc_sign} sugere um jeito direto de se apresentar.",
+    ]
+
+    temas_principais = [
+        {
+            "titulo": "Foco solar",
+            "porque": f"Sol em {sun_sign} na casa {sun_house}.",
+        },
+        {
+            "titulo": "Tom emocional",
+            "porque": f"Lua em {moon_sign} na casa {moon_house}.",
+        },
+    ]
+    if ruler_house:
+        temas_principais.append(
+            {
+                "titulo": "Estilo de ação",
+                "porque": f"Regente do Ascendente em casa {ruler_house}.",
+            }
         )
-        return payload
-    except Exception as e:
-        logger.error(
-            "interpretation_natal_error",
-            exc_info=True,
-            extra={"request_id": getattr(request.state, "request_id", None), "path": request.url.path},
+    else:
+        temas_principais.append(
+            {
+                "titulo": "Estilo de ação",
+                "porque": "Regente do Ascendente não disponível no momento.",
+            }
         )
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar resumo do mapa: {str(e)}")
+
+    payload = {
+        "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
+        "titulo": "Resumo Geral do Mapa",
+        "sintese": sintese,
+        "temas_principais": temas_principais,
+        "planetas_com_maior_peso": top_planets,
+        "distribuicao": distributions,
+        "avisos": avisos,
+        "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
+        "metadados": {"version": "v1", "fonte": "regras"},
+    }
+    payload["metadados"].update(
+        _build_time_metadata(
+            timezone=body.timezone,
+            tz_offset_minutes=tz_offset_minutes,
+            local_dt=dt,
+        )
+    )
+    return payload
+
+
+@app.post("/v1/transits/events", response_model=TransitEventsResponse)
+async def transits_events(
+    body: TransitsEventsRequest,
+    request: Request,
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    natal_dt = datetime(
+        year=body.natal_year,
+        month=body.natal_month,
+        day=body.natal_day,
+        hour=body.natal_hour,
+        minute=body.natal_minute,
+        second=body.natal_second,
+    )
+    tz_offset_minutes = _tz_offset_for(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+        path=request.url.path,
+    )
+
+    start_y, start_m, start_d = _parse_date_yyyy_mm_dd(body.range.from_)
+    end_y, end_m, end_d = _parse_date_yyyy_mm_dd(body.range.to)
+    start_date = datetime(year=start_y, month=start_m, day=start_d)
+    end_date = datetime(year=end_y, month=end_m, day=end_d)
+    if end_date < start_date:
+        raise HTTPException(status_code=400, detail="Intervalo inválido: 'from' deve ser <= 'to'.")
+    interval_days = (end_date - start_date).days + 1
+    if interval_days > 30:
+        raise HTTPException(
+            status_code=400,
+            detail="Intervalo máximo de 30 dias para eventos de trânsito.",
+        )
+
+    lang_key = (lang or "").lower()
+    cache_key = f"transit-events:{auth['user_id']}:{hash(body.model_dump_json())}:{lang_key}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    events: List[TransitEvent] = []
+    current = start_date
+    first_context = None
+    for _ in range(interval_days):
+        date_str = current.strftime("%Y-%m-%d")
+        context = _build_transits_context(
+            body,
+            tz_offset_minutes,
+            lang,
+            date_override=date_str,
+            preferencias=body.preferencias,
+        )
+        if first_context is None:
+            first_context = context
+        events.extend(_build_transit_events_for_date(date_str, context))
+        current += timedelta(days=1)
+
+    events.sort(key=lambda item: (item.date_range.peak_utc, -item.impact_score))
+    avisos: List[str] = []
+    metadata = {
+        "range": {"from": body.range.from_, "to": body.range.to},
+        "perfil": (first_context or {}).get("profile", "custom"),
+        "aspectos_usados": (first_context or {}).get("aspectos_usados", []),
+        "orbes_usados": (first_context or {}).get("orbes_usados", {}),
+    }
+    metadata.update(
+        _build_time_metadata(
+            timezone=body.timezone,
+            tz_offset_minutes=tz_offset_minutes,
+            local_dt=natal_dt,
+        )
+    )
+
+    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
+    return payload
 
 @app.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
 async def cosmic_weather(
@@ -2719,6 +3239,18 @@ async def cosmic_weather(
     tz_offset_minutes: Optional[int] = Query(
         None, ge=-840, le=840, description="Offset manual em minutos; ignorado se timezone for enviado."
     ),
+    natal_year: Optional[int] = Query(None, ge=1800, le=2100),
+    natal_month: Optional[int] = Query(None, ge=1, le=12),
+    natal_day: Optional[int] = Query(None, ge=1, le=31),
+    natal_hour: Optional[int] = Query(None, ge=0, le=23),
+    natal_minute: int = Query(0, ge=0, le=59),
+    natal_second: int = Query(0, ge=0, le=59),
+    lat: Optional[float] = Query(None, ge=-89.9999, le=89.9999),
+    lng: Optional[float] = Query(None, ge=-180, le=180),
+    house_system: HouseSystem = Query(HouseSystem.PLACIDUS),
+    zodiac_type: ZodiacType = Query(ZodiacType.TROPICAL),
+    ayanamsa: Optional[str] = Query(None),
+    preferencias_perfil: Optional[Literal["padrao", "custom"]] = Query(None),
     lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
@@ -2732,6 +3264,52 @@ async def cosmic_weather(
         request_id=getattr(request.state, "request_id", None),
         path=request.url.path,
     )
+    if natal_year and natal_month and natal_day and natal_hour is not None and lat is not None and lng is not None:
+        natal_dt = datetime(
+            year=natal_year,
+            month=natal_month,
+            day=natal_day,
+            hour=natal_hour,
+            minute=natal_minute,
+            second=natal_second,
+        )
+        tz_offset_minutes_resolved = _tz_offset_for(
+            natal_dt,
+            timezone,
+            tz_offset_minutes,
+            request_id=getattr(request.state, "request_id", None),
+            path=request.url.path,
+        )
+        preferencias = (
+            PreferenciasPerfil(perfil=preferencias_perfil) if preferencias_perfil is not None else None
+        )
+        transits_body = TransitsRequest(
+            natal_year=natal_year,
+            natal_month=natal_month,
+            natal_day=natal_day,
+            natal_hour=natal_hour,
+            natal_minute=natal_minute,
+            natal_second=natal_second,
+            lat=lat,
+            lng=lng,
+            tz_offset_minutes=tz_offset_minutes_resolved,
+            timezone=timezone,
+            target_date=d,
+            house_system=house_system,
+            zodiac_type=zodiac_type,
+            ayanamsa=ayanamsa,
+            preferencias=preferencias,
+        )
+        context = _build_transits_context(
+            transits_body,
+            tz_offset_minutes_resolved,
+            lang,
+            date_override=d,
+            preferencias=transits_body.preferencias,
+        )
+        events = _build_transit_events_for_date(d, context)
+        curated = _curate_daily_events(events)
+        payload.update(curated)
     return CosmicWeatherResponse(**payload)
 
 
@@ -2772,10 +3350,10 @@ async def cosmic_weather_range(
         raise HTTPException(status_code=400, detail="Parâmetro 'from' deve ser anterior ou igual a 'to'.")
 
     interval_days = (end_date - start_date).days + 1
-    if interval_days > 31:
+    if interval_days > 90:
         raise HTTPException(
             status_code=422,
-            detail="Range too large. Max 31 days. Use smaller windows.",
+            detail="Range too large. Max 90 days. Use smaller windows.",
         )
 
     _log(
@@ -2949,7 +3527,7 @@ async def solar_return_calculate(
         )
 
     try:
-        natal_dt, warnings, natal_time_missing = parse_local_datetime(
+        natal_dt, warnings, natal_time_missing = parse_local_datetime_ptbr(
             body.natal.data, body.natal.hora
         )
     except HTTPException:
@@ -2957,11 +3535,12 @@ async def solar_return_calculate(
     except Exception:
         raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
 
-    prefs = body.preferencias or SolarReturnPreferencias()
+    prefs = body.preferencias or SolarReturnPreferencias(perfil="padrao")
     engine = (os.getenv("SOLAR_RETURN_ENGINE") or "v1").lower()
     if engine not in ("v1", "v2"):
         engine = "v1"
 
+    aspectos_habilitados, orbes, _, _ = _apply_solar_return_profile(prefs)
     inputs = SolarReturnInputs(
         natal_date=natal_dt,
         natal_lat=body.natal.local.lat,
@@ -2974,8 +3553,8 @@ async def solar_return_calculate(
         house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
         zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
         ayanamsa=prefs.ayanamsa,
-        aspectos_habilitados=prefs.aspectos_habilitados,
-        orbes=prefs.orbes,
+        aspectos_habilitados=aspectos_habilitados,
+        orbes=orbes,
         engine=engine,  # type: ignore[arg-type]
         window_days=prefs.janela_dias,
         step_hours=prefs.passo_horas,
@@ -2983,9 +3562,6 @@ async def solar_return_calculate(
         tolerance_degrees=prefs.tolerancia_graus,
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
-        request_id=getattr(request.state, "request_id", None),
-        aspectos_habilitados=prefs.aspectos_habilitados,
-        orbes=prefs.orbes,
     )
 
     try:
@@ -3034,6 +3610,264 @@ async def solar_return_calculate(
         payload["warnings"] = warnings
 
     return payload
+
+
+@app.post("/v1/solar-return/overlay")
+async def solar_return_overlay(
+    body: SolarReturnOverlayRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    try:
+        ZoneInfo(body.natal.timezone)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(
+            status_code=422,
+            detail="Timezone natal inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
+        )
+
+    target_timezone = body.alvo.timezone or body.natal.timezone
+    try:
+        ZoneInfo(target_timezone)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(
+            status_code=422,
+            detail="Timezone do alvo inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
+        )
+
+    natal_dt, warnings, time_missing = parse_local_datetime_ptbr(body.natal.data, body.natal.hora)
+    avisos = list(warnings)
+    if time_missing:
+        avisos.append("Hora natal ausente: assumindo 12:00 local.")
+
+    localized = localize_with_zoneinfo(
+        natal_dt, body.natal.timezone, None, strict=False
+    )
+    avisos.extend(localized.warnings)
+    natal_offset = localized.tz_offset_minutes
+
+    rs_reference = body.rs or SolarReturnOverlayReference(year=body.alvo.ano)
+    if rs_reference.solar_return_utc:
+        parsed = datetime.fromisoformat(rs_reference.solar_return_utc.replace("Z", "+00:00"))
+        if parsed.tzinfo is not None:
+            solar_return_utc = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        else:
+            solar_return_utc = parsed
+    else:
+        solar_return_utc = _solar_return_datetime(
+            natal_dt=natal_dt,
+            target_year=rs_reference.year or body.alvo.ano,
+            tz_offset_minutes=natal_offset,
+            request=request,
+            user_id=auth.get("user_id"),
+        )
+
+    target_tzinfo = ZoneInfo(target_timezone)
+    solar_return_local_aware = solar_return_utc.replace(tzinfo=timezone.utc).astimezone(target_tzinfo)
+    solar_return_local = solar_return_local_aware.replace(tzinfo=None)
+    target_offset = int(solar_return_local_aware.utcoffset().total_seconds() // 60)
+
+    prefs = body.preferencias or SolarReturnPreferencias(perfil="padrao")
+    aspectos_habilitados, orbes, _, perfil = _apply_solar_return_profile(prefs)
+
+    natal_chart = compute_chart(
+        year=natal_dt.year,
+        month=natal_dt.month,
+        day=natal_dt.day,
+        hour=natal_dt.hour,
+        minute=natal_dt.minute,
+        second=natal_dt.second,
+        lat=body.natal.local.lat,
+        lng=body.natal.local.lon,
+        tz_offset_minutes=natal_offset,
+        house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
+        zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
+        ayanamsa=prefs.ayanamsa,
+    )
+
+    rs_chart = compute_chart(
+        year=solar_return_local.year,
+        month=solar_return_local.month,
+        day=solar_return_local.day,
+        hour=solar_return_local.hour,
+        minute=solar_return_local.minute,
+        second=solar_return_local.second,
+        lat=body.alvo.local.lat,
+        lng=body.alvo.local.lon,
+        tz_offset_minutes=target_offset,
+        house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
+        zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
+        ayanamsa=prefs.ayanamsa,
+    )
+
+    aspects_config, aspectos_usados, orbes_usados = resolve_aspects_config(
+        aspectos_habilitados,
+        orbes,
+    )
+    aspects = compute_transit_aspects(
+        transit_planets=rs_chart["planets"],
+        natal_planets=natal_chart["planets"],
+        aspects=aspects_config,
+    )
+    aspectos_rs_x_natal = [
+        {
+            "transitando": planet_key_to_ptbr(item["transit_planet"]),
+            "alvo": planet_key_to_ptbr(item["natal_planet"]),
+            "aspecto": aspect_to_ptbr(item["aspect"]),
+            "orb_graus": float(item["orb"]),
+        }
+        for item in aspects
+    ]
+
+    rs_em_casas_natais = [
+        {
+            "planeta_rs": planet_key_to_ptbr(name),
+            "casa_natal": _house_for_lon(natal_chart.get("houses", {}).get("cusps", []), data["lon"]),
+        }
+        for name, data in rs_chart.get("planets", {}).items()
+    ]
+    natal_em_casas_rs = [
+        {
+            "planeta_natal": planet_key_to_ptbr(name),
+            "casa_rs": _house_for_lon(rs_chart.get("houses", {}).get("cusps", []), data["lon"]),
+        }
+        for name, data in natal_chart.get("planets", {}).items()
+    ]
+
+    metadados = {
+        "perfil": perfil,
+        "aspectos_usados": aspectos_usados,
+        "orbes_usados": orbes_usados,
+    }
+    metadados.update(
+        _build_time_metadata(
+            timezone=target_timezone,
+            tz_offset_minutes=target_offset,
+            local_dt=solar_return_local,
+            avisos=avisos,
+        )
+    )
+
+    return {
+        "rs_em_casas_natais": rs_em_casas_natais,
+        "natal_em_casas_rs": natal_em_casas_rs,
+        "aspectos_rs_x_natal": aspectos_rs_x_natal,
+        "avisos": avisos,
+        "metadados": metadados,
+    }
+
+
+@app.post("/v1/solar-return/timeline")
+async def solar_return_timeline(
+    body: SolarReturnTimelineRequest,
+    request: Request,
+    auth=Depends(get_auth),
+):
+    try:
+        ZoneInfo(body.natal.timezone)
+    except ZoneInfoNotFoundError:
+        raise HTTPException(
+            status_code=422,
+            detail="Timezone natal inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
+        )
+
+    natal_dt, warnings, time_missing = parse_local_datetime_ptbr(body.natal.data, body.natal.hora)
+    avisos = list(warnings)
+    if time_missing:
+        avisos.append("Hora natal ausente: assumindo 12:00 local.")
+
+    localized = localize_with_zoneinfo(
+        natal_dt, body.natal.timezone, None, strict=False
+    )
+    avisos.extend(localized.warnings)
+    natal_offset = localized.tz_offset_minutes
+
+    prefs = body.preferencias or SolarReturnPreferencias(perfil="padrao")
+    aspectos_habilitados, orbes, orb_max, perfil = _apply_solar_return_profile(prefs)
+
+    natal_chart = compute_chart(
+        year=natal_dt.year,
+        month=natal_dt.month,
+        day=natal_dt.day,
+        hour=natal_dt.hour,
+        minute=natal_dt.minute,
+        second=natal_dt.second,
+        lat=body.natal.local.lat,
+        lng=body.natal.local.lon,
+        tz_offset_minutes=natal_offset,
+        house_system=prefs.sistema_casas.value if hasattr(prefs.sistema_casas, "value") else prefs.sistema_casas,
+        zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
+        ayanamsa=prefs.ayanamsa,
+    )
+
+    targets = {
+        "Sol": natal_chart["planets"]["Sun"]["lon"],
+        "Lua": natal_chart["planets"]["Moon"]["lon"],
+        "ASC": natal_chart["houses"]["asc"],
+        "MC": natal_chart["houses"]["mc"],
+    }
+    aspect_angles = {
+        "conjunction": {"label": "Conjunção", "angle": 0},
+        "sextile": {"label": "Sextil", "angle": 60},
+        "square": {"label": "Quadratura", "angle": 90},
+        "trine": {"label": "Trígono", "angle": 120},
+        "opposition": {"label": "Oposição", "angle": 180},
+    }
+
+    start_date = datetime(body.year, 1, 1)
+    end_date = datetime(body.year, 12, 31)
+    current = start_date
+    items = []
+    while current <= end_date:
+        date_str = current.strftime("%Y-%m-%d")
+        transit_chart = compute_transits(
+            target_year=current.year,
+            target_month=current.month,
+            target_day=current.day,
+            lat=body.natal.local.lat,
+            lng=body.natal.local.lon,
+            tz_offset_minutes=natal_offset,
+            zodiac_type=prefs.zodiaco.value if hasattr(prefs.zodiaco, "value") else prefs.zodiaco,
+            ayanamsa=prefs.ayanamsa,
+        )
+        sun_lon = transit_chart["planets"]["Sun"]["lon"]
+        for alvo, natal_lon in targets.items():
+            separation = angle_diff(sun_lon, natal_lon)
+            for aspecto_key, aspect_info in aspect_angles.items():
+                orb = abs(separation - aspect_info["angle"])
+                if orb <= orb_max:
+                    score = _impact_score(
+                        "Sun",
+                        aspecto_key,
+                        alvo if alvo in TARGET_WEIGHTS else "Sun",
+                        orb,
+                        orb_max,
+                    )
+                    items.append(
+                        {
+                            "start": (current - timedelta(days=1)).strftime("%Y-%m-%d"),
+                            "peak": date_str,
+                            "end": (current + timedelta(days=1)).strftime("%Y-%m-%d"),
+                            "method": "solar_aspects",
+                            "trigger": f"Sol em {aspect_info['label']} com {alvo}",
+                            "tags": ["Ano", "Direção", "Ajuste"],
+                            "score": round(score, 2),
+                        }
+                    )
+        current += timedelta(days=1)
+
+    items.sort(key=lambda item: item["peak"])
+    return {
+        "year_timeline": items,
+        "avisos": avisos,
+        "metadados": {
+            "perfil": perfil,
+            "aspectos_usados": aspectos_habilitados or [],
+            "orbes_usados": orbes or {},
+            "timezone_usada": body.natal.timezone,
+            "tz_offset_minutes": natal_offset,
+        },
+    }
 
 @app.post("/v1/ai/cosmic-chat")
 async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(get_auth)):
@@ -3092,11 +3926,11 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
 @app.get("/v1/alerts/system", response_model=SystemAlertsResponse)
 async def system_alerts(
     date: str,
+    request: Request,
     lat: float = Query(..., ge=-89.9999, le=89.9999),
     lng: float = Query(..., ge=-180, le=180),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
-    request: Request,
     auth=Depends(get_auth),
 ):
     _parse_date_yyyy_mm_dd(date)
@@ -3136,10 +3970,10 @@ async def system_alerts(
 
 @app.get("/v1/alerts/retrogrades")
 async def retrogrades_alerts(
+    request: Request,
     date: Optional[str] = Query(None, description="YYYY-MM-DD"),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
-    request: Request,
 ):
     if date:
         y, m, d = _parse_date_yyyy_mm_dd(date)
@@ -3190,12 +4024,12 @@ async def retrogrades_alerts(
 
 @app.get("/v1/notifications/daily", response_model=NotificationsDailyResponse)
 async def notifications_daily(
+    request: Request,
     date: Optional[str] = None,
     lat: float = Query(..., ge=-89.9999, le=89.9999),
     lng: float = Query(..., ge=-180, le=180),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
-    request: Request,
     auth=Depends(get_auth),
 ):
     d = date or _now_yyyy_mm_dd()

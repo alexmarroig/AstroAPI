@@ -3,33 +3,40 @@ from typing import Dict, List, Optional, Tuple
 
 from astro.utils import angle_diff
 
-ASPECTS_PROFILES: Dict[str, Dict[str, dict]] = {
-    "legacy": {
-        "conjunction": {"angle": 0, "orb": 6, "influence": "intense"},
-        "opposition": {"angle": 180, "orb": 6, "influence": "challenging"},
-        "square": {"angle": 90, "orb": 5, "influence": "challenging"},
-        "trine": {"angle": 120, "orb": 5, "influence": "supportive"},
-        "sextile": {"angle": 60, "orb": 4, "influence": "supportive"},
-    },
-    "modern": {
-        "conjunction": {"angle": 0, "orb": 8, "influence": "intense"},
-        "opposition": {"angle": 180, "orb": 8, "influence": "challenging"},
-        "square": {"angle": 90, "orb": 6, "influence": "challenging"},
-        "trine": {"angle": 120, "orb": 6, "influence": "supportive"},
-        "sextile": {"angle": 60, "orb": 5, "influence": "supportive"},
-        "quincunx": {"angle": 150, "orb": 3, "influence": "adjusting"},
-        "semisextile": {"angle": 30, "orb": 2, "influence": "subtle"},
-        "semisquare": {"angle": 45, "orb": 2, "influence": "challenging"},
-        "sesquisquare": {"angle": 135, "orb": 2, "influence": "challenging"},
-    },
-    "strict": {
-        "conjunction": {"angle": 0, "orb": 4, "influence": "intense"},
-        "opposition": {"angle": 180, "orb": 4, "influence": "challenging"},
-        "square": {"angle": 90, "orb": 4, "influence": "challenging"},
-        "trine": {"angle": 120, "orb": 4, "influence": "supportive"},
-        "sextile": {"angle": 60, "orb": 3, "influence": "supportive"},
-    },
+ASPECTS_LEGACY: Dict[str, dict] = {
+    "conjunction": {"angle": 0, "orb": 6, "influence": "intense"},
+    "opposition": {"angle": 180, "orb": 6, "influence": "challenging"},
+    "square": {"angle": 90, "orb": 5, "influence": "challenging"},
+    "trine": {"angle": 120, "orb": 5, "influence": "supportive"},
+    "sextile": {"angle": 60, "orb": 4, "influence": "supportive"},
 }
+
+ASPECTS_MODERN: Dict[str, dict] = {
+    "conjunction": {"angle": 0, "orb": 8, "influence": "intense"},
+    "opposition": {"angle": 180, "orb": 8, "influence": "challenging"},
+    "square": {"angle": 90, "orb": 6, "influence": "challenging"},
+    "trine": {"angle": 120, "orb": 6, "influence": "supportive"},
+    "sextile": {"angle": 60, "orb": 5, "influence": "supportive"},
+    "quincunx": {"angle": 150, "orb": 3, "influence": "adjusting"},
+    "semisextile": {"angle": 30, "orb": 2, "influence": "subtle"},
+    "semisquare": {"angle": 45, "orb": 2, "influence": "challenging"},
+    "sesquisquare": {"angle": 135, "orb": 2, "influence": "challenging"},
+}
+
+ASPECTS_STRICT: Dict[str, dict] = {
+    "conjunction": {"angle": 0, "orb": 4, "influence": "intense"},
+    "opposition": {"angle": 180, "orb": 4, "influence": "challenging"},
+    "square": {"angle": 90, "orb": 4, "influence": "challenging"},
+    "trine": {"angle": 120, "orb": 4, "influence": "supportive"},
+    "sextile": {"angle": 60, "orb": 3, "influence": "supportive"},
+}
+
+ASPECTS_PROFILES: Dict[str, Dict[str, dict]] = {
+    "legacy": ASPECTS_LEGACY,
+    "modern": ASPECTS_MODERN,
+    "strict": ASPECTS_STRICT,
+}
+
 ASPECTS = ASPECTS_PROFILES["legacy"]
 
 
@@ -44,28 +51,6 @@ def resolve_aspects_profile(profile: Optional[str]) -> Tuple[str, Dict[str, dict
 
 def get_aspects_profile() -> Tuple[str, Dict[str, dict]]:
     return resolve_aspects_profile(os.getenv("ASPECTS_PROFILE"))
-
-ASPECTS_MODERN = {
-    "conjunction": {"angle": 0, "orb": 6, "influence": "intense"},
-    "opposition": {"angle": 180, "orb": 5, "influence": "challenging"},
-    "square": {"angle": 90, "orb": 4, "influence": "challenging"},
-    "trine": {"angle": 120, "orb": 4, "influence": "supportive"},
-    "sextile": {"angle": 60, "orb": 3, "influence": "supportive"},
-}
-
-ASPECTS_STRICT = {
-    "conjunction": {"angle": 0, "orb": 4, "influence": "intense"},
-    "opposition": {"angle": 180, "orb": 4, "influence": "challenging"},
-    "square": {"angle": 90, "orb": 3, "influence": "challenging"},
-    "trine": {"angle": 120, "orb": 3, "influence": "supportive"},
-    "sextile": {"angle": 60, "orb": 2, "influence": "supportive"},
-}
-
-ASPECTS_PROFILES = {
-    "legacy": ASPECTS_LEGACY,
-    "modern": ASPECTS_MODERN,
-    "strict": ASPECTS_STRICT,
-}
 
 ASPECT_ALIASES = {
     "conj": "conjunction",
