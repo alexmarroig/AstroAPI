@@ -46,7 +46,7 @@ from timezone_utils import parse_local_datetime as parse_local_datetime_ptbr
 
 from core.security import require_api_key_and_user
 from core.cache import cache
-from core.plans import is_trial_or_premium
+from core.plans import TRIAL_SECONDS, get_user_plan, is_trial_or_premium
 from services.timezone_utils import resolve_local_datetime
 from routes.lunations import router as lunations_router
 from routes.progressions import router as progressions_router
@@ -1960,6 +1960,15 @@ ENDPOINTS_CATALOG = [
         "description": "Lista de endpoints (dev-only).",
     },
     {
+        "method": "GET",
+        "path": "/v1/account/plan",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": None,
+        "response_model": None,
+        "description": "Plano da conta e informações de trial.",
+    },
+    {
         "method": "POST",
         "path": "/v1/time/resolve-tz",
         "auth_required": False,
@@ -2238,6 +2247,18 @@ async def system_endpoints():
             "ambiente": "dev",
             **_build_time_metadata(timezone=None, tz_offset_minutes=None, local_dt=None),
         },
+    }
+
+@app.get("/v1/account/plan")
+async def account_plan(auth=Depends(get_auth)):
+    plan_obj = get_user_plan(auth["user_id"])
+    trial_started_at = int(plan_obj.trial_started_at)
+    trial_ends_at = int(plan_obj.trial_started_at + TRIAL_SECONDS)
+    return {
+        "plan": plan_obj.plan,
+        "trial_started_at": trial_started_at,
+        "trial_ends_at": trial_ends_at,
+        "is_trial": plan_obj.plan == "trial",
     }
 
 
