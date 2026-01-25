@@ -3537,7 +3537,6 @@ async def render_data(
     ]
 
     resp = {
-        "zodiac": ZODIAC_SIGNS,
         "zodiac": zodiac,
         "houses": houses,
         "planets": planets,
