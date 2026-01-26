@@ -83,6 +83,7 @@ class SolarReturnInputs:
     aspectos_habilitados: Optional[List[str]] = None
     orbes: Optional[Dict[str, float]] = None
     aspects_profile: Optional[str] = None
+    request_id: Optional[str] = None
 
 
 def _resolve_zodiac(config: SolarReturnConfig) -> tuple[ZodiacType, int]:

@@ -2,137 +2,84 @@ import os
 import time
 import uuid
 import json
-import hashlib
-from dataclasses import replace
 import logging
-from datetime import datetime, timedelta, timezone
-from enum import Enum
-from typing import Optional, Any, Dict, Literal, List
-from pathlib import Path
-import subprocess
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-
-from core.timezone_utils import TimezoneResolutionError, resolve_timezone_offset
+from datetime import datetime
+from typing import Any, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request, Depends, Header, Query
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, ConfigDict, model_validator, AliasChoices
 from fastapi.exceptions import RequestValidationError
-from openai import OpenAI
-import swisseph as swe
 
-from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only, solar_return_datetime
-from astro.ephemeris import PLANETS, compute_chart, compute_transits, compute_moon_only
-from astro.solar_return import SolarReturnInputs, compute_solar_return_payload
-from astro.aspects import compute_transit_aspects, get_aspects_profile, resolve_aspects_config
-from astro.retrogrades import retrograde_alerts
-from astro.i18n_ptbr import (
-    aspect_to_ptbr,
-    build_aspects_ptbr,
-    build_houses_ptbr,
-    build_planets_ptbr,
-    format_degree_ptbr,
-    format_position_ptbr,
-    planet_key_to_ptbr,
-    sign_to_ptbr,
-    sign_for_longitude,
+# Importação dos roteadores modulares
+from routes import (
+    system, account, time as time_route, chart, insights, transits,
+    cosmic_weather, solar_return, ai, diagnostics, alerts, notifications,
+    lunations, progressions
 )
-from astro.utils import angle_diff, to_julian_day, sign_to_pt, ZODIAC_SIGNS, ZODIAC_SIGNS_PT
-from ai.prompts import build_cosmic_chat_messages
-from services.time_utils import localize_with_zoneinfo, parse_local_datetime, to_utc
-from timezone_utils import parse_local_datetime as parse_local_datetime_ptbr
-
-from core.security import require_api_key_and_user
-from core.cache import cache
-from core.plans import TRIAL_SECONDS, get_user_plan, is_trial_or_premium
-from services.timezone_utils import resolve_local_datetime
-from routes.lunations import router as lunations_router
-from routes.progressions import router as progressions_router
-from services import timezone_utils
 
 # -----------------------------
-# Load env
+# Carregamento de Configurações
 # -----------------------------
 load_dotenv()
-SOLAR_RETURN_ENGINE = os.getenv("SOLAR_RETURN_ENGINE", "v1").lower()
 
 # -----------------------------
-# Logging (structured)
+# Logging Estruturado (JSON)
 # -----------------------------
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logger = logging.getLogger("astro-api")
 logger.setLevel(LOG_LEVEL)
-handler = logging.StreamHandler()
-handler.setLevel(LOG_LEVEL)
-logger.propagate = False
-
 
 class JsonFormatter(logging.Formatter):
+    """Formatador de log para saída em JSON, facilitando o monitoramento em produção."""
     def format(self, record: logging.LogRecord) -> str:
         payload = {
             "level": record.levelname,
             "ts": datetime.utcnow().isoformat() + "Z",
             "msg": record.getMessage(),
+            "request_id": getattr(record, "request_id", None),
         }
-        standard = {
-            "args",
-            "asctime",
-            "created",
-            "exc_info",
-            "exc_text",
-            "filename",
-            "funcName",
-            "levelname",
-            "levelno",
-            "lineno",
-            "message",
-            "module",
-            "msecs",
-            "msg",
-            "name",
-            "pathname",
-            "process",
-            "processName",
-            "relativeCreated",
-            "stack_info",
-            "thread",
-            "threadName",
-        }
+        # Adiciona campos extras do record que não são padrão
+        standard = {"args", "asctime", "created", "exc_info", "exc_text", "filename", "funcName", "levelname",
+                    "levelno", "lineno", "message", "module", "msecs", "msg", "name", "pathname", "process",
+                    "processName", "relativeCreated", "stack_info", "thread", "threadName"}
         for key, value in record.__dict__.items():
-            if key in standard or key in payload:
-                continue
-            try:
-                json.dumps(value, ensure_ascii=False)
-                payload[key] = value
-            except TypeError:
-                payload[key] = str(value)
+            if key not in standard and key not in payload:
+                try:
+                    json.dumps(value)
+                    payload[key] = value
+                except TypeError:
+                    payload[key] = str(value)
+
         if record.exc_info:
             payload["exc"] = self.formatException(record.exc_info)
         return json.dumps(payload, ensure_ascii=False)
 
-
+handler = logging.StreamHandler()
 handler.setFormatter(JsonFormatter())
 logger.handlers = [handler]
-
+logger.propagate = False
 
 def _log(level: str, message: str, **extra: Any) -> None:
-    """Small wrapper to keep structured logging consistent."""
+    """Wrapper para logging estruturado."""
     log_method = getattr(logger, level)
     log_method(message, extra=extra)
 
+# Aliases para compatibilidade com testes legados
+from services.time_utils import get_tz_offset_minutes as _tz_offset_for
+
 # -----------------------------
-# App
+# Inicialização do App FastAPI
 # -----------------------------
 app = FastAPI(
     title="Premium Astrology API",
-    description="Accurate astrological calculations using Swiss Ephemeris with AI-powered cosmic insights",
-    version="1.1.1",
+    description="API de Astrologia de alta precisão usando Swiss Ephemeris e IA.",
+    version="1.1.2", # Versão incrementada após refatoração
 )
 
 # -----------------------------
-# CORS
+# Configuração de CORS
 # -----------------------------
 origins = os.getenv("ALLOWED_ORIGINS", "*")
 allowed = [o.strip() for o in origins.split(",")] if origins != "*" else ["*"]
@@ -142,60 +89,35 @@ app.add_middleware(
     allow_origins=allowed,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],  # Authorization + X-User-Id
+    allow_headers=["*"],
 )
 
 # -----------------------------
-# Routers (isolated services)
-# -----------------------------
-app.include_router(lunations_router)
-app.include_router(progressions_router)
-
-# -----------------------------
-# Middleware: request_id + logging
+# Middleware de Logging e ID de Requisição
 # -----------------------------
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
     request_id = request.headers.get("X-Request-Id") or str(uuid.uuid4())
     request.state.request_id = request_id
 
-    start = time.time()
+    start_time = time.time()
     try:
         response = await call_next(request)
-        latency_ms = int((time.time() - start) * 1000)
+        latency_ms = int((time.time() - start_time) * 1000)
 
-        extra = {
-            "request_id": request_id,
-            "path": request.url.path,
-            "status": response.status_code,
-            "latency_ms": latency_ms,
-        }
-        _log("info", "request", **extra)
-        if request.url.path == "/v1/chart/render-data":
-            auth_present = bool(request.headers.get("authorization"))
-            user_id_header = request.headers.get("x-user-id")
-            _log(
-                "info",
-                f"render_data_proxy headers auth_present={auth_present} x_user_id_present={bool(user_id_header)}",
-                request_id=request_id,
-                path=request.url.path,
-                status=response.status_code,
-                latency_ms=latency_ms,
-                user_id=user_id_header,
-            )
+        _log("info", "request_processed",
+             request_id=request_id, path=request.url.path,
+             status=response.status_code, latency_ms=latency_ms)
 
         response.headers["X-Request-Id"] = request_id
         return response
 
-    except Exception:
-        latency_ms = int((time.time() - start) * 1000)
-        extra = {
-            "request_id": request_id,
-            "path": request.url.path,
-            "status": 500,
-            "latency_ms": latency_ms,
-        }
-        logger.error("unhandled_exception", exc_info=True, extra=extra)
+    except Exception as e:
+        latency_ms = int((time.time() - start_time) * 1000)
+        _log("error", "unhandled_exception",
+             request_id=request_id, path=request.url.path,
+             status=500, latency_ms=latency_ms, error=str(e))
+
         return JSONResponse(
             status_code=500,
             content={
@@ -207,31 +129,34 @@ async def request_logging_middleware(request: Request, call_next):
         )
 
 # -----------------------------
-# Exception handler: HTTPException
+# Handlers de Exceção Globais
 # -----------------------------
+# Estes handlers garantem que a API responda sempre em um formato padrão,
+# mesmo quando ocorrem erros inesperados ou validações falham.
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    request_id = getattr(request.state, "request_id", None) or str(uuid.uuid4())
-    extra = {
-        "request_id": request_id,
-        "path": request.url.path,
-        "status": exc.status_code,
-        "latency_ms": None,
-    }
-    _log("warning", "http_exception", **extra)
-    payload = {
-        "detail": exc.detail,
-        "request_id": request_id,
-        "code": f"http_{exc.status_code}",
-    }
+    request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
     return JSONResponse(
         status_code=exc.status_code,
-        content=payload,
+        content={
+            "detail": exc.detail,
+            "request_id": request_id,
+            "code": f"http_{exc.status_code}",
+        },
         headers={"X-Request-Id": request_id},
     )
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Captura erros de validação do Pydantic (ex: campos faltando ou formato inválido)."""
+    request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": exc.errors(),
+            "request_id": request_id,
+            "code": "validation_error",
     request_id = getattr(request.state, "request_id", None) or str(uuid.uuid4())
     extra = {
         "request_id": request_id,
@@ -1542,114 +1467,27 @@ def _daily_summary(phase: str, sign: str) -> Dict[str, str]:
             "gatilho": f"Tendência a limpar excessos em temas de {sign_pt}.",
             "acao": "Finalize pendências e reduza ruídos antes de seguir.",
         },
-    }
-    return templates.get(phase, templates["waxing"])
-
-
-def _summary_from_event(event: TransitEvent) -> Dict[str, str]:
-    tags = event.tags or []
-    tag = tags[0] if tags else "foco"
-    return {
-        "tom": f"Tendência a concentrar energia em {tag.lower()}.",
-        "gatilho": f"{event.transitando} em {event.aspecto} com {event.alvo} pede atenção a prioridades.",
-        "acao": "Aja com consistência e ajuste o ritmo conforme o contexto.",
-    }
-
-
-def _curate_daily_events(events: List[TransitEvent]) -> Dict[str, Any]:
-    if not events:
-        return {
-            "top_event": None,
-            "trigger_event": None,
-            "secondary_events": [],
-            "summary": None,
-        }
-    ordered = sorted(events, key=lambda item: item.impact_score, reverse=True)
-    top_event = ordered[0]
-    trigger_event = next(
-        (item for item in ordered if item.transitando == "Marte" and item.impact_score >= 55),
-        None,
-    )
-    if trigger_event is None and len(ordered) > 1:
-        trigger_event = ordered[1]
-    secondary_pool = [item for item in ordered[1:] if item != trigger_event]
-    secondary_events = secondary_pool[:2]
-    summary = _summary_from_event(top_event)
-    return {
-        "top_event": top_event,
-        "trigger_event": trigger_event,
-        "secondary_events": secondary_events,
-        "summary": summary,
-    }
-
-def _strength_from_score(score: float) -> str:
-    if score >= 70:
-        return "high"
-    if score >= 45:
-        return "medium"
-    return "low"
-
-def _icon_for_tags(tags: List[str]) -> str:
-    tag_map = {
-        "trabalho": "💼",
-        "carreira": "💼",
-        "relacionamentos": "💞",
-        "amor": "💞",
-        "emoções": "🌙",
-        "emocional": "🌙",
-        "energia": "🔥",
-        "corpo": "🔥",
-        "foco": "🎯",
-    }
-    for tag in tags:
-        key = tag.lower()
-        if key in tag_map:
-            return tag_map[key]
-    return "✨"
-
-def _build_transits_context(
-    body: TransitsRequest,
-    tz_offset_minutes: int,
-    lang: Optional[str],
-    date_override: Optional[str] = None,
-    preferencias: Optional[PreferenciasPerfil] = None,
-) -> Dict[str, Any]:
-    target_date = date_override or body.target_date
-    if not target_date:
-        raise HTTPException(status_code=422, detail="Informe target_date ou range.")
-    target_y, target_m, target_d = _parse_date_yyyy_mm_dd(target_date)
-    aspectos_habilitados, orbes, orb_max, profile = _apply_profile_defaults(
-        body.aspectos_habilitados,
-        body.orbes,
-        preferencias if preferencias is not None else body.preferencias,
+        headers={"X-Request-Id": request_id},
     )
 
-    natal_chart = compute_chart(
-        year=body.natal_year,
-        month=body.natal_month,
-        day=body.natal_day,
-        hour=body.natal_hour,
-        minute=body.natal_minute,
-        second=body.natal_second,
-        lat=body.lat,
-        lng=body.lng,
-        tz_offset_minutes=tz_offset_minutes,
-        house_system=body.house_system.value,
-        zodiac_type=body.zodiac_type.value,
-        ayanamsa=body.ayanamsa,
-    )
-
-    transit_chart = compute_transits(
-        target_year=target_y,
-        target_month=target_m,
-        target_day=target_d,
-        lat=body.lat,
-        lng=body.lng,
-        tz_offset_minutes=tz_offset_minutes,
-        zodiac_type=body.zodiac_type.value,
-        ayanamsa=body.ayanamsa,
-    )
-
+# -----------------------------
+# Inclusão de Rotas Modulares
+# -----------------------------
+# Cada módulo de rota foi isolado para facilitar a manutenção
+app.include_router(system.router, tags=["System"])
+app.include_router(account.router, tags=["Account"])
+app.include_router(time_route.router, tags=["Time"])
+app.include_router(chart.router, tags=["Chart"])
+app.include_router(insights.router, tags=["Insights"])
+app.include_router(transits.router, tags=["Transits"])
+app.include_router(cosmic_weather.router, tags=["Cosmic Weather"])
+app.include_router(solar_return.router, tags=["Solar Return"])
+app.include_router(ai.router, tags=["AI"])
+app.include_router(diagnostics.router, tags=["Diagnostics"])
+app.include_router(alerts.router, tags=["Alerts"])
+app.include_router(notifications.router, tags=["Notifications"])
+app.include_router(lunations.router, tags=["Lunations"])
+app.include_router(progressions.router, tags=["Progressions"])
     natal_chart = _apply_sign_localization(natal_chart, lang)
     transit_chart = _apply_sign_localization(transit_chart, lang)
 

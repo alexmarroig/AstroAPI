@@ -90,6 +90,7 @@ serve(async (req) => {
 
   const upstreamResponse = await fetch(
     `${upstreamUrlObject.origin}${targetPath}${
+    `${upstreamUrlObject.origin}${upstreamPath}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`,
     {
