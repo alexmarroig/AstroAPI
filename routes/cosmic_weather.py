@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as dt_date
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, Request, Query, HTTPException
 
@@ -22,6 +22,10 @@ router = APIRouter()
 logger = logging.getLogger("astro-api")
 
 TTL_COSMIC_WEATHER_SECONDS = 6 * 3600
+DEFAULT_DATE = dt_date.today().isoformat()
+DEFAULT_LAT = -23.5505
+DEFAULT_LNG = -46.6333
+DEFAULT_TIMEZONE = "America/Sao_Paulo"
 
 def _get_cosmic_weather_payload(
     date_str: str,
@@ -87,14 +91,17 @@ def _get_cosmic_weather_payload(
 @router.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
 async def cosmic_weather(
     request: Request,
-    date: Optional[str] = None,
-    timezone: Optional[str] = Query(None),
+    date: Optional[str] = Query(DEFAULT_DATE),
+    timezone: Optional[str] = Query(DEFAULT_TIMEZONE),
     tz_offset_minutes: Optional[int] = Query(None),
     lang: Optional[str] = Query(None),
     auth=Depends(get_auth),
 ):
     """Retorna o clima cósmico geral (fase da lua, signo lunar) para uma data."""
-    d = date or datetime.utcnow().strftime("%Y-%m-%d")
+    d = date or DEFAULT_DATE
+    if not d:
+        d = dt_date.today().isoformat()
+    timezone = timezone or DEFAULT_TIMEZONE
     payload = _get_cosmic_weather_payload(d, timezone, tz_offset_minutes, auth["user_id"], lang,
                                           request_id=getattr(request.state, "request_id", None), path=request.url.path)
     return CosmicWeatherResponse(**payload)
@@ -104,14 +111,17 @@ async def cosmic_weather_range(
     request: Request,
     from_: Optional[str] = Query(None, alias="from"),
     to: Optional[str] = Query(None),
-    timezone: Optional[str] = Query(None),
+    timezone: Optional[str] = Query(DEFAULT_TIMEZONE),
     tz_offset_minutes: Optional[int] = Query(None),
     lang: Optional[str] = Query(None),
     auth=Depends(get_auth),
 ):
     """Retorna o clima cósmico para um intervalo de datas."""
-    if from_ is None: from_ = datetime.utcnow().strftime("%Y-%m-%d")
-    if to is None: to = (datetime.utcnow() + timedelta(days=6)).strftime("%Y-%m-%d")
+    if not from_:
+        from_ = dt_date.today().isoformat()
+    if not to:
+        to = (dt_date.today() + timedelta(days=6)).isoformat()
+    timezone = timezone or DEFAULT_TIMEZONE
 
     if timezone:
         from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -153,7 +163,7 @@ async def moon_timeline(
     request: Request,
     from_: Optional[str] = Query(None, alias="from"),
     to: Optional[str] = Query(None),
-    timezone: Optional[str] = Query(None),
+    timezone: Optional[str] = Query(DEFAULT_TIMEZONE),
     tz_offset_minutes: Optional[int] = Query(None),
     lang: Optional[str] = Query(None),
     auth=Depends(get_auth),

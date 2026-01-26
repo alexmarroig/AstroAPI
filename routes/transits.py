@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as dt_date
 from typing import Optional, List, Dict, Any, Literal
 from fastapi import APIRouter, Depends, Request, Query, HTTPException
 
@@ -33,6 +33,10 @@ router = APIRouter()
 logger = logging.getLogger("astro-api")
 
 TTL_TRANSITS_SECONDS = 6 * 3600
+DEFAULT_DATE = dt_date.today().isoformat()
+DEFAULT_LAT = -23.5505
+DEFAULT_LNG = -46.6333
+DEFAULT_TIMEZONE = "America/Sao_Paulo"
 
 def _build_transits_context(
     body: TransitsRequest,
@@ -204,20 +208,25 @@ async def transits_next_days(
 @router.get("/v1/transits/personal-today")
 async def transits_personal_today(
     request: Request,
-    date: Optional[str] = None,
-    timezone: Optional[str] = Query(None),
+    date: Optional[str] = Query(DEFAULT_DATE),
+    timezone: Optional[str] = Query(DEFAULT_TIMEZONE),
     tz_offset_minutes: Optional[int] = Query(None),
     natal_year: int = Query(...),
     natal_month: int = Query(...),
     natal_day: int = Query(...),
     natal_hour: Optional[int] = Query(None),
-    lat: float = Query(...),
-    lng: float = Query(...),
+    lat: Optional[float] = Query(DEFAULT_LAT),
+    lng: Optional[float] = Query(DEFAULT_LNG),
     lang: Optional[str] = Query(None),
     auth=Depends(get_auth),
 ):
     """Retorna os trânsitos pessoais detalhados para o dia de hoje."""
-    d = date or datetime.utcnow().strftime("%Y-%m-%d")
+    d = date or DEFAULT_DATE
+    if not d:
+        d = dt_date.today().isoformat()
+    lat = DEFAULT_LAT if lat is None else lat
+    lng = DEFAULT_LNG if lng is None else lng
+    timezone = timezone or DEFAULT_TIMEZONE
     is_pt = is_pt_br(lang)
 
     hour = natal_hour if natal_hour is not None else 12
@@ -296,15 +305,22 @@ async def transits_live(body: TransitsLiveRequest, request: Request, auth=Depend
 
 @router.get("/v1/daily/summary")
 async def daily_summary(
-    request: Request, date: Optional[str] = None, timezone: Optional[str] = Query(None),
+    request: Request,
+    date: Optional[str] = Query(DEFAULT_DATE),
+    timezone: Optional[str] = Query(DEFAULT_TIMEZONE),
     tz_offset_minutes: Optional[int] = Query(None),
     natal_year: Optional[int] = Query(None), natal_month: Optional[int] = Query(None),
     natal_day: Optional[int] = Query(None), natal_hour: Optional[int] = Query(None),
-    lat: Optional[float] = Query(None), lng: Optional[float] = Query(None),
+    lat: Optional[float] = Query(DEFAULT_LAT), lng: Optional[float] = Query(DEFAULT_LNG),
     lang: Optional[str] = Query(None), auth=Depends(get_auth),
 ):
     """Resumo diário completo, combinando clima cósmico e trânsitos pessoais se disponíveis."""
-    d = date or datetime.utcnow().strftime("%Y-%m-%d")
+    d = date or DEFAULT_DATE
+    if not d:
+        d = dt_date.today().isoformat()
+    lat = DEFAULT_LAT if lat is None else lat
+    lng = DEFAULT_LNG if lng is None else lng
+    timezone = timezone or DEFAULT_TIMEZONE
     is_pt = is_pt_br(lang)
 
     # Placeholder para clima cósmico
