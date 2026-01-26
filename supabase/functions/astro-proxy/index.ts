@@ -44,6 +44,7 @@ const upstreamUrl = Deno.env.get("ASTRO_API_URL") ?? "http://localhost:8000";
 serve(async (req) => {
   const url = new URL(req.url);
   const upstreamPath = url.pathname;
+  const targetPath = upstreamPath === "/api-test" ? "/health" : upstreamPath;
   const upstreamUrlObject = new URL(upstreamUrl);
   const queryParams = new URLSearchParams(url.search);
 
@@ -88,6 +89,7 @@ serve(async (req) => {
   }
 
   const upstreamResponse = await fetch(
+    `${upstreamUrlObject.origin}${targetPath}${
     `${upstreamUrlObject.origin}${upstreamPath}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`,

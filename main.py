@@ -1380,8 +1380,9 @@ def _impact_score(
     target_weight = TARGET_WEIGHTS.get(target, 1.0)
     duration_factor = DURATION_FACTORS.get(transit_planet, 1.0)
     orb_factor = max(0.0, min(1.0, 1.0 - (orb_deg / orb_max)))
-    score = 100 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor
-    return round(min(score, 100.0), 2)
+    score = 100.0 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor
+    clamped_score = min(score, 100.0)
+    return round(clamped_score, 2)
 
 
 def _severity_for(score: float) -> str:
