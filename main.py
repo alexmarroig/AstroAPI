@@ -3,14 +3,32 @@ import time
 import uuid
 import json
 import logging
-from datetime import datetime
-from typing import Any, Optional
+from datetime import datetime, timedelta
+from typing import Any, Optional, Dict, List, Literal
+from enum import Enum
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, Field, AliasChoices, model_validator, ConfigDict
+
+from core.security import require_api_key_and_user
+from astro.i18n_ptbr import (
+    planet_key_to_ptbr,
+    sign_to_ptbr,
+    aspect_to_ptbr,
+    format_degree_ptbr,
+    format_position_ptbr,
+    build_planets_ptbr,
+    build_houses_ptbr,
+    sign_for_longitude
+)
+from astro.utils import sign_to_pt
+from astro.ephemeris import compute_chart, compute_transits
+from astro.aspects import resolve_aspects_config, compute_transit_aspects
 
 # Importação dos roteadores modulares
 from routes import (
@@ -150,13 +168,6 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Captura erros de validação do Pydantic (ex: campos faltando ou formato inválido)."""
-    request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
-    return JSONResponse(
-        status_code=422,
-        content={
-            "detail": exc.errors(),
-            "request_id": request_id,
-            "code": "validation_error",
     request_id = getattr(request.state, "request_id", None) or str(uuid.uuid4())
     extra = {
         "request_id": request_id,
@@ -1466,8 +1477,8 @@ def _daily_summary(phase: str, sign: str) -> Dict[str, str]:
             "gatilho": f"Tendência a limpar excessos em temas de {sign_pt}.",
             "acao": "Finalize pendências e reduza ruídos antes de seguir.",
         },
-        headers={"X-Request-Id": request_id},
-    )
+    }
+    return templates.get(phase, templates["new_moon"])
 
 # -----------------------------
 # Inclusão de Rotas Modulares
@@ -1487,28 +1498,6 @@ app.include_router(alerts.router, tags=["Alerts"])
 app.include_router(notifications.router, tags=["Notifications"])
 app.include_router(lunations.router, tags=["Lunations"])
 app.include_router(progressions.router, tags=["Progressions"])
-    natal_chart = _apply_sign_localization(natal_chart, lang)
-    transit_chart = _apply_sign_localization(transit_chart, lang)
-
-    aspects_config, aspectos_usados, orbes_usados = resolve_aspects_config(
-        aspectos_habilitados,
-        orbes,
-    )
-    aspects = compute_transit_aspects(
-        transit_planets=transit_chart["planets"],
-        natal_planets=natal_chart["planets"],
-        aspects=aspects_config,
-    )
-
-    return {
-        "natal": natal_chart,
-        "transits": transit_chart,
-        "aspects": aspects,
-        "aspectos_usados": aspectos_usados,
-        "orbes_usados": orbes_usados,
-        "orb_max": orb_max,
-        "profile": profile,
-    }
 
 
 def _build_transit_events_for_date(date_str: str, context: Dict[str, Any]) -> List[TransitEvent]:
