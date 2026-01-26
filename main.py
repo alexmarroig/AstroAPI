@@ -2133,11 +2133,12 @@ ENDPOINTS_CATALOG = [
     {
         "method": "GET",
         "path": "/v1/account/status",
+        "path": "/v1/account/plan",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
         "request_model": None,
         "response_model": None,
-        "description": "Status da conta e do plano.",
+        "description": "Plano da conta e informações de trial.",
     },
     {
         "method": "POST",
@@ -2485,6 +2486,16 @@ async def account_status(request: Request, auth=Depends(get_auth)):
             "requested_at": datetime.utcnow().isoformat() + "Z",
             "trial_started_at": datetime.utcfromtimestamp(plan_obj.trial_started_at).isoformat() + "Z",
         },
+@app.get("/v1/account/plan")
+async def account_plan(auth=Depends(get_auth)):
+    plan_obj = get_user_plan(auth["user_id"])
+    trial_started_at = int(plan_obj.trial_started_at)
+    trial_ends_at = int(plan_obj.trial_started_at + TRIAL_SECONDS)
+    return {
+        "plan": plan_obj.plan,
+        "trial_started_at": trial_started_at,
+        "trial_ends_at": trial_ends_at,
+        "is_trial": plan_obj.plan == "trial",
     }
 
 
@@ -3682,6 +3693,10 @@ async def daily_summary(
                         ),
                     }
                 )
+        if first_context is None:
+            first_context = context
+        events.extend(_build_transit_events_for_date(date_str, context))
+        current += timedelta(days=1)
 
         def area_text(area_name: str, level: str) -> str:
             level_map = {
@@ -4032,6 +4047,10 @@ async def transits_personal_today(
             error="INTERNAL_ERROR",
             message="Tivemos um problema no servidor ao calcular os trânsitos pessoais. Tente novamente em alguns minutos.",
         )
+    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
+    return payload
+
 
 @app.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
 async def cosmic_weather(
