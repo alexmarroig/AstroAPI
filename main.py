@@ -2138,6 +2138,7 @@ ENDPOINTS_CATALOG = [
         "headers_required": ["Authorization", "X-User-Id"],
         "request_model": None,
         "response_model": None,
+        "description": "Status da conta e do plano.",
         "description": "Plano da conta e informações de trial.",
     },
     {
@@ -2274,6 +2275,15 @@ ENDPOINTS_CATALOG = [
         "request_model": None,
         "response_model": None,
         "description": "Trânsitos pessoais do dia.",
+    },
+    {
+        "method": "GET",
+        "path": "/v1/moon/timeline",
+        "auth_required": True,
+        "headers_required": ["Authorization", "X-User-Id"],
+        "request_model": None,
+        "response_model": "CosmicWeatherRangeResponse",
+        "description": "Timeline lunar (intervalo de datas).",
     },
     {
         "method": "POST",
@@ -3134,6 +3144,13 @@ async def chart_distributions(
                 "birth_time_precise": body.birth_time_precise,
             },
         )
+        payload.update(
+            {
+                "elements": payload.get("elementos", {}),
+                "modalities": payload.get("modalidades", {}),
+                "houses": payload.get("casas", []),
+            }
+        )
         return payload
     except Exception as e:
         logger.error(
@@ -3449,6 +3466,9 @@ async def interpretation_natal(
         "avisos": avisos,
         "interpretacao": {"tipo": "heuristica", "fonte": "regras_internas"},
         "metadados": {"version": "v1", "fonte": "regras"},
+        "summary": " ".join(sintese),
+        "highlights": top_planets,
+        "themes": temas_principais,
     }
     payload["metadados"].update(
         _build_time_metadata(
@@ -4045,6 +4065,82 @@ async def transits_personal_today(
             request,
             status_code=500,
             error="INTERNAL_ERROR",
+            message="Tivemos um problema no servidor ao calcular os trânsitos pessoais. Tente novamente em alguns minutos.",
+        )
+
+
+@app.get("/v1/moon/timeline", response_model=CosmicWeatherRangeResponse)
+async def moon_timeline(
+    request: Request,
+    from_: Optional[str] = Query(None, alias="from", description="Data inicial no formato YYYY-MM-DD"),
+    to: Optional[str] = Query(None, description="Data final no formato YYYY-MM-DD"),
+    timezone: Optional[str] = Query(None, description="Timezone IANA"),
+    tz_offset_minutes: Optional[int] = Query(
+        None, ge=-840, le=840, description="Offset manual em minutos; ignorado se timezone for enviado."
+    ),
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
+    auth=Depends(get_auth),
+):
+    request_id = getattr(request.state, "request_id", None)
+    _log(
+        "info",
+        "moon_timeline_request",
+        request_id=request_id,
+        path=request.url.path,
+        user_id=auth.get("user_id"),
+    )
+    try:
+        return await cosmic_weather_range(
+            request=request,
+            from_=from_,
+            to=to,
+            timezone=timezone,
+            tz_offset_minutes=tz_offset_minutes,
+            lang=lang,
+            auth=auth,
+        )
+
+        personal_transits = []
+        for event in events[:8]:
+            personal_transits.append(
+                {
+                    "type": event.aspecto,
+                    "transiting_planet": event.transitando,
+                    "natal_point": event.alvo,
+                    "orb": event.orb_graus,
+                    "area": area_map.get(event.alvo, "tema geral"),
+                    "strength": _strength_from_score(event.impact_score),
+                    "short_text": event.copy.mecanica,
+                }
+            )
+
+        return {
+            "date": d,
+            "personal_transits": personal_transits,
+            "metadados": {
+                "birth_time_precise": natal_hour is not None,
+                **_build_time_metadata(
+                    timezone=timezone,
+                    tz_offset_minutes=tz_offset_minutes_resolved,
+                    local_dt=natal_dt,
+                ),
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error(
+            "moon_timeline_error",
+            "transits_personal_today_error",
+            exc_info=True,
+            extra={"request_id": request_id, "path": request.url.path},
+        )
+        return _json_error_response(
+            request,
+            status_code=500,
+            error="INTERNAL_ERROR",
+            message="Tivemos um problema no servidor ao carregar a timeline lunar. Tente novamente em alguns minutos.",
+        )
             message="Tivemos um problema no servidor ao calcular os trânsitos pessoais. Tente novamente em alguns minutos.",
         )
     payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
