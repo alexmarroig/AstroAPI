@@ -532,6 +532,26 @@ class TransitsRequest(BaseModel):
                 )
         return data
 
+class TransitsLiveRequest(BaseModel):
+    target_datetime: datetime = Field(..., description="Data/hora alvo com timezone (ISO 8601).")
+    tz_offset_minutes: Optional[int] = Field(
+        None, ge=-840, le=840, description="Offset manual em minutos; opcional se timezone for enviado."
+    )
+    timezone: Optional[str] = Field(
+        None,
+        description="Timezone IANA (ex.: America/Sao_Paulo). Se preenchido, substitui tz_offset_minutes",
+    )
+    strict_timezone: bool = Field(
+        default=False,
+        description="Quando true, rejeita horários ambíguos em transições de DST para evitar datas erradas.",
+    )
+    lat: float = Field(..., ge=-89.9999, le=89.9999)
+    lng: float = Field(..., ge=-180, le=180)
+    zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
+    ayanamsa: Optional[str] = Field(
+        default=None, description="Opcional para zodíaco sideral (ex.: lahiri, fagan_bradley)",
+    )
+
 class SolarReturnRequest(BaseModel):
     natal_year: int = Field(..., ge=1800, le=2100)
     natal_month: int = Field(..., ge=1, le=12)
@@ -1400,7 +1420,8 @@ def _impact_score(
     target_weight = TARGET_WEIGHTS.get(target, 1.0)
     duration_factor = DURATION_FACTORS.get(transit_planet, 1.0)
     orb_factor = max(0.0, min(1.0, 1.0 - (orb_deg / orb_max)))
-    return round(100 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor, 2)
+    score = 100 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor
+    return round(min(score, 100.0), 2)
 
 
 def _severity_for(score: float) -> str:
@@ -4552,7 +4573,12 @@ async def solar_return_overlay(
             detail="Timezone do alvo inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
         )
 
-    natal_dt, warnings, time_missing = parse_local_datetime(body.natal.data, body.natal.hora)
+    try:
+        natal_dt, warnings, time_missing = parse_local_datetime_ptbr(body.natal.data, body.natal.hora)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
     avisos = list(warnings)
     if time_missing:
         avisos.append("Hora natal ausente: assumindo 12:00 local.")
@@ -4688,7 +4714,12 @@ async def solar_return_timeline(
             detail="Timezone natal inválido. Use um timezone IANA (ex.: America/Sao_Paulo).",
         )
 
-    natal_dt, warnings, time_missing = parse_local_datetime(body.natal.data, body.natal.hora)
+    try:
+        natal_dt, warnings, time_missing = parse_local_datetime_ptbr(body.natal.data, body.natal.hora)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=422, detail="Data natal inválida. Use YYYY-MM-DD.")
     avisos = list(warnings)
     if time_missing:
         avisos.append("Hora natal ausente: assumindo 12:00 local.")
