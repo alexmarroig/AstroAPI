@@ -13,12 +13,16 @@ router = APIRouter()
 
 @router.get("/v1/alerts/system", response_model=SystemAlertsResponse)
 async def system_alerts(
-    date: str, request: Request, lat: float = Query(..., ge=-89.9999, le=89.9999),
-    lng: float = Query(..., ge=-180, le=180),
-    timezone: Optional[str] = Query(None), tz_offset_minutes: Optional[int] = Query(None),
+    request: Request,
+    date: Optional[str] = Query(None, description="Data no formato YYYY-MM-DD. Se omitida, usa hoje."),
+    lat: float = Query(0.0, ge=-89.9999, le=89.9999),
+    lng: float = Query(0.0, ge=-180, le=180),
+    timezone: Optional[str] = Query(None),
+    tz_offset_minutes: Optional[int] = Query(None),
     auth=Depends(get_auth)
 ):
     """Retorna alertas do sistema para uma data e local (ex: Mercúrio Retrógrado)."""
+    date = date or datetime.utcnow().strftime("%Y-%m-%d")
     parse_date_yyyy_mm_dd(date)
     dt = datetime.strptime(date, "%Y-%m-%d").replace(hour=12, minute=0, second=0)
 

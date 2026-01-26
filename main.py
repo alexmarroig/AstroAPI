@@ -5027,14 +5027,15 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
 
 @app.get("/v1/alerts/system", response_model=SystemAlertsResponse)
 async def system_alerts(
-    date: str,
     request: Request,
-    lat: float = Query(..., ge=-89.9999, le=89.9999),
-    lng: float = Query(..., ge=-180, le=180),
+    date: Optional[str] = Query(None, description="Data no formato YYYY-MM-DD. Se omitida, usa hoje."),
+    lat: float = Query(0.0, ge=-89.9999, le=89.9999),
+    lng: float = Query(0.0, ge=-180, le=180),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
     auth=Depends(get_auth),
 ):
+    date = date or _now_yyyy_mm_dd()
     _parse_date_yyyy_mm_dd(date)
     dt = datetime.strptime(date, "%Y-%m-%d").replace(hour=12, minute=0, second=0)
     resolved_offset = _tz_offset_for(
@@ -5128,8 +5129,8 @@ async def retrogrades_alerts(
 async def notifications_daily(
     request: Request,
     date: Optional[str] = None,
-    lat: float = Query(..., ge=-89.9999, le=89.9999),
-    lng: float = Query(..., ge=-180, le=180),
+    lat: float = Query(0.0, ge=-89.9999, le=89.9999),
+    lng: float = Query(0.0, ge=-180, le=180),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
     auth=Depends(get_auth),

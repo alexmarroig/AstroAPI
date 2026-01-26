@@ -47,8 +47,10 @@ def _daily_notifications_payload(date: str, lat: float, lng: float, tz_offset_mi
 
 @router.get("/v1/notifications/daily", response_model=NotificationsDailyResponse)
 async def notifications_daily(
-    request: Request, date: Optional[str] = None, lat: float = Query(..., ge=-89.9999, le=89.9999),
-    lng: float = Query(..., ge=-180, le=180),
+    request: Request,
+    date: Optional[str] = None,
+    lat: float = Query(0.0, ge=-89.9999, le=89.9999),
+    lng: float = Query(0.0, ge=-180, le=180),
     timezone: Optional[str] = Query(None), tz_offset_minutes: Optional[int] = Query(None),
     auth=Depends(get_auth)
 ):
