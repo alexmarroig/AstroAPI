@@ -2178,6 +2178,7 @@ ENDPOINTS_CATALOG = [
     {
         "method": "GET",
         "path": "/v1/account/status",
+        "path": "/v1/account/plan",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
         "request_model": None,
@@ -2201,6 +2202,7 @@ ENDPOINTS_CATALOG = [
         "request_model": "SynastryRequest",
         "response_model": None,
         "description": "Comparação básica de sinastria.",
+        "description": "Plano da conta e informações de trial.",
     },
     {
         "method": "POST",
@@ -2683,6 +2685,18 @@ async def synastry_compare(
             error="SERVIDOR_TEMPORARIO",
             message="Tente novamente em 1 minuto",
         )
+
+@app.get("/v1/account/plan")
+async def account_plan(auth=Depends(get_auth)):
+    plan_obj = get_user_plan(auth["user_id"])
+    trial_started_at = int(plan_obj.trial_started_at)
+    trial_ends_at = int(plan_obj.trial_started_at + TRIAL_SECONDS)
+    return {
+        "plan": plan_obj.plan,
+        "trial_started_at": trial_started_at,
+        "trial_ends_at": trial_ends_at,
+        "is_trial": plan_obj.plan == "trial",
+    }
 
 
 @app.post("/v1/time/resolve-tz")
@@ -3759,6 +3773,7 @@ async def transits_events(
             status_code=500,
             error="INTERNAL_ERROR",
             message="Tente novamente em 1 minuto",
+            message="Tivemos um problema no servidor ao calcular os trânsitos. Tente novamente em alguns minutos.",
         )
 
 
@@ -3889,6 +3904,10 @@ async def daily_summary(
                         ),
                     }
                 )
+        if first_context is None:
+            first_context = context
+        events.extend(_build_transit_events_for_date(date_str, context))
+        current += timedelta(days=1)
 
         def area_text(area_name: str, level: str) -> str:
             level_map = {
@@ -3935,6 +3954,7 @@ async def daily_summary(
             {
                 "id": "body",
                 "title": "Corpo",
+                "title": "Corpo e energia",
                 "text": area_text(
                     "Corpo e energia", area_lookup.get("Corpo", {}).get("level", "medium")
                 ),
@@ -3947,6 +3967,7 @@ async def daily_summary(
             "headline": headline,
             "sections": sections,
             "technical_aspects": technical_aspects,
+            "technical_base": {"aspects": technical_aspects},
             "summary": summary,
             "curated_events": curated,
         }
@@ -3970,10 +3991,32 @@ async def daily_summary(
 async def cosmic_timeline_next_7_days(
     request: Request,
     date: Optional[str] = None,
+            error="INTERNAL_ERROR",
+            message="Tivemos um problema no servidor ao calcular o resumo do dia. Tente novamente em alguns minutos.",
+        )
+
+
+@app.get("/v1/transits/next-days")
+async def transits_next_days(
+    request: Request,
+    date: Optional[str] = None,
+    days: int = Query(7, ge=1, le=30),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(
         None, ge=-840, le=840, description="Offset manual em minutos; ignorado se timezone for enviado."
     ),
+    natal_year: Optional[int] = Query(None, ge=1800, le=2100),
+    natal_month: Optional[int] = Query(None, ge=1, le=12),
+    natal_day: Optional[int] = Query(None, ge=1, le=31),
+    natal_hour: Optional[int] = Query(None, ge=0, le=23),
+    natal_minute: int = Query(0, ge=0, le=59),
+    natal_second: int = Query(0, ge=0, le=59),
+    lat: Optional[float] = Query(None, ge=-89.9999, le=89.9999),
+    lng: Optional[float] = Query(None, ge=-180, le=180),
+    house_system: HouseSystem = Query(HouseSystem.PLACIDUS),
+    zodiac_type: ZodiacType = Query(ZodiacType.TROPICAL),
+    ayanamsa: Optional[str] = Query(None),
+    preferencias_perfil: Optional[Literal["padrao", "custom"]] = Query(None),
     lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
@@ -4167,6 +4210,8 @@ async def transits_next_days(
             status_code=500,
             error="SERVIDOR_TEMPORARIO",
             message="Tente novamente em 1 minuto",
+            error="INTERNAL_ERROR",
+            message="Tivemos um problema no servidor ao carregar os próximos dias. Tente novamente em alguns minutos.",
         )
 
 
@@ -4313,6 +4358,16 @@ async def revolution_solar_current_year(
     natal_second: int = Query(0, ge=0, le=59),
     lat: float = Query(..., ge=-89.9999, le=89.9999),
     lng: float = Query(..., ge=-180, le=180),
+            error="INTERNAL_ERROR",
+            message="Tivemos um problema no servidor ao calcular os trânsitos pessoais. Tente novamente em alguns minutos.",
+        )
+
+
+@app.get("/v1/moon/timeline", response_model=CosmicWeatherRangeResponse)
+async def moon_timeline(
+    request: Request,
+    from_: Optional[str] = Query(None, alias="from", description="Data inicial no formato YYYY-MM-DD"),
+    to: Optional[str] = Query(None, description="Data final no formato YYYY-MM-DD"),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(
         None, ge=-840, le=840, description="Offset manual em minutos; ignorado se timezone for enviado."
@@ -4320,12 +4375,14 @@ async def revolution_solar_current_year(
     house_system: HouseSystem = Query(HouseSystem.PLACIDUS),
     zodiac_type: ZodiacType = Query(ZodiacType.TROPICAL),
     ayanamsa: Optional[str] = Query(None),
+    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
     request_id = getattr(request.state, "request_id", None)
     _log(
         "info",
         "revolution_solar_current_year_request",
+        "moon_timeline_request",
         request_id=request_id,
         path=request.url.path,
         user_id=auth.get("user_id"),
@@ -4435,11 +4492,48 @@ async def moon_timeline(
             lang=lang,
             auth=auth,
         )
+        return await cosmic_weather_range(
+            request=request,
+            from_=from_,
+            to=to,
+            timezone=timezone,
+            tz_offset_minutes=tz_offset_minutes,
+            lang=lang,
+            auth=auth,
+        )
+
+        personal_transits = []
+        for event in events[:8]:
+            personal_transits.append(
+                {
+                    "type": event.aspecto,
+                    "transiting_planet": event.transitando,
+                    "natal_point": event.alvo,
+                    "orb": event.orb_graus,
+                    "area": area_map.get(event.alvo, "tema geral"),
+                    "strength": _strength_from_score(event.impact_score),
+                    "short_text": event.copy.mecanica,
+                }
+            )
+
+        return {
+            "date": d,
+            "personal_transits": personal_transits,
+            "metadados": {
+                "birth_time_precise": natal_hour is not None,
+                **_build_time_metadata(
+                    timezone=timezone,
+                    tz_offset_minutes=tz_offset_minutes_resolved,
+                    local_dt=natal_dt,
+                ),
+            },
+        }
     except HTTPException:
         raise
     except Exception:
         logger.error(
             "moon_timeline_error",
+            "transits_personal_today_error",
             exc_info=True,
             extra={"request_id": request_id, "path": request.url.path},
         )
@@ -4449,6 +4543,15 @@ async def moon_timeline(
             error="SERVIDOR_TEMPORARIO",
             message="Tente novamente em 1 minuto",
         )
+            error="INTERNAL_ERROR",
+            message="Tivemos um problema no servidor ao carregar a timeline lunar. Tente novamente em alguns minutos.",
+        )
+            message="Tivemos um problema no servidor ao calcular os trânsitos pessoais. Tente novamente em alguns minutos.",
+        )
+    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
+    return payload
+
 
 @app.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
 async def cosmic_weather(
@@ -4808,6 +4911,7 @@ async def solar_return_calculate(
         tolerance_degrees=prefs.tolerancia_graus,
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
+        request_id=getattr(request.state, "request_id", None),
     )
 
     try:
