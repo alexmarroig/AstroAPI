@@ -9,7 +9,7 @@ from core.timezone_utils import TimezoneResolutionError, resolve_timezone_offset
 
 import swisseph as swe
 
-from astro.aspects import ASPECTS
+from astro.aspects import ASPECTS, resolve_aspects
 from astro.ephemeris import AYANAMSA_MAP, compute_chart, solar_return_datetime, sun_longitude_at
 from astro.i18n_ptbr import (
     aspect_to_ptbr,
