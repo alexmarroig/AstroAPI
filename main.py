@@ -1444,8 +1444,9 @@ def _impact_score(
     target_weight = TARGET_WEIGHTS.get(target, 1.0)
     duration_factor = DURATION_FACTORS.get(transit_planet, 1.0)
     orb_factor = max(0.0, min(1.0, 1.0 - (orb_deg / orb_max)))
-    score = 100 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor
-    return round(min(score, 100.0), 2)
+    score = 100.0 * planet_weight * aspect_weight * target_weight * orb_factor * duration_factor
+    clamped_score = min(score, 100.0)
+    return round(clamped_score, 2)
 
 
 def _severity_for(score: float) -> str:
@@ -3772,7 +3773,6 @@ async def transits_events(
             request,
             status_code=500,
             error="INTERNAL_ERROR",
-            message="Tente novamente em 1 minuto",
             message="Tivemos um problema no servidor ao calcular os trânsitos. Tente novamente em alguns minutos.",
         )
 
@@ -3991,32 +3991,10 @@ async def daily_summary(
 async def cosmic_timeline_next_7_days(
     request: Request,
     date: Optional[str] = None,
-            error="INTERNAL_ERROR",
-            message="Tivemos um problema no servidor ao calcular o resumo do dia. Tente novamente em alguns minutos.",
-        )
-
-
-@app.get("/v1/transits/next-days")
-async def transits_next_days(
-    request: Request,
-    date: Optional[str] = None,
-    days: int = Query(7, ge=1, le=30),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
     tz_offset_minutes: Optional[int] = Query(
         None, ge=-840, le=840, description="Offset manual em minutos; ignorado se timezone for enviado."
     ),
-    natal_year: Optional[int] = Query(None, ge=1800, le=2100),
-    natal_month: Optional[int] = Query(None, ge=1, le=12),
-    natal_day: Optional[int] = Query(None, ge=1, le=31),
-    natal_hour: Optional[int] = Query(None, ge=0, le=23),
-    natal_minute: int = Query(0, ge=0, le=59),
-    natal_second: int = Query(0, ge=0, le=59),
-    lat: Optional[float] = Query(None, ge=-89.9999, le=89.9999),
-    lng: Optional[float] = Query(None, ge=-180, le=180),
-    house_system: HouseSystem = Query(HouseSystem.PLACIDUS),
-    zodiac_type: ZodiacType = Query(ZodiacType.TROPICAL),
-    ayanamsa: Optional[str] = Query(None),
-    preferencias_perfil: Optional[Literal["padrao", "custom"]] = Query(None),
     lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
@@ -4210,8 +4188,6 @@ async def transits_next_days(
             status_code=500,
             error="SERVIDOR_TEMPORARIO",
             message="Tente novamente em 1 minuto",
-            error="INTERNAL_ERROR",
-            message="Tivemos um problema no servidor ao carregar os próximos dias. Tente novamente em alguns minutos.",
         )
 
 
@@ -4358,31 +4334,17 @@ async def revolution_solar_current_year(
     natal_second: int = Query(0, ge=0, le=59),
     lat: float = Query(..., ge=-89.9999, le=89.9999),
     lng: float = Query(..., ge=-180, le=180),
-            error="INTERNAL_ERROR",
-            message="Tivemos um problema no servidor ao calcular os trânsitos pessoais. Tente novamente em alguns minutos.",
-        )
-
-
-@app.get("/v1/moon/timeline", response_model=CosmicWeatherRangeResponse)
-async def moon_timeline(
-    request: Request,
-    from_: Optional[str] = Query(None, alias="from", description="Data inicial no formato YYYY-MM-DD"),
-    to: Optional[str] = Query(None, description="Data final no formato YYYY-MM-DD"),
     timezone: Optional[str] = Query(None, description="Timezone IANA"),
-    tz_offset_minutes: Optional[int] = Query(
-        None, ge=-840, le=840, description="Offset manual em minutos; ignorado se timezone for enviado."
-    ),
+    tz_offset_minutes: Optional[int] = Query(None, ge=-840, le=840),
     house_system: HouseSystem = Query(HouseSystem.PLACIDUS),
     zodiac_type: ZodiacType = Query(ZodiacType.TROPICAL),
     ayanamsa: Optional[str] = Query(None),
-    lang: Optional[str] = Query(None, description="Idioma para nomes de signos (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
     request_id = getattr(request.state, "request_id", None)
     _log(
         "info",
         "revolution_solar_current_year_request",
-        "moon_timeline_request",
         request_id=request_id,
         path=request.url.path,
         user_id=auth.get("user_id"),
@@ -4492,48 +4454,11 @@ async def moon_timeline(
             lang=lang,
             auth=auth,
         )
-        return await cosmic_weather_range(
-            request=request,
-            from_=from_,
-            to=to,
-            timezone=timezone,
-            tz_offset_minutes=tz_offset_minutes,
-            lang=lang,
-            auth=auth,
-        )
-
-        personal_transits = []
-        for event in events[:8]:
-            personal_transits.append(
-                {
-                    "type": event.aspecto,
-                    "transiting_planet": event.transitando,
-                    "natal_point": event.alvo,
-                    "orb": event.orb_graus,
-                    "area": area_map.get(event.alvo, "tema geral"),
-                    "strength": _strength_from_score(event.impact_score),
-                    "short_text": event.copy.mecanica,
-                }
-            )
-
-        return {
-            "date": d,
-            "personal_transits": personal_transits,
-            "metadados": {
-                "birth_time_precise": natal_hour is not None,
-                **_build_time_metadata(
-                    timezone=timezone,
-                    tz_offset_minutes=tz_offset_minutes_resolved,
-                    local_dt=natal_dt,
-                ),
-            },
-        }
     except HTTPException:
         raise
     except Exception:
         logger.error(
             "moon_timeline_error",
-            "transits_personal_today_error",
             exc_info=True,
             extra={"request_id": request_id, "path": request.url.path},
         )
@@ -4543,14 +4468,6 @@ async def moon_timeline(
             error="SERVIDOR_TEMPORARIO",
             message="Tente novamente em 1 minuto",
         )
-            error="INTERNAL_ERROR",
-            message="Tivemos um problema no servidor ao carregar a timeline lunar. Tente novamente em alguns minutos.",
-        )
-            message="Tivemos um problema no servidor ao calcular os trânsitos pessoais. Tente novamente em alguns minutos.",
-        )
-    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
-    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
-    return payload
 
 
 @app.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
@@ -4911,7 +4828,6 @@ async def solar_return_calculate(
         tolerance_degrees=prefs.tolerancia_graus,
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
-        request_id=getattr(request.state, "request_id", None),
     )
 
     try:
