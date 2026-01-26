@@ -44,9 +44,11 @@ const upstreamUrl = Deno.env.get("ASTRO_API_URL") ?? "http://localhost:8000";
 serve(async (req) => {
   const url = new URL(req.url);
   const upstreamPath = url.pathname;
+  const upstreamUrlObject = new URL(upstreamUrl);
+  const queryParams = new URLSearchParams(url.search);
 
   const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("host", new URL(upstreamUrl).host);
+  requestHeaders.set("host", upstreamUrlObject.host);
 
   let body: string | undefined;
 
@@ -58,13 +60,43 @@ serve(async (req) => {
         : payload;
     body = JSON.stringify(normalizedPayload);
     requestHeaders.set("content-type", "application/json");
+  } else {
+    const contentType = req.headers.get("content-type") ?? "";
+    const contentLength = req.headers.get("content-length");
+    const hasBody =
+      contentType.includes("application/json") ||
+      (contentLength !== null && contentLength !== "0");
+
+    if (hasBody) {
+      const rawBody = await req.text();
+      if (rawBody) {
+        try {
+          const payload = JSON.parse(rawBody) as JsonRecord;
+          for (const [key, value] of Object.entries(payload)) {
+            if (value === null || value === undefined) {
+              continue;
+            }
+            if (!queryParams.has(key)) {
+              queryParams.set(key, String(value));
+            }
+          }
+        } catch {
+          // Ignore invalid JSON body on GET requests.
+        }
+      }
+    }
   }
 
-  const upstreamResponse = await fetch(`${upstreamUrl}${upstreamPath}${url.search}`, {
-    method: req.method,
-    headers: requestHeaders,
-    body,
-  });
+  const upstreamResponse = await fetch(
+    `${upstreamUrlObject.origin}${upstreamPath}${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`,
+    {
+      method: req.method,
+      headers: requestHeaders,
+      body,
+    },
+  );
 
   return new Response(upstreamResponse.body, {
     status: upstreamResponse.status,
