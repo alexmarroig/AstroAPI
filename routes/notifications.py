@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, date as dt_date
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, Query, Request, HTTPException
 from .common import get_auth
@@ -16,6 +16,10 @@ from core.cache import cache
 router = APIRouter()
 
 TTL_COSMIC_WEATHER_SECONDS = 6 * 3600
+DEFAULT_DATE = dt_date.today().isoformat()
+DEFAULT_LAT = -23.5505
+DEFAULT_LNG = -46.6333
+DEFAULT_TIMEZONE = "America/Sao_Paulo"
 
 def _daily_notifications_payload(date: str, lat: float, lng: float, tz_offset_minutes: int) -> NotificationsDailyResponse:
     """Helper para construir o payload completo de notificações diárias."""
@@ -47,13 +51,21 @@ def _daily_notifications_payload(date: str, lat: float, lng: float, tz_offset_mi
 
 @router.get("/v1/notifications/daily", response_model=NotificationsDailyResponse)
 async def notifications_daily(
-    request: Request, date: Optional[str] = None, lat: float = Query(..., ge=-89.9999, le=89.9999),
-    lng: float = Query(..., ge=-180, le=180),
-    timezone: Optional[str] = Query(None), tz_offset_minutes: Optional[int] = Query(None),
+    request: Request,
+    date: Optional[str] = Query(DEFAULT_DATE),
+    lat: Optional[float] = Query(DEFAULT_LAT, ge=-89.9999, le=89.9999),
+    lng: Optional[float] = Query(DEFAULT_LNG, ge=-180, le=180),
+    timezone: Optional[str] = Query(DEFAULT_TIMEZONE),
+    tz_offset_minutes: Optional[int] = Query(None),
     auth=Depends(get_auth)
 ):
     """Retorna as notificações diárias recomendadas para o usuário, baseadas no clima cósmico e alertas."""
-    d = date or datetime.utcnow().strftime("%Y-%m-%d")
+    d = date or DEFAULT_DATE
+    if not d:
+        d = dt_date.today().isoformat()
+    lat = DEFAULT_LAT if lat is None else lat
+    lng = DEFAULT_LNG if lng is None else lng
+    timezone = timezone or DEFAULT_TIMEZONE
     dt = datetime.strptime(d, "%Y-%m-%d").replace(hour=12, minute=0, second=0)
     resolved_offset = get_tz_offset_minutes(dt, timezone, tz_offset_minutes, request_id=request.state.request_id)
 

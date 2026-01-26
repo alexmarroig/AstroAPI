@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, date as dt_date
 from typing import Optional, List
 from fastapi import APIRouter, Depends, Query, Request
 from .common import get_auth
@@ -10,15 +10,28 @@ from astro.retrogrades import retrograde_alerts
 from astro.i18n_ptbr import planet_key_to_ptbr
 
 router = APIRouter()
+DEFAULT_DATE = dt_date.today().isoformat()
+DEFAULT_LAT = -23.5505
+DEFAULT_LNG = -46.6333
+DEFAULT_TIMEZONE = "America/Sao_Paulo"
 
 @router.get("/v1/alerts/system", response_model=SystemAlertsResponse)
 async def system_alerts(
-    date: str, request: Request, lat: float = Query(..., ge=-89.9999, le=89.9999),
-    lng: float = Query(..., ge=-180, le=180),
-    timezone: Optional[str] = Query(None), tz_offset_minutes: Optional[int] = Query(None),
+    request: Request,
+    date: Optional[str] = Query(DEFAULT_DATE),
+    lat: Optional[float] = Query(DEFAULT_LAT, ge=-89.9999, le=89.9999),
+    lng: Optional[float] = Query(DEFAULT_LNG, ge=-180, le=180),
+    timezone: Optional[str] = Query(DEFAULT_TIMEZONE),
+    tz_offset_minutes: Optional[int] = Query(None),
     auth=Depends(get_auth)
 ):
     """Retorna alertas do sistema para uma data e local (ex: Mercúrio Retrógrado)."""
+    date = date or DEFAULT_DATE
+    if not date:
+        date = dt_date.today().isoformat()
+    lat = DEFAULT_LAT if lat is None else lat
+    lng = DEFAULT_LNG if lng is None else lng
+    timezone = timezone or DEFAULT_TIMEZONE
     parse_date_yyyy_mm_dd(date)
     dt = datetime.strptime(date, "%Y-%m-%d").replace(hour=12, minute=0, second=0)
 
