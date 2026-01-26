@@ -2154,11 +2154,13 @@ ENDPOINTS_CATALOG = [
     {
         "method": "GET",
         "path": "/v1/account/status",
+        "path": "/v1/account/plan",
         "auth_required": True,
         "headers_required": ["Authorization", "X-User-Id"],
         "request_model": None,
         "response_model": None,
         "description": "Status da conta e do plano.",
+        "description": "Plano da conta e informações de trial.",
     },
     {
         "method": "POST",
@@ -2515,6 +2517,16 @@ async def account_status(request: Request, auth=Depends(get_auth)):
             "requested_at": datetime.utcnow().isoformat() + "Z",
             "trial_started_at": datetime.utcfromtimestamp(plan_obj.trial_started_at).isoformat() + "Z",
         },
+@app.get("/v1/account/plan")
+async def account_plan(auth=Depends(get_auth)):
+    plan_obj = get_user_plan(auth["user_id"])
+    trial_started_at = int(plan_obj.trial_started_at)
+    trial_ends_at = int(plan_obj.trial_started_at + TRIAL_SECONDS)
+    return {
+        "plan": plan_obj.plan,
+        "trial_started_at": trial_started_at,
+        "trial_ends_at": trial_ends_at,
+        "is_trial": plan_obj.plan == "trial",
     }
 
 
@@ -3722,6 +3734,10 @@ async def daily_summary(
                         ),
                     }
                 )
+        if first_context is None:
+            first_context = context
+        events.extend(_build_transit_events_for_date(date_str, context))
+        current += timedelta(days=1)
 
         def area_text(area_name: str, level: str) -> str:
             level_map = {
@@ -4104,11 +4120,39 @@ async def moon_timeline(
             lang=lang,
             auth=auth,
         )
+
+        personal_transits = []
+        for event in events[:8]:
+            personal_transits.append(
+                {
+                    "type": event.aspecto,
+                    "transiting_planet": event.transitando,
+                    "natal_point": event.alvo,
+                    "orb": event.orb_graus,
+                    "area": area_map.get(event.alvo, "tema geral"),
+                    "strength": _strength_from_score(event.impact_score),
+                    "short_text": event.copy.mecanica,
+                }
+            )
+
+        return {
+            "date": d,
+            "personal_transits": personal_transits,
+            "metadados": {
+                "birth_time_precise": natal_hour is not None,
+                **_build_time_metadata(
+                    timezone=timezone,
+                    tz_offset_minutes=tz_offset_minutes_resolved,
+                    local_dt=natal_dt,
+                ),
+            },
+        }
     except HTTPException:
         raise
     except Exception:
         logger.error(
             "moon_timeline_error",
+            "transits_personal_today_error",
             exc_info=True,
             extra={"request_id": request_id, "path": request.url.path},
         )
@@ -4118,6 +4162,12 @@ async def moon_timeline(
             error="INTERNAL_ERROR",
             message="Tivemos um problema no servidor ao carregar a timeline lunar. Tente novamente em alguns minutos.",
         )
+            message="Tivemos um problema no servidor ao calcular os trânsitos pessoais. Tente novamente em alguns minutos.",
+        )
+    payload = TransitEventsResponse(events=events, metadados=metadata, avisos=avisos)
+    cache.set(cache_key, payload.model_dump(), ttl_seconds=TTL_TRANSITS_SECONDS)
+    return payload
+
 
 @app.get("/v1/cosmic-weather", response_model=CosmicWeatherResponse)
 async def cosmic_weather(
@@ -4449,6 +4499,7 @@ async def solar_return_calculate(
         tolerance_degrees=prefs.tolerancia_graus,
         tz_offset_minutes=None,
         natal_time_missing=natal_time_missing,
+        request_id=getattr(request.state, "request_id", None),
     )
 
     try:
