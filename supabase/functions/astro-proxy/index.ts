@@ -6,6 +6,23 @@ type RenderDataNormalizationConfig = {
   natalPrefix?: string;
 };
 
+type SynastryPersonPayload = {
+  birth_date?: string;
+  birth_time?: string | null;
+  natal_year?: number;
+  natal_month?: number;
+  natal_day?: number;
+  natal_hour?: number;
+  natal_minute?: number;
+  natal_second?: number;
+  timezone?: string | null;
+  tz_offset_minutes?: number | null;
+  lat?: number;
+  lng?: number;
+  name?: string | null;
+  [key: string]: unknown;
+};
+
 const RENDER_DATA_DATE_FIELDS = [
   "year",
   "month",
@@ -39,6 +56,62 @@ export const normalizeRenderDataPayload = (
   return normalized;
 };
 
+const pad2 = (value: number) => String(value).padStart(2, "0");
+
+const normalizeSynastryPerson = (
+  person: SynastryPersonPayload,
+): SynastryPersonPayload => {
+  const normalized: SynastryPersonPayload = { ...person };
+
+  if (!normalized.birth_date && normalized.natal_year !== undefined) {
+    const year = normalized.natal_year;
+    const month = normalized.natal_month;
+    const day = normalized.natal_day;
+    if (
+      typeof year === "number" &&
+      typeof month === "number" &&
+      typeof day === "number"
+    ) {
+      normalized.birth_date = `${year}-${pad2(month)}-${pad2(day)}`;
+    }
+  }
+
+  if (!normalized.birth_time && normalized.natal_hour !== undefined) {
+    const hour = normalized.natal_hour;
+    const minute = normalized.natal_minute ?? 0;
+    const second = normalized.natal_second ?? 0;
+    if (
+      typeof hour === "number" &&
+      typeof minute === "number" &&
+      typeof second === "number"
+    ) {
+      normalized.birth_time = `${pad2(hour)}:${pad2(minute)}:${pad2(second)}`;
+    }
+  }
+
+  return normalized;
+};
+
+const normalizeSynastryPayload = (payload: JsonRecord): JsonRecord => {
+  const normalized: JsonRecord = { ...payload };
+  const personA = (payload.person_a ?? payload.person1) as
+    | SynastryPersonPayload
+    | undefined;
+  const personB = (payload.person_b ?? payload.person2) as
+    | SynastryPersonPayload
+    | undefined;
+
+  if (personA && normalized.person_a === undefined) {
+    normalized.person_a = normalizeSynastryPerson(personA);
+  }
+
+  if (personB && normalized.person_b === undefined) {
+    normalized.person_b = normalizeSynastryPerson(personB);
+  }
+
+  return normalized;
+};
+
 const upstreamUrl = Deno.env.get("ASTRO_API_URL") ?? "http://localhost:8000";
 
 serve(async (req) => {
@@ -55,10 +128,12 @@ serve(async (req) => {
 
   if (req.method !== "GET" && req.method !== "HEAD") {
     const payload = (await req.json()) as JsonRecord;
-    const normalizedPayload =
-      upstreamPath === "/v1/chart/render-data"
-        ? normalizeRenderDataPayload(payload)
-        : payload;
+    let normalizedPayload = payload;
+    if (upstreamPath === "/v1/chart/render-data") {
+      normalizedPayload = normalizeRenderDataPayload(payload);
+    } else if (upstreamPath === "/v1/synastry/compare") {
+      normalizedPayload = normalizeSynastryPayload(payload);
+    }
     body = JSON.stringify(normalizedPayload);
     requestHeaders.set("content-type", "application/json");
   } else {
@@ -90,7 +165,6 @@ serve(async (req) => {
 
   const upstreamResponse = await fetch(
     `${upstreamUrlObject.origin}${targetPath}${
-    `${upstreamUrlObject.origin}${upstreamPath}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`,
     {
