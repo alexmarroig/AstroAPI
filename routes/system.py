@@ -73,3 +73,46 @@ async def system_endpoints():
             **build_time_metadata(timezone_name=None, tz_offset_minutes=None, local_dt=None),
         },
     }
+
+
+@router.get("/api-test")
+async def api_test():
+    """Lista os principais endpoints disponíveis para integração rápida no frontend."""
+    return {
+        "ok": True,
+        "mensagem": "Mapa de rotas disponíveis para o Inner Sky Guide.",
+        "endpoints": [
+            {"method": "GET", "path": "/api/daily-analysis/{date}"},
+            {"method": "POST", "path": "/api/chat/astral-oracle"},
+            {"method": "GET", "path": "/api/solar-return"},
+            {"method": "GET", "path": "/api/lunar-calendar"},
+            {"method": "GET", "path": "/api/secondary-progressions"},
+            {"method": "POST", "path": "/v1/chart/natal"},
+            {"method": "POST", "path": "/v1/chart/transits"},
+            {"method": "POST", "path": "/v1/chart/render-data"},
+            {"method": "POST", "path": "/v1/chart/distributions"},
+            {"method": "POST", "path": "/v1/interpretation/natal"},
+            {"method": "POST", "path": "/v1/transits/events"},
+            {"method": "GET", "path": "/v1/transits/next-days"},
+            {"method": "GET", "path": "/v1/transits/personal-today"},
+            {"method": "POST", "path": "/v1/transits/live"},
+            {"method": "GET", "path": "/v1/daily/summary"},
+            {"method": "GET", "path": "/v1/cosmic-weather"},
+            {"method": "GET", "path": "/v1/cosmic-weather/range"},
+            {"method": "GET", "path": "/v1/moon/timeline"},
+            {"method": "POST", "path": "/v1/solar-return/calculate"},
+            {"method": "POST", "path": "/v1/solar-return/overlay"},
+            {"method": "POST", "path": "/v1/solar-return/timeline"},
+            {"method": "POST", "path": "/v1/ai/cosmic-chat"},
+            {"method": "POST", "path": "/v1/diagnostics/ephemeris-check"},
+            {"method": "GET", "path": "/v1/alerts/system"},
+            {"method": "GET", "path": "/v1/alerts/retrogrades"},
+            {"method": "GET", "path": "/v1/notifications/daily"},
+            {"method": "POST", "path": "/v1/lunations/calculate"},
+            {"method": "POST", "path": "/v1/progressions/secondary/calculate"},
+            {"method": "POST", "path": "/v1/synastry/compare"},
+        ],
+        "metadados_tecnicos": build_time_metadata(
+            timezone_name=None, tz_offset_minutes=None, local_dt=None
+        ),
+    }

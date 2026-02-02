@@ -3,12 +3,24 @@ from collections import defaultdict
 
 # contador por (day_key, user_id, endpoint)
 _counts = defaultdict(int)
+_hour_counts = defaultdict(int)
 
 def _day_key() -> str:
     t = time.gmtime()
     return f"{t.tm_year:04d}-{t.tm_mon:02d}-{t.tm_mday:02d}"
 
+def _hour_key() -> str:
+    t = time.gmtime()
+    return f"{t.tm_year:04d}-{t.tm_mon:02d}-{t.tm_mday:02d}-{t.tm_hour:02d}"
+
 def check_and_inc(user_id: str, endpoint: str, plan: str) -> tuple[bool, str]:
+    hour = _hour_key()
+    hour_key = (hour, user_id)
+    hourly_limit = 100
+    if _hour_counts[hour_key] >= hourly_limit:
+        return False, "Você alcançou o limite horário de 100 requisições. Respire e tente novamente em instantes."
+    _hour_counts[hour_key] += 1
+
     day = _day_key()
     key = (day, user_id, endpoint)
 
