@@ -36,6 +36,7 @@ def test_astral_oracle_quick_answer():
     body = resp.json()
     assert body["success"] is True
     assert body["theme"] == "dia"
+    assert "timestamp" in body
 
 
 def test_solar_return_ok():
@@ -73,6 +74,19 @@ def test_lunar_calendar_ok():
     body = resp.json()
     assert body["success"] is True
     assert body["phases"]
+
+
+def test_lunar_calendar_week_range():
+    client = TestClient(main.app)
+    resp = client.get(
+        "/api/lunar-calendar",
+        params={"month": 1, "year": 2024, "range": "week"},
+        headers=_auth_headers(),
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["success"] is True
+    assert len(body["phases"]) == 7
 
 
 def test_secondary_progressions_ok():

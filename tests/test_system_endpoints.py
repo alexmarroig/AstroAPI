@@ -20,3 +20,12 @@ def test_system_endpoints_enabled(monkeypatch):
     data = resp.json()
     assert "endpoints" in data
     assert isinstance(data["endpoints"], list)
+
+
+def test_api_test_endpoint():
+    client = TestClient(main.app)
+    resp = client.get("/api-test")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["ok"] is True
+    assert "endpoints" in data

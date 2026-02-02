@@ -8,6 +8,7 @@ from datetime import date as dt_date, datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import JSONResponse
 from openai import OpenAI
 from pydantic import BaseModel
 
@@ -51,6 +52,13 @@ def _log_error(message: str, user_id: str, request_id: Optional[str]) -> None:
         message,
         extra={"user_id": user_id, "request_id": request_id},
         exc_info=True,
+    )
+
+
+def _error_response(status_code: int, message: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={"success": False, "message": message},
     )
 
 
@@ -207,6 +215,12 @@ async def daily_analysis(date: str, request: Request, auth=Depends(get_auth)):
         }
         cache.set(cache_key, payload, ttl_seconds=DAILY_ANALYSIS_TTL)
         return payload
+    except ValueError as exc:
+        _log_error("daily_analysis_invalid_date", user_id, getattr(request.state, "request_id", None))
+        return _error_response(422, str(exc))
+    except Exception:
+        _log_error("daily_analysis_error", user_id, getattr(request.state, "request_id", None))
+        return _error_response(500, "Algo deu errado com os astros, tente novamente em instantes.")
     except Exception:
         _log_error("daily_analysis_error", user_id, getattr(request.state, "request_id", None))
         return {
@@ -269,6 +283,7 @@ async def astral_oracle(body: AstralOracleRequest, request: Request, auth=Depend
             "answer": "Envie sua pergunta e um contexto astrológico para abrir o Oráculo.",
             "theme": "oraculo",
             "confidence": 0.1,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
     quick_answer, theme, confidence = _match_quick_answer(body.question)
@@ -278,6 +293,7 @@ async def astral_oracle(body: AstralOracleRequest, request: Request, auth=Depend
             "answer": quick_answer,
             "theme": theme,
             "confidence": confidence,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
     api_key = os.getenv("OPENAI_API_KEY")
@@ -288,6 +304,7 @@ async def astral_oracle(body: AstralOracleRequest, request: Request, auth=Depend
             "answer": "Desculpe, o Oráculo está contemplando o cosmos. Tente novamente em alguns momentos.",
             "theme": "oraculo",
             "confidence": 0.2,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
     context = body.context
@@ -313,6 +330,7 @@ async def astral_oracle(body: AstralOracleRequest, request: Request, auth=Depend
                 "answer": answer,
                 "theme": "oraculo",
                 "confidence": 0.6,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             }
         except asyncio.TimeoutError:
             _log_error("astral_oracle_timeout", user_id, getattr(request.state, "request_id", None))
@@ -324,6 +342,7 @@ async def astral_oracle(body: AstralOracleRequest, request: Request, auth=Depend
         "answer": "Desculpe, o Oráculo está contemplando o cosmos. Tente novamente em alguns momentos.",
         "theme": "oraculo",
         "confidence": 0.2,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
     }
 
 
@@ -354,6 +373,11 @@ async def solar_return_api(
         lat_f = _parse_float(lat, "Latitude", -89.9999, 89.9999)
         lng_f = _parse_float(lng, "Longitude", -180, 180)
     except ValueError as exc:
+        _log_error("solar_return_invalid_params", user_id, getattr(request.state, "request_id", None))
+        return _error_response(422, str(exc))
+
+    if not all([natal_year_i, natal_month_i, natal_day_i, natal_hour_i is not None, lat_f is not None, lng_f is not None, timezone]):
+        return _error_response(422, "Dados insuficientes para calcular sua revolução solar.")
         return {
             "success": False,
             "message": str(exc),
@@ -474,6 +498,10 @@ async def solar_return_api(
         return payload
     except Exception:
         _log_error("solar_return_api_error", user_id, getattr(request.state, "request_id", None))
+        return _error_response(
+            500,
+            "Não foi possível calcular sua revolução solar agora. Tente novamente em instantes.",
+        )
         return {
             "success": False,
             "message": "Não foi possível calcular sua revolução solar agora. Tente novamente em instantes.",
@@ -485,6 +513,7 @@ async def lunar_calendar(
     request: Request,
     month: Optional[str] = Query(None),
     year: Optional[str] = Query(None),
+    range_: str = Query("month", alias="range"),
     auth=Depends(get_auth),
 ):
     user_id = auth["user_id"]
@@ -493,6 +522,13 @@ async def lunar_calendar(
         target_month = _parse_int(month, "Mês", 1, 12) or today.month
         target_year = _parse_int(year, "Ano", 1800, 2100) or today.year
     except ValueError as exc:
+        _log_error("lunar_calendar_invalid_params", user_id, getattr(request.state, "request_id", None))
+        return _error_response(422, str(exc))
+
+    if range_ not in {"month", "week"}:
+        return _error_response(422, "O parâmetro range deve ser 'month' ou 'week'.")
+
+    cache_key = f"lunar-calendar:{target_year}:{target_month}:{range_}"
         return {
             "success": False,
             "message": str(exc),
@@ -503,6 +539,7 @@ async def lunar_calendar(
         return cached
 
     try:
+        phases: List[Dict[str, Any]] = []
         _, days_in_month = calendar.monthrange(target_year, target_month)
         phases: List[Dict[str, Any]] = []
         seen_types = set()
@@ -519,6 +556,13 @@ async def lunar_calendar(
             "last_quarter": "Tempo de desapegar do que pesa e reorganizar prioridades.",
         }
 
+        if range_ == "week":
+            start_date = dt_date(target_year, target_month, 1)
+            for offset in range(7):
+                day_date = start_date + timedelta(days=offset)
+                lunation = calculate_lunation(datetime.combine(day_date, datetime.min.time()), 0, None)
+                phase_key = lunation.phase
+                phase_type, phase_name = phase_map.get(phase_key, (phase_key, lunation.phase_pt))
         for day in range(1, days_in_month + 1):
             date_obj = datetime(target_year, target_month, day)
             lunation = calculate_lunation(date_obj, 0, None)
@@ -532,6 +576,26 @@ async def lunar_calendar(
                     "pt_name": phase_name,
                     "sign": lunation.moon_sign,
                     "pt_sign": lunation.moon_sign_pt,
+                    "interpretation": interpretations.get(phase_type, "O céu pede atenção gentil ao fluxo do dia."),
+                })
+        else:
+            _, days_in_month = calendar.monthrange(target_year, target_month)
+            seen_types = set()
+            for day in range(1, days_in_month + 1):
+                date_obj = datetime(target_year, target_month, day)
+                lunation = calculate_lunation(date_obj, 0, None)
+                phase_key = lunation.phase
+                if phase_key in phase_map and phase_key not in seen_types:
+                    phase_type, phase_name = phase_map[phase_key]
+                    seen_types.add(phase_key)
+                    phases.append({
+                        "date": lunation.date,
+                        "type": phase_type,
+                        "pt_name": phase_name,
+                        "sign": lunation.moon_sign,
+                        "pt_sign": lunation.moon_sign_pt,
+                        "interpretation": interpretations[phase_type],
+                    })
                     "interpretation": interpretations[phase_type],
                 })
 
@@ -559,6 +623,7 @@ async def lunar_calendar(
         return payload
     except Exception:
         _log_error("lunar_calendar_error", user_id, getattr(request.state, "request_id", None))
+        return _error_response(500, "Não conseguimos ler o calendário lunar agora. Tente novamente em instantes.")
         return {
             "success": False,
             "message": "Não conseguimos ler o calendário lunar agora. Tente novamente em instantes.",
@@ -590,6 +655,14 @@ async def secondary_progressions(
         lat_f = _parse_float(lat, "Latitude", -89.9999, 89.9999)
         lng_f = _parse_float(lng, "Longitude", -180, 180)
     except ValueError as exc:
+        _log_error("secondary_progressions_invalid_params", user_id, getattr(request.state, "request_id", None))
+        return _error_response(422, str(exc))
+
+    if not all([natal_year_i, natal_month_i, natal_day_i, lat_f is not None, lng_f is not None, timezone]):
+        return _error_response(
+            422,
+            "Suas progressões ainda não estão disponíveis. Complete seus dados natais.",
+        )
         return {
             "success": False,
             "message": str(exc),
@@ -639,6 +712,7 @@ async def secondary_progressions(
         return payload
     except Exception:
         _log_error("secondary_progressions_error", user_id, getattr(request.state, "request_id", None))
+        return _error_response(500, "Não foi possível calcular suas progressões agora. Tente novamente em instantes.")
         return {
             "success": False,
             "message": "Não foi possível calcular suas progressões agora. Tente novamente em instantes.",
