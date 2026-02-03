@@ -45,4 +45,8 @@ def test_ephemeris_check_rejects_invalid_timezone():
     }
 
     resp = client.post("/v1/diagnostics/ephemeris-check", json=payload, headers=_auth_headers())
-    assert resp.status_code == 400
+    assert resp.status_code == 200
+
+    body = resp.json()
+    assert body["success"] is False
+    assert body["message"] == "Não foi possível validar a efeméride neste momento"
