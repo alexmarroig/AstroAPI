@@ -51,6 +51,10 @@ export const normalizeRenderDataPayload = (
     if (!hasRenderField && natalValue !== undefined) {
       normalized[field] = natalValue;
     }
+
+    if (normalized[natalField] !== undefined) {
+      delete normalized[natalField];
+    }
   }
 
   return normalized;
