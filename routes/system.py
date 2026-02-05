@@ -46,6 +46,31 @@ async def health_check():
     """Endpoint simples de health check."""
     return {"ok": True}
 
+
+
+@router.get("/v1/system/health")
+async def system_health():
+    """Health detalhado para monitoramento operacional."""
+    return {
+        "ok": True,
+        "data": {
+            "status": "ok",
+            "build": os.getenv("APP_VERSION", "1.1.2"),
+            "commit": get_git_commit_hash(),
+            "env": os.getenv("APP_ENV", "development"),
+            "deps": {
+                "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
+            },
+            "timeouts": {
+                "openai_timeout_s": int(os.getenv("OPENAI_TIMEOUT_S", "35")),
+            },
+            "queue": {
+                "enabled": False,
+            },
+            "openai_status": "configured" if os.getenv("OPENAI_API_KEY") else "missing_key",
+        },
+    }
+
 @router.get("/v1/system/roadmap")
 async def roadmap():
     """Visão rápida do andamento das próximas funcionalidades."""

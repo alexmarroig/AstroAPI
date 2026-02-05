@@ -23,6 +23,14 @@ type SynastryPersonPayload = {
   [key: string]: unknown;
 };
 
+type ProxyEnvelope = {
+  method?: string;
+  path?: string;
+  body?: JsonRecord;
+  query?: Record<string, string | number | boolean | null | undefined>;
+  [key: string]: unknown;
+};
+
 const RENDER_DATA_DATE_FIELDS = [
   "year",
   "month",
@@ -35,6 +43,76 @@ const RENDER_DATA_DATE_FIELDS = [
 const DEFAULT_CONFIG: RenderDataNormalizationConfig = {
   natalPrefix: "natal_",
 };
+
+const ALLOWED_EXACT_PATHS = new Set([
+  "/",
+  "/health",
+  "/api-test",
+  "/api/chat/astral-oracle",
+  "/api/lunar-calendar",
+  "/api/secondary-progressions",
+  "/api/solar-return",
+  "/v1/account/status",
+  "/v1/account/plan",
+  "/v1/account/plan-status",
+  "/v1/ai/cosmic-chat",
+  "/v1/alerts/retrogrades",
+  "/v1/alerts/system",
+  "/v1/astro/chart",
+  "/v1/astro/chart/render-spec",
+  "/v1/astro/composite",
+  "/v1/astro/lunar-phases",
+  "/v1/astro/progressions",
+  "/v1/astro/solar-return",
+  "/v1/astro/synastry",
+  "/v1/astro/transits",
+  "/v1/billing/entitlements",
+  "/v1/billing/status",
+  "/v1/bugs/report",
+  "/v1/chart/distributions",
+  "/v1/chart/natal",
+  "/v1/chart/render-data",
+  "/v1/chart/transits",
+  "/v1/cosmic-timeline/next-7-days",
+  "/v1/cosmic-weather",
+  "/v1/cosmic-weather/range",
+  "/v1/daily/summary",
+  "/v1/dev/login-as",
+  "/v1/diagnostics/ephemeris-check",
+  "/v1/i18n/ptbr",
+  "/v1/i18n/validate",
+  "/v1/insights/areas-activated",
+  "/v1/insights/care-suggestion",
+  "/v1/insights/dominant-theme",
+  "/v1/insights/life-cycles",
+  "/v1/insights/mercury-retrograde",
+  "/v1/insights/solar-return",
+  "/v1/interpretation/natal",
+  "/v1/lunations/calculate",
+  "/v1/moon/timeline",
+  "/v1/notifications/daily",
+  "/v1/oracle/chat",
+  "/v1/progressions/secondary/calculate",
+  "/v1/revolution-solar/current-year",
+  "/v1/solar-return/calculate",
+  "/v1/solar-return/overlay",
+  "/v1/solar-return/timeline",
+  "/v1/synastry/compare",
+  "/v1/system/endpoints",
+  "/v1/system/health",
+  "/v1/system/roadmap",
+  "/v1/telemetry/event",
+  "/v1/time/resolve-tz",
+  "/v1/time/validate-local-datetime",
+  "/v1/transits/events",
+  "/v1/transits/live",
+  "/v1/transits/next-days",
+  "/v1/transits/personal-today",
+]);
+
+const ALLOWED_DYNAMIC_PREFIXES = [
+  "/api/daily-analysis/",
+];
 
 export const normalizeRenderDataPayload = (
   payload: JsonRecord,
@@ -118,61 +196,107 @@ const normalizeSynastryPayload = (payload: JsonRecord): JsonRecord => {
 
 const upstreamUrl = Deno.env.get("ASTRO_API_URL") ?? "http://localhost:8000";
 
+const isAllowedPath = (path: string): boolean => {
+  if (ALLOWED_EXACT_PATHS.has(path)) {
+    return true;
+  }
+  return ALLOWED_DYNAMIC_PREFIXES.some((prefix) => path.startsWith(prefix));
+};
+
+const readJsonSafely = async (req: Request): Promise<JsonRecord | undefined> => {
+  const contentType = req.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return undefined;
+  }
+
+  try {
+    return (await req.json()) as JsonRecord;
+  } catch {
+    return undefined;
+  }
+};
+
 serve(async (req) => {
   const url = new URL(req.url);
-  const upstreamPath = url.pathname;
-  const targetPath = upstreamPath;
   const upstreamUrlObject = new URL(upstreamUrl);
   const queryParams = new URLSearchParams(url.search);
-
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("host", upstreamUrlObject.host);
 
+  const incomingBody = await readJsonSafely(req);
+  const envelope = (incomingBody ?? {}) as ProxyEnvelope;
+
+  const rawPathFromEnvelope =
+    typeof envelope.path === "string" && envelope.path.trim().startsWith("/")
+      ? envelope.path.trim()
+      : undefined;
+  const rawMethodFromEnvelope =
+    typeof envelope.method === "string" && envelope.method.trim().length > 0
+      ? envelope.method.trim().toUpperCase()
+      : undefined;
+
+  const [envelopePathOnly, envelopeQueryString] = rawPathFromEnvelope
+    ? rawPathFromEnvelope.split("?", 2)
+    : [undefined, undefined];
+
+  const upstreamPath =
+    envelopePathOnly && envelopePathOnly !== "/"
+      ? envelopePathOnly
+      : url.pathname;
+
+  if (!isAllowedPath(upstreamPath)) {
+    return new Response(
+      JSON.stringify({ detail: "Path não permitido", path: upstreamPath }),
+      { status: 400, headers: { "content-type": "application/json" } },
+    );
+  }
+
+  if (envelopeQueryString) {
+    const parsed = new URLSearchParams(envelopeQueryString);
+    for (const [k, v] of parsed.entries()) {
+      if (!queryParams.has(k)) {
+        queryParams.set(k, v);
+      }
+    }
+  }
+
+  if (envelope.query && typeof envelope.query === "object") {
+    for (const [key, value] of Object.entries(envelope.query)) {
+      if (value === null || value === undefined) continue;
+      if (!queryParams.has(key)) {
+        queryParams.set(key, String(value));
+      }
+    }
+  }
+
+  const targetMethod = rawMethodFromEnvelope ?? req.method.toUpperCase();
+
   let body: string | undefined;
 
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    const payload = (await req.json()) as JsonRecord;
+  if (targetMethod !== "GET" && targetMethod !== "HEAD") {
+    let payload = (incomingBody ?? {}) as JsonRecord;
+
+    if (rawPathFromEnvelope && envelope.body && typeof envelope.body === "object") {
+      payload = envelope.body;
+    }
+
     let normalizedPayload = payload;
     if (upstreamPath === "/v1/chart/render-data") {
       normalizedPayload = normalizeRenderDataPayload(payload);
     } else if (upstreamPath === "/v1/synastry/compare") {
       normalizedPayload = normalizeSynastryPayload(payload);
     }
+
     body = JSON.stringify(normalizedPayload);
     requestHeaders.set("content-type", "application/json");
-  } else {
-    const contentType = req.headers.get("content-type") ?? "";
-    const contentLength = req.headers.get("content-length");
-    const hasBody =
-      contentType.includes("application/json") ||
-      (contentLength !== null && contentLength !== "0");
-
-    if (hasBody) {
-      const rawBody = await req.text();
-      if (rawBody) {
-        try {
-          const payload = JSON.parse(rawBody) as JsonRecord;
-          for (const [key, value] of Object.entries(payload)) {
-            if (value === null || value === undefined) {
-              continue;
-            }
-            if (!queryParams.has(key)) {
-              queryParams.set(key, String(value));
-            }
-          }
-        } catch {
-          // Ignore invalid JSON body on GET requests.
-        }
-      }
-    }
   }
 
   const upstreamResponse = await fetch(
-    `${upstreamUrlObject.origin}${targetPath}${
+    `${upstreamUrlObject.origin}${upstreamPath}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`,
     {
-      method: req.method,
+      method: targetMethod,
       headers: requestHeaders,
       body,
     },
