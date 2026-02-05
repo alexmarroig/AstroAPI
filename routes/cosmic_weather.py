@@ -45,8 +45,8 @@ def _get_cosmic_weather_payload(
 
     resolved_offset = get_tz_offset_minutes(dt, timezone_name, tz_offset_minutes, request_id=request_id, path=path)
 
-    is_pt = is_pt_br(lang)
-    cache_key = f"cw:{user_id}:{date_str}:{timezone_name}:{resolved_offset}:{str(lang).lower()}"
+    is_pt = True if lang is None else is_pt_br(lang)
+    cache_key = f"cw:{date_str}:{timezone_name}:{resolved_offset}:{str(lang).lower()}"
     cached = cache.get(cache_key)
     if cached: return cached
 
