@@ -16,6 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field, AliasChoices, model_validator, ConfigDict
 
 from core.security import require_api_key_and_user
+from core.errors import build_error
 from astro.i18n_ptbr import (
     planet_key_to_ptbr,
     sign_to_ptbr,
@@ -34,7 +35,7 @@ from astro.aspects import resolve_aspects_config, compute_transit_aspects
 from routes import (
     system, account, time as time_route, chart, insights, transits,
     cosmic_weather, solar_return, ai, diagnostics, alerts, notifications,
-    lunations, progressions, inner_sky
+    lunations, progressions, inner_sky, i18n
 )
 
 # -----------------------------
@@ -136,11 +137,13 @@ async def request_logging_middleware(request: Request, call_next):
              request_id=request_id, path=request.url.path,
              status=500, latency_ms=latency_ms, error=str(e))
 
+        err = build_error(500, "Tente novamente em 1 minuto", retryable=True)
         return JSONResponse(
             status_code=500,
             content={
-                "error": "SERVIDOR_TEMPORARIO",
-                "message": "Tente novamente em 1 minuto",
+                "ok": False,
+                "data": None,
+                "error": err.to_response(),
                 "request_id": request_id,
             },
             headers={"X-Request-Id": request_id},
@@ -155,12 +158,15 @@ async def request_logging_middleware(request: Request, call_next):
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
+    err = build_error(exc.status_code, str(exc.detail), retryable=exc.status_code >= 500)
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "detail": exc.detail,
+            "ok": False,
+            "data": None,
+            "error": err.to_response(),
+            "detail": str(exc.detail),
             "request_id": request_id,
-            "code": f"http_{exc.status_code}",
         },
         headers={"X-Request-Id": request_id},
     )
@@ -176,10 +182,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         "latency_ms": None,
     }
     _log("warning", "validation_error", **extra)
+    err = build_error(422, "Payload inválido.", retryable=False)
     payload = {
+        "ok": False,
+        "data": None,
+        "error": {
+            **err.to_response(),
+            "details": exc.errors(),
+        },
         "detail": exc.errors(),
         "request_id": request_id,
-        "code": "validation_error",
     }
     return JSONResponse(status_code=422, content=payload, headers={"X-Request-Id": request_id})
 
@@ -1500,6 +1512,7 @@ app.include_router(notifications.router, tags=["Notifications"])
 app.include_router(lunations.router, tags=["Lunations"])
 app.include_router(progressions.router, tags=["Progressions"])
 app.include_router(inner_sky.router, tags=["Inner Sky"])
+app.include_router(i18n.router, tags=["I18N"])
 
 
 def _build_transit_events_for_date(date_str: str, context: Dict[str, Any]) -> List[TransitEvent]:
