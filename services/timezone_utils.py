@@ -109,6 +109,19 @@ def _roundtrip_valid(local_dt: datetime, tzinfo: ZoneInfo, fold: int) -> bool:
     return roundtrip.replace(tzinfo=None) == local_dt
 
 
+def _first_non_none(*values):
+    """Return the first value that is not None.
+
+    Important: timezone offsets can be zero (UTC) and zero-like values are falsy,
+    therefore we must not rely on ``or`` when choosing fallback offsets.
+    """
+
+    for value in values:
+        if value is not None:
+            return value
+    return None
+
+
 def validate_local_datetime(
     local_datetime: datetime,
     timezone_name: str,
@@ -126,11 +139,12 @@ def validate_local_datetime(
     valid_fold0 = _roundtrip_valid(naive_local, tzinfo, fold=0)
     valid_fold1 = _roundtrip_valid(naive_local, tzinfo, fold=1)
 
+    # Use explicit None checks because offset 0 minutes (UTC) is valid but falsy.
     ambiguous = (
         valid_fold0
         and valid_fold1
-        and offset_fold0
-        and offset_fold1
+        and offset_fold0 is not None
+        and offset_fold1 is not None
         and offset_fold0 != offset_fold1
     )
     nonexistent = not valid_fold0 and not valid_fold1
@@ -168,23 +182,27 @@ def validate_local_datetime(
             "fold": 0,
         }
         fold = 0
-        offset = offset_fold0 or offset_fold1
+        offset = _first_non_none(offset_fold0, offset_fold1)
     elif nonexistent:
-        if offset_fold0 and offset_fold1 and offset_fold1 > offset_fold0:
+        if (
+            offset_fold0 is not None
+            and offset_fold1 is not None
+            and offset_fold1 > offset_fold0
+        ):
             delta = offset_fold1 - offset_fold0
             adjustment_minutes = int(delta.total_seconds() // 60)
             resolved_local = naive_local + delta
             fold = 0
             offset = offset_fold1
         else:
-            offset = offset_fold0 or offset_fold1
+            offset = _first_non_none(offset_fold0, offset_fold1)
         warning = {
             "code": "nonexistent_local_time",
             "message": "Horário inexistente na transição de horário de verão.",
             "adjustment_minutes": adjustment_minutes,
         }
     else:
-        offset = offset_fold0 or offset_fold1
+        offset = _first_non_none(offset_fold0, offset_fold1)
 
     if offset is None:
         raise HTTPException(status_code=400, detail=f"Timezone sem offset disponível: {timezone_name}")
