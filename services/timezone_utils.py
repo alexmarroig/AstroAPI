@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import List, Optional
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import HTTPException
+
+from core.timezone_utils import (
+    TimezoneResolutionError,
+    localize_with_zoneinfo as core_localize_with_zoneinfo,
+)
 
 
 @dataclass(frozen=True)
@@ -14,80 +19,6 @@ class LocalDatetimeResolution:
     datetime_utc_used: datetime
     fold_used: Optional[int]
     warnings: List[str]
-
-
-def _offset_candidates(
-    date_time: datetime, tzinfo: ZoneInfo
-) -> tuple[Optional[object], Optional[object]]:
-    offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
-    offset_fold1 = date_time.replace(tzinfo=tzinfo, fold=1).utcoffset()
-    return offset_fold0, offset_fold1
-
-
-def _matches_local_time(date_time: datetime, tzinfo: ZoneInfo, offset) -> bool:
-    if offset is None:
-        return False
-    utc_candidate = date_time - offset
-    local = tzinfo.fromutc(utc_candidate.replace(tzinfo=tzinfo))
-    return local.replace(tzinfo=None) == date_time
-
-
-def resolve_local_datetime(
-    date_time: datetime, timezone: str, strict: bool = True
-) -> LocalDatetimeResolution:
-    if not timezone:
-        raise HTTPException(status_code=400, detail="Timezone é obrigatório.")
-
-    try:
-        tzinfo = ZoneInfo(timezone)
-    except ZoneInfoNotFoundError:
-        raise HTTPException(status_code=400, detail=f"Timezone inválido: {timezone}")
-
-    offset_fold0, offset_fold1 = _offset_candidates(date_time, tzinfo)
-    if offset_fold0 is None and offset_fold1 is None:
-        raise HTTPException(status_code=400, detail=f"Timezone sem offset disponível: {timezone}")
-
-    matches_fold0 = _matches_local_time(date_time, tzinfo, offset_fold0)
-    matches_fold1 = _matches_local_time(date_time, tzinfo, offset_fold1)
-
-    warnings: List[str] = []
-
-    if matches_fold0 and matches_fold1 and offset_fold0 != offset_fold1:
-        if strict:
-            raise HTTPException(
-                status_code=400,
-                detail="Horário ambíguo na transição de horário de verão.",
-            )
-        fold_used = 0
-        utc_dt = date_time - offset_fold0
-        warnings.append(
-            "Horário ambíguo na transição de horário de verão; fold=0 aplicado de forma determinística."
-        )
-        return LocalDatetimeResolution(date_time, utc_dt, fold_used, warnings)
-
-    if not matches_fold0 and not matches_fold1:
-        if strict:
-            raise HTTPException(
-                status_code=400,
-                detail="Horário inexistente na transição de horário de verão.",
-            )
-        offset = offset_fold0 or offset_fold1
-        utc_dt = date_time - offset
-        local_adjusted = tzinfo.fromutc(utc_dt.replace(tzinfo=tzinfo)).replace(tzinfo=None)
-        warnings.append(
-            "Horário inexistente na transição de horário de verão; horário ajustado para o próximo válido."
-        )
-        return LocalDatetimeResolution(local_adjusted, utc_dt, 0, warnings)
-
-    if matches_fold0:
-        offset = offset_fold0
-        fold_used = 0
-    else:
-        offset = offset_fold1
-        fold_used = 1
-
-    utc_dt = date_time - offset
-    return LocalDatetimeResolution(date_time, utc_dt, fold_used, warnings)
 
 
 @dataclass(frozen=True)
@@ -102,24 +33,32 @@ class LocalDatetimeValidation:
     adjustment_minutes: int = 0
 
 
-def _roundtrip_valid(local_dt: datetime, tzinfo: ZoneInfo, fold: int) -> bool:
-    candidate = local_dt.replace(tzinfo=tzinfo, fold=fold)
-    utc_dt = candidate.astimezone(timezone.utc)
-    roundtrip = utc_dt.astimezone(tzinfo)
-    return roundtrip.replace(tzinfo=None) == local_dt
+def resolve_local_datetime(
+    date_time: datetime, timezone_name: str, strict: bool = True
+) -> LocalDatetimeResolution:
+    warnings.warn(
+        "services.timezone_utils.resolve_local_datetime está deprecated; use core.timezone_utils.localize_with_zoneinfo.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    if not timezone_name:
+        raise HTTPException(status_code=400, detail="Timezone é obrigatório.")
+    try:
+        localized, info = core_localize_with_zoneinfo(
+            date_time,
+            timezone_name,
+            strict=strict,
+            prefer_fold=0,
+        )
+    except TimezoneResolutionError as exc:
+        raise HTTPException(status_code=400, detail=exc.detail) from exc
 
-
-def _first_non_none(*values):
-    """Return the first value that is not None.
-
-    Important: timezone offsets can be zero (UTC) and zero-like values are falsy,
-    therefore we must not rely on ``or`` when choosing fallback offsets.
-    """
-
-    for value in values:
-        if value is not None:
-            return value
-    return None
+    return LocalDatetimeResolution(
+        datetime_local_used=localized.replace(tzinfo=None),
+        datetime_utc_used=localized.astimezone(timezone.utc).replace(tzinfo=None),
+        fold_used=info.get("fold_used") if info.get("fold_used") in (0, 1) else None,
+        warnings=list(info.get("warnings", [])),
+    )
 
 
 def validate_local_datetime(
@@ -127,89 +66,68 @@ def validate_local_datetime(
     timezone_name: str,
     strict: bool = False,
 ) -> LocalDatetimeValidation:
-    try:
-        tzinfo = ZoneInfo(timezone_name)
-    except ZoneInfoNotFoundError:
-        raise HTTPException(status_code=400, detail=f"Timezone inválido: {timezone_name}")
-
-    naive_local = local_datetime.replace(tzinfo=None)
-    offset_fold0 = naive_local.replace(tzinfo=tzinfo, fold=0).utcoffset()
-    offset_fold1 = naive_local.replace(tzinfo=tzinfo, fold=1).utcoffset()
-
-    valid_fold0 = _roundtrip_valid(naive_local, tzinfo, fold=0)
-    valid_fold1 = _roundtrip_valid(naive_local, tzinfo, fold=1)
-
-    # Use explicit None checks because offset 0 minutes (UTC) is valid but falsy.
-    ambiguous = (
-        valid_fold0
-        and valid_fold1
-        and offset_fold0 is not None
-        and offset_fold1 is not None
-        and offset_fold0 != offset_fold1
+    warnings.warn(
+        "services.timezone_utils.validate_local_datetime está deprecated; use core.timezone_utils.localize_with_zoneinfo.",
+        DeprecationWarning,
+        stacklevel=2,
     )
-    nonexistent = not valid_fold0 and not valid_fold1
+    naive_local = local_datetime.replace(tzinfo=None)
 
-    if strict and (ambiguous or nonexistent):
-        if ambiguous:
-            options = sorted(
-                {int(offset_fold0.total_seconds() // 60), int(offset_fold1.total_seconds() // 60)}
+    classification: Optional[str] = None
+    if strict:
+        try:
+            core_localize_with_zoneinfo(
+                naive_local,
+                timezone_name,
+                strict=True,
+                prefer_fold=0,
             )
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "detail": "Horário ambíguo na transição de horário de verão.",
-                    "offset_options_minutes": options,
-                    "hint": "Envie tz_offset_minutes explicitamente ou ajuste o horário local.",
-                },
+        except TimezoneResolutionError as exc:
+            raise HTTPException(status_code=400, detail=exc.detail) from exc
+    else:
+        try:
+            core_localize_with_zoneinfo(
+                naive_local,
+                timezone_name,
+                strict=True,
+                prefer_fold=0,
             )
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "detail": "Horário inexistente na transição de horário de verão.",
-                "hint": "Ajuste o horário local ou envie outro horário válido.",
-            },
+        except TimezoneResolutionError as exc:
+            msg = str(exc)
+            if "ambíguo" in msg:
+                classification = "ambiguous"
+            elif "inexistente" in msg:
+                classification = "nonexistent"
+
+    try:
+        localized, info = core_localize_with_zoneinfo(
+            naive_local,
+            timezone_name,
+            strict=False,
+            prefer_fold=0,
         )
+    except TimezoneResolutionError as exc:
+        raise HTTPException(status_code=400, detail=exc.detail) from exc
 
-    warning: Optional[dict] = None
-    adjustment_minutes = 0
-    resolved_local = naive_local
-    fold = 0
+    resolved_local = localized.replace(tzinfo=None)
+    utc_dt = localized.astimezone(timezone.utc)
+    fold_used = info.get("fold_used") if info.get("fold_used") in (0, 1) else 0
+    tz_offset_minutes = int(localized.utcoffset().total_seconds() // 60)
+    adjustment_minutes = int(info.get("adjusted_minutes", 0) or 0)
+    warning = None
 
-    if ambiguous:
-        warning = {
-            "code": "ambiguous_local_time",
-            "message": "Horário ambíguo na transição de horário de verão.",
-            "fold": 0,
-        }
-        fold = 0
-        offset = _first_non_none(offset_fold0, offset_fold1)
-    elif nonexistent:
-        if (
-            offset_fold0 is not None
-            and offset_fold1 is not None
-            and offset_fold1 > offset_fold0
-        ):
-            delta = offset_fold1 - offset_fold0
-            adjustment_minutes = int(delta.total_seconds() // 60)
-            resolved_local = naive_local + delta
-            fold = 0
-            offset = offset_fold1
-        else:
-            offset = _first_non_none(offset_fold0, offset_fold1)
+    if classification == "nonexistent" or adjustment_minutes:
         warning = {
             "code": "nonexistent_local_time",
             "message": "Horário inexistente na transição de horário de verão.",
             "adjustment_minutes": adjustment_minutes,
         }
-    else:
-        offset = _first_non_none(offset_fold0, offset_fold1)
-
-    if offset is None:
-        raise HTTPException(status_code=400, detail=f"Timezone sem offset disponível: {timezone_name}")
-
-    tz_offset_minutes = int(offset.total_seconds() // 60)
-    aware_local = resolved_local.replace(tzinfo=tzinfo, fold=fold)
-    utc_dt = aware_local.astimezone(timezone.utc)
+    elif classification == "ambiguous":
+        warning = {
+            "code": "ambiguous_local_time",
+            "message": "Horário ambíguo na transição de horário de verão.",
+            "fold": fold_used,
+        }
 
     return LocalDatetimeValidation(
         input_datetime=naive_local,
@@ -217,7 +135,7 @@ def validate_local_datetime(
         timezone=timezone_name,
         tz_offset_minutes=tz_offset_minutes,
         utc_datetime=utc_dt,
-        fold=fold,
+        fold=fold_used,
         warning=warning,
         adjustment_minutes=adjustment_minutes,
     )

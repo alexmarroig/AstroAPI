@@ -2594,6 +2594,7 @@ async def resolve_timezone(body: TimezoneResolveRequest, request: Request):
         strict=body.strict_birth,
         request_id=getattr(request.state, "request_id", None),
         path=request.url.path,
+        prefer_fold=body.prefer_fold,
     )
     return {
         "tz_offset_minutes": resolved_offset,

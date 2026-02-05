@@ -124,8 +124,8 @@ def test_validate_local_datetime_spring_forward_inexistent_relaxed():
     resp = client.post("/v1/time/validate-local-datetime", json=payload)
     assert resp.status_code == 200
     body = resp.json()
-    assert body["datetime_local_usado"] == "2024-03-10T03:30:00"
-    assert body["datetime_utc_usado"] == "2024-03-10T07:30:00"
+    assert body["datetime_local_usado"] == "2024-03-10T03:00:00"
+    assert body["datetime_utc_usado"] == "2024-03-10T07:00:00"
     assert body["fold_usado"] == 0
     assert body["avisos"]
 
@@ -171,3 +171,34 @@ def test_validate_local_datetime_ambiguous_detail_includes_zero_offset_option():
     detail = resp.json().get("detail", "")
     assert "Horário ambíguo na transição de horário de verão." in detail
     assert "[0, 60]" in detail
+
+
+def test_validate_local_datetime_invalid_timezone_contract():
+    client = TestClient(main.app)
+    payload = {
+        "datetime_local": "2024-01-15T12:00:00",
+        "timezone": "Invalid/Timezone",
+        "strict": True,
+    }
+    resp = client.post("/v1/time/validate-local-datetime", json=payload)
+    assert resp.status_code == 400
+    detail = resp.json().get("detail")
+    assert "Timezone inválido" in str(detail)
+
+
+def test_validate_local_datetime_ambiguous_with_fold_1():
+    client = TestClient(main.app)
+    payload = {
+        "year": 2024,
+        "month": 11,
+        "day": 3,
+        "hour": 1,
+        "minute": 30,
+        "second": 0,
+        "timezone": "America/New_York",
+        "strict_birth": False,
+        "prefer_fold": 1,
+    }
+    resp = client.post("/v1/time/resolve-tz", json=payload)
+    assert resp.status_code == 200
+    assert resp.json()["tz_offset_minutes"] == -300

@@ -1,10 +1,18 @@
 from __future__ import annotations
 import logging
 import re
+import warnings
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any, NamedTuple
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from fastapi import HTTPException
+
+from core.timezone_utils import (
+    TimezoneResolutionError,
+    localize_with_zoneinfo as core_localize_with_zoneinfo,
+    resolve_timezone_offset,
+    to_utc as core_to_utc,
+)
 
 logger = logging.getLogger("astro-api")
 
@@ -184,40 +192,18 @@ def get_tz_offset_minutes(
     prefer_fold: Optional[int] = None,
 ) -> int:
     """Resolve o offset de timezone (em minutos) para uma determinada data/hora."""
-    # Nota: Esta função consolida a lógica do _tz_offset_for do main.py
-    if timezone_name:
-        try:
-            tzinfo = ZoneInfo(timezone_name)
-        except ZoneInfoNotFoundError:
-            raise HTTPException(status_code=400, detail=f"Timezone inválido: {timezone_name}")
+    try:
+        result = resolve_timezone_offset(
+            date_time,
+            timezone_name,
+            fallback_minutes,
+            strict=strict,
+            prefer_fold=prefer_fold,
+        )
+    except TimezoneResolutionError as exc:
+        raise HTTPException(status_code=400, detail=exc.detail) from exc
+    return result.offset_minutes
 
-        offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
-        offset_fold1 = date_time.replace(tzinfo=tzinfo, fold=1).utcoffset()
-
-        if offset_fold0 is None and offset_fold1 is None:
-            raise HTTPException(status_code=400, detail=f"Timezone sem offset disponível: {timezone_name}")
-
-        if strict and offset_fold0 and offset_fold1 and offset_fold0 != offset_fold1:
-            opts = sorted({int(offset_fold0.total_seconds() // 60), int(offset_fold1.total_seconds() // 60)})
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "detail": "Horário ambíguo na transição de horário de verão.",
-                    "offset_options_minutes": opts,
-                    "hint": "Envie tz_offset_minutes explicitamente ou ajuste o horário local.",
-                },
-            )
-
-        # Se prefer_fold for fornecido, usa ele. Caso contrário, tenta o offset do fold 0
-        offset = offset_fold0 if prefer_fold == 0 or prefer_fold is None else offset_fold1
-        if offset is None: offset = offset_fold1 # Fallback
-
-        return int(offset.total_seconds() // 60)
-
-    if fallback_minutes is not None:
-        return fallback_minutes
-
-    return 0
 
 def resolve_fold_for(
     date_time: Optional[datetime],
@@ -270,44 +256,32 @@ def localize_with_zoneinfo(
     fallback_minutes: Optional[int],
     strict: bool = False,
 ) -> LocalizedDateTime:
-    """Localiza uma data ingênua usando ZoneInfo ou um offset de fallback."""
-    warnings = []
+    """Localiza uma data ingênua usando funções canônicas de `core.timezone_utils`."""
+    warnings.warn(
+        "services.time_utils.localize_with_zoneinfo está deprecated; use core.timezone_utils.localize_with_zoneinfo.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     if timezone_name:
         try:
-            tzinfo = ZoneInfo(timezone_name)
-        except ZoneInfoNotFoundError:
-            raise HTTPException(status_code=400, detail=f"Timezone inválido: {timezone_name}")
-
-        offset_fold0 = local_dt.replace(tzinfo=tzinfo, fold=0).utcoffset()
-        offset_fold1 = local_dt.replace(tzinfo=tzinfo, fold=1).utcoffset()
-
-        fold_used = 0
-        offset = offset_fold0
-
-        if offset_fold0 != offset_fold1:
-            if fallback_minutes is not None:
-                if fallback_minutes == int(offset_fold0.total_seconds() // 60):
-                    fold_used = 0
-                    offset = offset_fold0
-                elif fallback_minutes == int(offset_fold1.total_seconds() // 60):
-                    fold_used = 1
-                    offset = offset_fold1
-                else:
-                    warnings.append("tz_offset_minutes não coincide com opções de DST; usando fold=0.")
-            elif strict:
-                raise HTTPException(status_code=400, detail="Horário ambíguo na transição de DST.")
-            else:
-                warnings.append("Horário ambíguo na transição de DST; usando fold=0.")
-
-        if offset is None:
-            raise HTTPException(status_code=400, detail="Timezone sem offset disponível.")
-
+            localized_dt, info = core_localize_with_zoneinfo(
+                local_dt,
+                timezone_name,
+                strict=strict,
+                prefer_fold=0,
+            )
+            tz_offset = int(localized_dt.utcoffset().total_seconds() // 60)
+        except TimezoneResolutionError as exc:
+            raise HTTPException(status_code=400, detail=exc.detail) from exc
+        fold_used = info.get("fold_used")
+        fold = int(fold_used) if fold_used in (0, 1) else None
         return LocalizedDateTime(
-            datetime_local=local_dt.replace(tzinfo=tzinfo, fold=fold_used),
+            datetime_local=localized_dt,
             timezone_resolved=timezone_name,
-            tz_offset_minutes=int(offset.total_seconds() // 60),
-            fold=fold_used,
-            warnings=warnings
+            tz_offset_minutes=tz_offset,
+            fold=fold,
+            warnings=list(info.get("warnings", [])),
         )
 
     return LocalizedDateTime(
@@ -315,13 +289,19 @@ def localize_with_zoneinfo(
         timezone_resolved="UTC" if (fallback_minutes or 0) == 0 else "offset_manual",
         tz_offset_minutes=fallback_minutes or 0,
         fold=None,
-        warnings=warnings
+        warnings=[],
     )
+
 
 def to_utc(local_dt: datetime, tz_offset_minutes: Optional[int] = None) -> datetime:
     """Converte uma data local para UTC."""
+    warnings.warn(
+        "services.time_utils.to_utc está deprecated; use core.timezone_utils.to_utc.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if local_dt.tzinfo is not None:
-        return local_dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return core_to_utc(local_dt).replace(tzinfo=None)
     if tz_offset_minutes is None:
         raise HTTPException(status_code=400, detail="Offset de timezone não informado.")
     return local_dt - timedelta(minutes=tz_offset_minutes)
