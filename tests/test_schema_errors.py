@@ -30,7 +30,9 @@ def test_resolve_tz_rejects_natal_fields():
     resp = client.post("/v1/time/resolve-tz", json=payload)
     assert resp.status_code == 422
     body = resp.json()
-    assert body["detail"] == "Use year/month/day/hour/minute/second for resolve-tz (not natal_*)."
+    assert body["ok"] is False
+    assert body["error"]["code"] == "ASTRO-422"
+    assert "resolve-tz" in body["error"]["message"]
 
 
 def test_transits_rejects_year_payload():
@@ -51,4 +53,6 @@ def test_transits_rejects_year_payload():
     resp = client.post("/v1/chart/transits", json=payload, headers=_auth_headers())
     assert resp.status_code == 422
     body = resp.json()
-    assert body["detail"] == "Use natal_year/natal_month/natal_day/natal_hour... for transits."
+    assert body["ok"] is False
+    assert body["error"]["code"] == "ASTRO-422"
+    assert "transits" in body["error"]["message"]
