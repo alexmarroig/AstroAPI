@@ -35,7 +35,7 @@ from astro.aspects import resolve_aspects_config, compute_transit_aspects
 from routes import (
     system, account, time as time_route, chart, insights, transits,
     cosmic_weather, solar_return, ai, diagnostics, alerts, notifications,
-    lunations, progressions, inner_sky, i18n
+    lunations, progressions, inner_sky, i18n, professional
 )
 
 # -----------------------------
@@ -1513,6 +1513,7 @@ app.include_router(lunations.router, tags=["Lunations"])
 app.include_router(progressions.router, tags=["Progressions"])
 app.include_router(inner_sky.router, tags=["Inner Sky"])
 app.include_router(i18n.router, tags=["I18N"])
+app.include_router(professional.router, tags=["Professional"])
 
 
 def _build_transit_events_for_date(date_str: str, context: Dict[str, Any]) -> List[TransitEvent]:
