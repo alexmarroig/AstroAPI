@@ -37,6 +37,7 @@ from routes import (
     cosmic_weather, solar_return, ai, diagnostics, alerts, notifications,
     lunations, progressions, inner_sky, i18n, professional
 )
+from services.observability import OperationalEvent, observability_orchestrator
 
 # -----------------------------
 # Carregamento de Configurações
@@ -123,19 +124,40 @@ async def request_logging_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
         latency_ms = int((time.time() - start_time) * 1000)
+        event = OperationalEvent(
+            endpoint=request.url.path,
+            latency_ms=latency_ms,
+            request_id=request_id,
+            user_plan=request.headers.get("X-User-Plan", "unknown"),
+            status_code=response.status_code,
+        )
+        observability = observability_orchestrator.process_event(event)
 
         _log("info", "request_processed",
              request_id=request_id, path=request.url.path,
-             status=response.status_code, latency_ms=latency_ms)
+             status=response.status_code, latency_ms=latency_ms,
+             endpoint=event.endpoint, user_plan=event.user_plan,
+             error=None, observability_alert=observability["alert"])
 
         response.headers["X-Request-Id"] = request_id
         return response
 
     except Exception as e:
         latency_ms = int((time.time() - start_time) * 1000)
+        event = OperationalEvent(
+            endpoint=request.url.path,
+            latency_ms=latency_ms,
+            request_id=request_id,
+            user_plan=request.headers.get("X-User-Plan", "unknown"),
+            status_code=500,
+            error=str(e),
+        )
+        observability = observability_orchestrator.process_event(event)
         _log("error", "unhandled_exception",
              request_id=request_id, path=request.url.path,
-             status=500, latency_ms=latency_ms, error=str(e))
+             status=500, latency_ms=latency_ms,
+             endpoint=event.endpoint, user_plan=event.user_plan,
+             error=str(e), observability_alert=observability["alert"])
 
         err = build_error(500, "Tente novamente em 1 minuto", retryable=True)
         return JSONResponse(
@@ -178,8 +200,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     extra = {
         "request_id": request_id,
         "path": request.url.path,
+        "endpoint": request.url.path,
         "status": 422,
         "latency_ms": None,
+        "error": "validation_error",
+        "user_plan": request.headers.get("X-User-Plan", "unknown"),
     }
     _log("warning", "validation_error", **extra)
     err = build_error(422, "Payload inválido.", retryable=False)

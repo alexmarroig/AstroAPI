@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, HTTPException
 from services.time_utils import build_time_metadata
+from services.observability import observability_orchestrator
 
 router = APIRouter()
 
@@ -96,6 +97,20 @@ async def system_endpoints():
             "version": "v1",
             "ambiente": "dev",
             **build_time_metadata(timezone_name=None, tz_offset_minutes=None, local_dt=None),
+        },
+    }
+
+
+@router.get("/v1/system/observability/status")
+async def observability_status():
+    """Resumo do pipeline de observabilidade e ciclo de vida dos modelos."""
+    return {
+        "ok": True,
+        "data": {
+            "metrics_buffer_size": len(observability_orchestrator.ingestion.metrics),
+            "logs_buffer_size": len(observability_orchestrator.ingestion.logs),
+            "model_versions": observability_orchestrator.registry.versions,
+            "false_positive_rate": observability_orchestrator.feedback.false_positive_rate(),
         },
     }
 
