@@ -529,11 +529,6 @@ async def lunar_calendar(
         return _error_response(422, "O parâmetro range deve ser 'month' ou 'week'.")
 
     cache_key = f"lunar-calendar:{target_year}:{target_month}:{range_}"
-        return {
-            "success": False,
-            "message": str(exc),
-        }
-    cache_key = f"lunar-calendar:{user_id}:{target_year}:{target_month}"
     cached = cache.get(cache_key)
     if cached:
         return cached
@@ -563,24 +558,16 @@ async def lunar_calendar(
                 lunation = calculate_lunation(datetime.combine(day_date, datetime.min.time()), 0, None)
                 phase_key = lunation.phase
                 phase_type, phase_name = phase_map.get(phase_key, (phase_key, lunation.phase_pt))
-        for day in range(1, days_in_month + 1):
-            date_obj = datetime(target_year, target_month, day)
-            lunation = calculate_lunation(date_obj, 0, None)
-            phase_key = lunation.phase
-            if phase_key in phase_map and phase_key not in seen_types:
-                phase_type, phase_name = phase_map[phase_key]
-                seen_types.add(phase_key)
                 phases.append({
                     "date": lunation.date,
                     "type": phase_type,
                     "pt_name": phase_name,
-                    "sign": lunation.moon_sign,
+                    "sign": lunation.moon_sign_pt,
+                    "sign_en": lunation.moon_sign,
                     "pt_sign": lunation.moon_sign_pt,
                     "interpretation": interpretations.get(phase_type, "O céu pede atenção gentil ao fluxo do dia."),
                 })
         else:
-            _, days_in_month = calendar.monthrange(target_year, target_month)
-            seen_types = set()
             for day in range(1, days_in_month + 1):
                 date_obj = datetime(target_year, target_month, day)
                 lunation = calculate_lunation(date_obj, 0, None)
@@ -592,12 +579,11 @@ async def lunar_calendar(
                         "date": lunation.date,
                         "type": phase_type,
                         "pt_name": phase_name,
-                        "sign": lunation.moon_sign,
+                        "sign": lunation.moon_sign_pt,
+                        "sign_en": lunation.moon_sign,
                         "pt_sign": lunation.moon_sign_pt,
-                        "interpretation": interpretations[phase_type],
+                        "interpretation": interpretations.get(phase_type, "O céu pede atenção gentil ao fluxo do dia."),
                     })
-                    "interpretation": interpretations[phase_type],
-                })
 
         payload = {
             "success": True,
@@ -624,10 +610,6 @@ async def lunar_calendar(
     except Exception:
         _log_error("lunar_calendar_error", user_id, getattr(request.state, "request_id", None))
         return _error_response(500, "Não conseguimos ler o calendário lunar agora. Tente novamente em instantes.")
-        return {
-            "success": False,
-            "message": "Não conseguimos ler o calendário lunar agora. Tente novamente em instantes.",
-        }
 
 
 @router.get("/api/secondary-progressions")
@@ -663,16 +645,6 @@ async def secondary_progressions(
             422,
             "Suas progressões ainda não estão disponíveis. Complete seus dados natais.",
         )
-        return {
-            "success": False,
-            "message": str(exc),
-        }
-
-    if not all([natal_year_i, natal_month_i, natal_day_i, lat_f is not None, lng_f is not None, timezone]):
-        return {
-            "success": False,
-            "message": "Suas progressões ainda não estão disponíveis. Complete seus dados natais.",
-        }
 
     try:
         hour = natal_hour_i if natal_hour_i is not None else 12
@@ -713,7 +685,3 @@ async def secondary_progressions(
     except Exception:
         _log_error("secondary_progressions_error", user_id, getattr(request.state, "request_id", None))
         return _error_response(500, "Não foi possível calcular suas progressões agora. Tente novamente em instantes.")
-        return {
-            "success": False,
-            "message": "Não foi possível calcular suas progressões agora. Tente novamente em instantes.",
-        }
