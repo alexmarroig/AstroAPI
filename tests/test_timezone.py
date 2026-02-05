@@ -142,3 +142,32 @@ def test_validate_local_datetime_midnight_has_used_datetimes():
     body = resp.json()
     assert body["datetime_local_usado"] == "2024-01-15T00:00:00"
     assert body["datetime_utc_usado"] == "2024-01-15T05:00:00"
+
+
+def test_validate_local_datetime_accepts_utc_zero_offset():
+    client = TestClient(main.app)
+    payload = {
+        "datetime_local": "2024-01-15T12:00:00",
+        "timezone": "Etc/UTC",
+        "strict": True,
+    }
+    resp = client.post("/v1/time/validate-local-datetime", json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["datetime_local_usado"] == "2024-01-15T12:00:00"
+    assert body["datetime_utc_usado"] == "2024-01-15T12:00:00"
+    assert body["tz_offset_minutes"] == 0
+
+
+def test_validate_local_datetime_ambiguous_detail_includes_zero_offset_option():
+    client = TestClient(main.app)
+    payload = {
+        "datetime_local": "2024-10-27T01:30:00",
+        "timezone": "Europe/London",
+        "strict": True,
+    }
+    resp = client.post("/v1/time/validate-local-datetime", json=payload)
+    assert resp.status_code == 400
+    detail = resp.json().get("detail", "")
+    assert "Horário ambíguo na transição de horário de verão." in detail
+    assert "[0, 60]" in detail
