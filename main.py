@@ -97,6 +97,16 @@ app = FastAPI(
     version="1.1.2", # Versão incrementada após refatoração
 )
 
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    ai.initialize_openai_client(app)
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    await ai.shutdown_openai_client(app)
+
 # -----------------------------
 # Configuração de CORS
 # -----------------------------
