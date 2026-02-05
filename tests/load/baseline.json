@@ -1,0 +1,24 @@
+{
+  "global": {
+    "p95_ms": 1500,
+    "error_rate": 0.01
+  },
+  "endpoints": {
+    "POST /v1/chart/natal": {
+      "p95_ms": 900,
+      "error_rate": 0.005
+    },
+    "POST /v1/chart/transits": {
+      "p95_ms": 1300,
+      "error_rate": 0.01
+    },
+    "POST /v1/chart/render-data": {
+      "p95_ms": 700,
+      "error_rate": 0.005
+    },
+    "POST /v1/ai/cosmic-chat": {
+      "p95_ms": 3000,
+      "error_rate": 0.02
+    }
+  }
+}
