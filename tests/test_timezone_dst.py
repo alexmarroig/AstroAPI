@@ -87,3 +87,20 @@ def test_validate_local_datetime_previous_day_utc():
     assert body["utc_datetime"] == expected.utc_datetime.isoformat()
     assert body["metadados_tecnicos"]["timezone"] == "Asia/Tokyo"
     assert body["metadados_tecnicos"]["tz_offset_minutes"] == expected.tz_offset_minutes
+
+
+def test_validate_local_datetime_dst_end_fold_zero_and_one_offsets():
+    fold0 = timezone_utils.validate_local_datetime(
+        datetime(2024, 11, 3, 1, 30), "America/New_York", strict=False
+    )
+    assert fold0.fold == 0
+    assert fold0.tz_offset_minutes == -240
+
+
+def test_validate_local_datetime_nonexistent_adjusts_one_hour():
+    result = timezone_utils.validate_local_datetime(
+        datetime(2024, 3, 10, 2, 30), "America/New_York", strict=False
+    )
+    assert result.warning and result.warning["code"] == "nonexistent_local_time"
+    assert result.adjustment_minutes == 30
+    assert result.resolved_datetime.isoformat() == "2024-03-10T03:00:00"

@@ -19,6 +19,12 @@ class TimezoneResolveRequest(BaseModel):
         default=False,
         description="Quando true, acusa horários ambíguos em transições de DST para dados de nascimento.",
     )
+    prefer_fold: int = Field(
+        default=0,
+        ge=0,
+        le=1,
+        description="Preferência de fold (0 ou 1) para horários ambíguos.",
+    )
 
     @model_validator(mode="before")
     @classmethod

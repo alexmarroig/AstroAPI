@@ -46,14 +46,21 @@ def localize_with_zoneinfo(
 
     Returns the aware datetime and metadata (warnings, fold_used).
     """
-    tz = ZoneInfo(tz_name)
+    try:
+        tz = ZoneInfo(tz_name)
+    except ZoneInfoNotFoundError as exc:
+        raise TimezoneResolutionError(f"Timezone inválido: {tz_name}") from exc
     info: dict[str, object] = {"warnings": []}
 
     valid_folds = _valid_folds(dt_naive, tz)
     if not valid_folds:
         if strict:
-            raise ValueError(
-                f"Horário inexistente em {tz_name}: {dt_naive.isoformat()}"
+            raise TimezoneResolutionError(
+                f"Horário inexistente em {tz_name}: {dt_naive.isoformat()}",
+                detail={
+                    "detail": "Horário inexistente na transição de horário de verão.",
+                    "hint": "Ajuste o horário local ou envie tz_offset_minutes explicitamente.",
+                },
             )
         for minutes in range(1, 181):
             adjusted = dt_naive + timedelta(minutes=minutes)
@@ -68,7 +75,7 @@ def localize_with_zoneinfo(
                 info["adjusted_minutes"] = minutes
                 info["fold_used"] = chosen_fold
                 return adjusted.replace(tzinfo=tz, fold=chosen_fold), info
-        raise ValueError(
+        raise TimezoneResolutionError(
             f"Não foi possível ajustar horário inexistente em {tz_name}."
         )
 
@@ -79,8 +86,19 @@ def localize_with_zoneinfo(
         }
         if offsets[0] != offsets[1]:
             if strict:
-                raise ValueError(
-                    f"Horário ambíguo em {tz_name}: {dt_naive.isoformat()}"
+                opts = sorted(
+                    {
+                        int(offsets[0].total_seconds() // 60),
+                        int(offsets[1].total_seconds() // 60),
+                    }
+                )
+                raise TimezoneResolutionError(
+                    f"Horário ambíguo em {tz_name}: {dt_naive.isoformat()}",
+                    detail={
+                        "detail": "Horário ambíguo na transição de horário de verão.",
+                        "offset_options_minutes": opts,
+                        "hint": "Envie tz_offset_minutes explicitamente ou ajuste o horário local.",
+                    },
                 )
             chosen_fold = prefer_fold if prefer_fold in valid_folds else valid_folds[0]
             info["fold_used"] = chosen_fold
@@ -100,7 +118,7 @@ def utc_offset_minutes(dt_aware: datetime) -> int:
     """Return UTC offset in minutes for an aware datetime."""
     offset = dt_aware.utcoffset()
     if offset is None:
-        raise ValueError("Datetime não possui offset UTC.")
+        raise TimezoneResolutionError("Datetime não possui offset UTC.")
     return int(offset.total_seconds() // 60)
 
 
