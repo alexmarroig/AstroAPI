@@ -117,6 +117,22 @@ Please provide thoughtful cosmic guidance based on the astrological data above."
 
 
 def format_astro_payload(payload: dict) -> str:
+    def _safe_orb(value) -> str:
+        if value is None:
+            return "Unknown"
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return "Unknown"
+            try:
+                return f"{float(stripped):.2f}"
+            except ValueError:
+                return stripped
+        try:
+            return f"{float(value):.2f}"
+        except (TypeError, ValueError):
+            return "Unknown"
+
     payload_data = _to_dict(payload)
     lines = []
 
@@ -140,6 +156,29 @@ def format_astro_payload(payload: dict) -> str:
         transit_planets = _to_dict(transits.get("planets"))
         if transit_planets:
             lines.append("\nTransit Planets:")
+            for planet, data in transits["planets"].items():
+                lines.append(f"  - {planet}: {data.get('sign', 'Unknown')} ({data.get('deg_in_sign', 0):.1f})")
+    
+    if "aspects" in payload:
+        aspects = payload["aspects"]
+        if aspects:
+            lines.append("\n=== KEY ASPECTS (Transit to Natal) ===")
+            for asp in aspects[:10]:
+                if not isinstance(asp, dict):
+                    lines.append("  - Invalid aspect entry.")
+                    continue
+
+                transit_planet = asp.get("transit_planet", "Unknown")
+                aspect_name = asp.get("aspect", "Unknown")
+                natal_planet = asp.get("natal_planet", "Unknown")
+                influence = asp.get("influence", "Unknown")
+                orb = _safe_orb(asp.get("orb", "Unknown"))
+
+                lines.append(
+                    f"  - Transit {transit_planet} {aspect_name} Natal {natal_planet} "
+                    f"(orb: {orb}) - {influence}"
+                )
+    
             for planet, data in list(transit_planets.items())[:MAX_PLANETS_PER_SECTION]:
                 lines.append(_format_planet_line(planet, data))
 
