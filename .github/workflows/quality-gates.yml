@@ -1,0 +1,78 @@
+name: quality-gates
+
+on:
+  pull_request:
+  push:
+    branches: ["main", "master"]
+  schedule:
+    - cron: "0 8 * * 1"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      API_KEY: test-api-key
+      LOADTEST_API_KEY: test-api-key
+      LOADTEST_USER_ID: ci-load-user
+      OPENAI_API_KEY: test-openai-key
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest locust pip-audit safety playwright
+
+      - name: Install Playwright browsers
+        run: |
+          playwright install --with-deps chromium firefox webkit
+
+      - name: Run unit and integration tests
+        run: pytest -q tests
+
+      - name: Start API server
+        run: |
+          mkdir -p tests/load/artifacts
+          nohup uvicorn main:app --host 0.0.0.0 --port 8000 > tests/load/artifacts/server.log 2>&1 &
+          sleep 5
+
+      - name: Run load scenarios
+        run: |
+          mkdir -p tests/load/artifacts
+          locust -f tests/load/locustfile.py \
+            --host http://127.0.0.1:8000 \
+            --users 20 --spawn-rate 5 --run-time 1m --headless \
+            --csv tests/load/artifacts/load --only-summary
+
+      - name: Enforce load thresholds and baseline gate
+        run: python tests/load/evaluate_load.py
+
+      - name: API security checks
+        run: pytest -q tests/security
+
+      - name: Dependency security scan (pip-audit)
+        run: pip-audit -r requirements.txt --format json --output tests/security/pip-audit.json
+
+      - name: Dependency security scan (safety)
+        run: safety check -r requirements.txt --json > tests/security/safety.json
+
+      - name: Cross-browser/API UX smoke (Playwright)
+        run: pytest -q tests/e2e_ui
+
+      - name: Upload quality artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-artifacts
+          path: |
+            tests/load/artifacts
+            tests/security/*.json
