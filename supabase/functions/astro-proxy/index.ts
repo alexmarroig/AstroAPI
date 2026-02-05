@@ -217,93 +217,91 @@ const readJsonSafely = async (req: Request): Promise<JsonRecord | undefined> => 
 };
 
 serve(async (req) => {
-  const url = new URL(req.url);
-  const upstreamUrlObject = new URL(upstreamUrl);
-  const queryParams = new URLSearchParams(url.search);
-  const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("host", upstreamUrlObject.host);
+  try {
+    const url = new URL(req.url);
+    const upstreamPath = url.pathname;
+    const targetPath = upstreamPath;
+    const upstreamUrlObject = new URL(upstreamUrl);
+    const queryParams = new URLSearchParams(url.search);
 
-  const incomingBody = await readJsonSafely(req);
-  const envelope = (incomingBody ?? {}) as ProxyEnvelope;
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("host", upstreamUrlObject.host);
 
-  const rawPathFromEnvelope =
-    typeof envelope.path === "string" && envelope.path.trim().startsWith("/")
-      ? envelope.path.trim()
-      : undefined;
-  const rawMethodFromEnvelope =
-    typeof envelope.method === "string" && envelope.method.trim().length > 0
-      ? envelope.method.trim().toUpperCase()
-      : undefined;
+    let body: string | undefined;
 
-  const [envelopePathOnly, envelopeQueryString] = rawPathFromEnvelope
-    ? rawPathFromEnvelope.split("?", 2)
-    : [undefined, undefined];
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      const rawBody = await req.text();
+      const contentType = req.headers.get("content-type") ?? "";
+      const isJsonRequest = contentType.includes("application/json");
 
-  const upstreamPath =
-    envelopePathOnly && envelopePathOnly !== "/"
-      ? envelopePathOnly
-      : url.pathname;
+      if (rawBody && isJsonRequest) {
+        const payload = JSON.parse(rawBody) as JsonRecord;
+        let normalizedPayload = payload;
+        if (upstreamPath === "/v1/chart/render-data") {
+          normalizedPayload = normalizeRenderDataPayload(payload);
+        } else if (upstreamPath === "/v1/synastry/compare") {
+          normalizedPayload = normalizeSynastryPayload(payload);
+        }
+        body = JSON.stringify(normalizedPayload);
+        requestHeaders.set("content-type", "application/json");
+      } else {
+        body = rawBody || undefined;
+      }
+    } else {
+      const contentType = req.headers.get("content-type") ?? "";
+      const contentLength = req.headers.get("content-length");
+      const hasBody =
+        contentType.includes("application/json") ||
+        (contentLength !== null && contentLength !== "0");
 
-  if (!isAllowedPath(upstreamPath)) {
+      if (hasBody) {
+        const rawBody = await req.text();
+        if (rawBody) {
+          try {
+            const payload = JSON.parse(rawBody) as JsonRecord;
+            for (const [key, value] of Object.entries(payload)) {
+              if (value === null || value === undefined) {
+                continue;
+              }
+              if (!queryParams.has(key)) {
+                queryParams.set(key, String(value));
+              }
+            }
+          } catch {
+            // Ignore invalid JSON body on GET requests.
+          }
+        }
+      }
+    }
+
+    const upstreamResponse = await fetch(
+      `${upstreamUrlObject.origin}${targetPath}${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`,
+      {
+        method: req.method,
+        headers: requestHeaders,
+        body,
+      },
+    );
+
+    return new Response(upstreamResponse.body, {
+      status: upstreamResponse.status,
+      headers: upstreamResponse.headers,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro inesperado";
     return new Response(
-      JSON.stringify({ detail: "Path não permitido", path: upstreamPath }),
-      { status: 400, headers: { "content-type": "application/json" } },
+      JSON.stringify({
+        error: "PROXY_UPSTREAM_ERROR",
+        message,
+      }),
+      {
+        status: 502,
+        headers: {
+          "content-type": "application/json",
+        },
+      },
     );
   }
-
-  if (envelopeQueryString) {
-    const parsed = new URLSearchParams(envelopeQueryString);
-    for (const [k, v] of parsed.entries()) {
-      if (!queryParams.has(k)) {
-        queryParams.set(k, v);
-      }
-    }
-  }
-
-  if (envelope.query && typeof envelope.query === "object") {
-    for (const [key, value] of Object.entries(envelope.query)) {
-      if (value === null || value === undefined) continue;
-      if (!queryParams.has(key)) {
-        queryParams.set(key, String(value));
-      }
-    }
-  }
-
-  const targetMethod = rawMethodFromEnvelope ?? req.method.toUpperCase();
-
-  let body: string | undefined;
-
-  if (targetMethod !== "GET" && targetMethod !== "HEAD") {
-    let payload = (incomingBody ?? {}) as JsonRecord;
-
-    if (rawPathFromEnvelope && envelope.body && typeof envelope.body === "object") {
-      payload = envelope.body;
-    }
-
-    let normalizedPayload = payload;
-    if (upstreamPath === "/v1/chart/render-data") {
-      normalizedPayload = normalizeRenderDataPayload(payload);
-    } else if (upstreamPath === "/v1/synastry/compare") {
-      normalizedPayload = normalizeSynastryPayload(payload);
-    }
-
-    body = JSON.stringify(normalizedPayload);
-    requestHeaders.set("content-type", "application/json");
-  }
-
-  const upstreamResponse = await fetch(
-    `${upstreamUrlObject.origin}${upstreamPath}${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`,
-    {
-      method: targetMethod,
-      headers: requestHeaders,
-      body,
-    },
-  );
-
-  return new Response(upstreamResponse.body, {
-    status: upstreamResponse.status,
-    headers: upstreamResponse.headers,
-  });
 });
