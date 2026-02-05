@@ -23,6 +23,14 @@ type SynastryPersonPayload = {
   [key: string]: unknown;
 };
 
+type ProxyEnvelope = {
+  method?: string;
+  path?: string;
+  body?: JsonRecord;
+  query?: Record<string, string | number | boolean | null | undefined>;
+  [key: string]: unknown;
+};
+
 const RENDER_DATA_DATE_FIELDS = [
   "year",
   "month",
@@ -35,6 +43,76 @@ const RENDER_DATA_DATE_FIELDS = [
 const DEFAULT_CONFIG: RenderDataNormalizationConfig = {
   natalPrefix: "natal_",
 };
+
+const ALLOWED_EXACT_PATHS = new Set([
+  "/",
+  "/health",
+  "/api-test",
+  "/api/chat/astral-oracle",
+  "/api/lunar-calendar",
+  "/api/secondary-progressions",
+  "/api/solar-return",
+  "/v1/account/status",
+  "/v1/account/plan",
+  "/v1/account/plan-status",
+  "/v1/ai/cosmic-chat",
+  "/v1/alerts/retrogrades",
+  "/v1/alerts/system",
+  "/v1/astro/chart",
+  "/v1/astro/chart/render-spec",
+  "/v1/astro/composite",
+  "/v1/astro/lunar-phases",
+  "/v1/astro/progressions",
+  "/v1/astro/solar-return",
+  "/v1/astro/synastry",
+  "/v1/astro/transits",
+  "/v1/billing/entitlements",
+  "/v1/billing/status",
+  "/v1/bugs/report",
+  "/v1/chart/distributions",
+  "/v1/chart/natal",
+  "/v1/chart/render-data",
+  "/v1/chart/transits",
+  "/v1/cosmic-timeline/next-7-days",
+  "/v1/cosmic-weather",
+  "/v1/cosmic-weather/range",
+  "/v1/daily/summary",
+  "/v1/dev/login-as",
+  "/v1/diagnostics/ephemeris-check",
+  "/v1/i18n/ptbr",
+  "/v1/i18n/validate",
+  "/v1/insights/areas-activated",
+  "/v1/insights/care-suggestion",
+  "/v1/insights/dominant-theme",
+  "/v1/insights/life-cycles",
+  "/v1/insights/mercury-retrograde",
+  "/v1/insights/solar-return",
+  "/v1/interpretation/natal",
+  "/v1/lunations/calculate",
+  "/v1/moon/timeline",
+  "/v1/notifications/daily",
+  "/v1/oracle/chat",
+  "/v1/progressions/secondary/calculate",
+  "/v1/revolution-solar/current-year",
+  "/v1/solar-return/calculate",
+  "/v1/solar-return/overlay",
+  "/v1/solar-return/timeline",
+  "/v1/synastry/compare",
+  "/v1/system/endpoints",
+  "/v1/system/health",
+  "/v1/system/roadmap",
+  "/v1/telemetry/event",
+  "/v1/time/resolve-tz",
+  "/v1/time/validate-local-datetime",
+  "/v1/transits/events",
+  "/v1/transits/live",
+  "/v1/transits/next-days",
+  "/v1/transits/personal-today",
+]);
+
+const ALLOWED_DYNAMIC_PREFIXES = [
+  "/api/daily-analysis/",
+];
 
 export const normalizeRenderDataPayload = (
   payload: JsonRecord,
@@ -117,6 +195,26 @@ const normalizeSynastryPayload = (payload: JsonRecord): JsonRecord => {
 };
 
 const upstreamUrl = Deno.env.get("ASTRO_API_URL") ?? "http://localhost:8000";
+
+const isAllowedPath = (path: string): boolean => {
+  if (ALLOWED_EXACT_PATHS.has(path)) {
+    return true;
+  }
+  return ALLOWED_DYNAMIC_PREFIXES.some((prefix) => path.startsWith(prefix));
+};
+
+const readJsonSafely = async (req: Request): Promise<JsonRecord | undefined> => {
+  const contentType = req.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return undefined;
+  }
+
+  try {
+    return (await req.json()) as JsonRecord;
+  } catch {
+    return undefined;
+  }
+};
 
 serve(async (req) => {
   try {
