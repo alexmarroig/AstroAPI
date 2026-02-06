@@ -61,13 +61,15 @@ async def shutdown_openai_client(app) -> None:
     close_result = client.close()
     if inspect.isawaitable(close_result):
         await close_result
+    app.state.openai_client = None
 
 
 async def _create_completion_with_retry(client, *, model: str, messages: list[dict], max_tokens: int, temperature: float):
     max_retries = int(os.getenv("OPENAI_MAX_RETRIES", "3"))
     base_backoff_s = float(os.getenv("OPENAI_RETRY_BASE_BACKOFF_S", "0.5"))
-    timeout_s = float(os.getenv("OPENAI_TIMEOUT_S", "35"))
+    timeout_s = float(os.getenv("OPENAI_TIMEOUT_SECONDS", os.getenv("OPENAI_TIMEOUT_S", "35")))
     transient_errors = (APITimeoutError, APIConnectionError, RateLimitError, InternalServerError)
+    last_error: Exception | None = None
 
     for attempt in range(1, max_retries + 1):
         try:
@@ -81,7 +83,8 @@ async def _create_completion_with_retry(client, *, model: str, messages: list[di
                 ),
                 timeout=timeout_s,
             )
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as exc:
+            last_error = exc
             logger.warning("cosmic_chat_timeout", extra={"attempt": attempt, "max_retries": max_retries}, exc_info=True)
         except transient_errors:
             logger.warning(
@@ -92,6 +95,9 @@ async def _create_completion_with_retry(client, *, model: str, messages: list[di
 
         if attempt < max_retries:
             await asyncio.sleep(base_backoff_s * (2 ** (attempt - 1)))
+
+    if last_error is not None:
+        raise last_error
 
     raise HTTPException(status_code=504, detail="Serviço de IA temporariamente indisponível. Tente novamente.")
 
