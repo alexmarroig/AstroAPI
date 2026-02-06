@@ -53,8 +53,8 @@ def test_build_messages_truncates_large_payload_and_normalizes_defaults():
     system_message = messages[0]["content"]
     user_message = messages[1]["content"]
 
-    assert "Respond in a calm, supportive, and reflective manner." in system_message
-    assert "Respond entirely in Portuguese (Brazil)." in system_message
+    assert "Respond in a calm, supportive, and reflective manner (fallback applied due to invalid tone input)." in system_message
+    assert "Respond entirely in Portuguese (Brazil) (fallback applied due to invalid language input)." in system_message
     assert user_message.count("Transit Planet-") == 10
     assert "..." in user_message
 
@@ -64,6 +64,15 @@ def test_cosmic_chat_request_rejects_too_large_payload():
         CosmicChatRequest(
             user_question="oi",
             astro_payload={"aspects": [{"influence": "x" * 3000}]},
+            language="pt-BR",
+        )
+
+
+def test_cosmic_chat_request_rejects_payload_with_too_many_items():
+    with pytest.raises(ValidationError):
+        CosmicChatRequest(
+            user_question="oi",
+            astro_payload={"aspects": [{"influence": "ok"}] * 250},
             language="pt-BR",
         )
 

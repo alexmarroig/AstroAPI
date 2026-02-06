@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 SYSTEM_PROMPT = """You are a thoughtful and insightful astrologer providing cosmic guidance. Follow these guidelines strictly:
 
@@ -62,17 +62,20 @@ def _to_list(value: Any) -> list:
     return value if isinstance(value, list) else []
 
 
-def _normalize_language(language: Optional[str]) -> str:
+def _normalize_language(language: Optional[str]) -> Tuple[str, bool]:
     if not isinstance(language, str) or not language.strip():
-        return DEFAULT_LANGUAGE
+        return DEFAULT_LANGUAGE, True
     normalized = language.strip().lower()
-    return LANGUAGE_MAP.get(normalized, DEFAULT_LANGUAGE)
+    resolved = LANGUAGE_MAP.get(normalized)
+    if resolved is None:
+        return DEFAULT_LANGUAGE, True
+    return resolved, False
 
 
-def _normalize_tone(tone: Optional[str]) -> str:
+def _normalize_tone(tone: Optional[str]) -> Tuple[str, bool]:
     if not isinstance(tone, str) or not tone.strip():
-        return DEFAULT_TONE
-    return _truncate_text(tone, max_length=80)
+        return DEFAULT_TONE, True
+    return _truncate_text(tone, max_length=80), False
 
 
 def _format_planet_line(planet: Any, data: Any) -> str:
@@ -91,13 +94,15 @@ def build_cosmic_chat_messages(
     tone: Optional[str] = None,
     language: str = "English"
 ) -> list:
-    normalized_tone = _normalize_tone(tone)
-    normalized_language = _normalize_language(language)
+    normalized_tone, tone_fallback = _normalize_tone(tone)
+    normalized_language, language_fallback = _normalize_language(language)
+    tone_suffix = " (fallback applied due to invalid tone input)." if tone_fallback else "."
+    language_suffix = " (fallback applied due to invalid language input)." if language_fallback else "."
 
     system_content = (
         f"{SYSTEM_PROMPT}"
-        f"\n\nADDITIONAL TONE: Respond in a {normalized_tone} manner."
-        f"\n\nLANGUAGE: Respond entirely in {normalized_language}."
+        f"\n\nADDITIONAL TONE: Respond in a {normalized_tone} manner{tone_suffix}"
+        f"\n\nLANGUAGE: Respond entirely in {normalized_language}{language_suffix}"
     )
 
     astro_context = format_astro_payload(astro_payload)
@@ -156,29 +161,6 @@ def format_astro_payload(payload: dict) -> str:
         transit_planets = _to_dict(transits.get("planets"))
         if transit_planets:
             lines.append("\nTransit Planets:")
-            for planet, data in transits["planets"].items():
-                lines.append(f"  - {planet}: {data.get('sign', 'Unknown')} ({data.get('deg_in_sign', 0):.1f})")
-    
-    if "aspects" in payload:
-        aspects = payload["aspects"]
-        if aspects:
-            lines.append("\n=== KEY ASPECTS (Transit to Natal) ===")
-            for asp in aspects[:10]:
-                if not isinstance(asp, dict):
-                    lines.append("  - Invalid aspect entry.")
-                    continue
-
-                transit_planet = asp.get("transit_planet", "Unknown")
-                aspect_name = asp.get("aspect", "Unknown")
-                natal_planet = asp.get("natal_planet", "Unknown")
-                influence = asp.get("influence", "Unknown")
-                orb = _safe_orb(asp.get("orb", "Unknown"))
-
-                lines.append(
-                    f"  - Transit {transit_planet} {aspect_name} Natal {natal_planet} "
-                    f"(orb: {orb}) - {influence}"
-                )
-    
             for planet, data in list(transit_planets.items())[:MAX_PLANETS_PER_SECTION]:
                 lines.append(_format_planet_line(planet, data))
 
@@ -192,7 +174,7 @@ def format_astro_payload(payload: dict) -> str:
                 f"{_truncate_text(asp_data.get('transit_planet', 'Unknown'), max_length=20)} "
                 f"{_truncate_text(asp_data.get('aspect', 'aspect'), max_length=20)} Natal "
                 f"{_truncate_text(asp_data.get('natal_planet', 'Unknown'), max_length=20)} "
-                f"(orb: {_truncate_text(str(asp_data.get('orb', 'n/a')), max_length=10)}) - "
+                f"(orb: {_safe_orb(asp_data.get('orb'))}) - "
                 f"{_truncate_text(asp_data.get('influence', 'No influence data'), max_length=MAX_TEXT_FIELD_LENGTH)}"
             )
 
