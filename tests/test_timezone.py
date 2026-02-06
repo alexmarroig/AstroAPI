@@ -186,6 +186,23 @@ def test_validate_local_datetime_invalid_timezone_contract():
     assert "Timezone inválido" in str(detail)
 
 
+def test_resolve_timezone_invalid_timezone_contract():
+    client = TestClient(main.app)
+    payload = {
+        "year": 2024,
+        "month": 1,
+        "day": 15,
+        "hour": 12,
+        "minute": 0,
+        "second": 0,
+        "timezone": "Invalid/Timezone",
+    }
+    resp = client.post("/v1/time/resolve-tz", json=payload)
+    assert resp.status_code == 400
+    detail = resp.json().get("detail")
+    assert "Timezone inválido" in str(detail)
+
+
 def test_validate_local_datetime_ambiguous_with_fold_1():
     client = TestClient(main.app)
     payload = {
