@@ -36,11 +36,6 @@ PREMIUM_LIMITS = {
 HOURLY_LIMIT = 100
 
 
-class RateLimitStorage(Protocol):
-    def incr_with_ttl(self, key: str, ttl_seconds: int) -> int:
-        """Atomically increment key and apply expiry when key is created."""
-
-
 class RateLimitStore(Protocol):
     def incr_with_window(
         self,
@@ -50,29 +45,6 @@ class RateLimitStore(Protocol):
         ttl_seconds: int,
     ) -> int:
         """Increment and return usage count for the provided window."""
-
-
-class MemoryRateLimitStorage:
-    """Optional fallback backend when Redis is not available."""
-
-    def __init__(self) -> None:
-        self._lock = Lock()
-        self._counts: dict[str, int] = {}
-        self._expires_at: dict[str, float] = {}
-
-    def incr_with_ttl(self, key: str, ttl_seconds: int) -> int:
-        now = time.time()
-        with self._lock:
-            expiry = self._expires_at.get(key)
-            if expiry is not None and expiry <= now:
-                self._counts.pop(key, None)
-                self._expires_at.pop(key, None)
-
-            next_value = self._counts.get(key, 0) + 1
-            self._counts[key] = next_value
-            if next_value == 1:
-                self._expires_at[key] = now + max(ttl_seconds, 1)
-            return next_value
 
 
 class InMemoryRateLimitStore:
@@ -106,7 +78,9 @@ class InMemoryRateLimitStore:
             return self._counts[key]
 
 
-class RedisRateLimitStorage:
+class RedisRateLimitStore:
+    """Redis backend with atomic increment + TTL assignment per fixed window key."""
+
     _LUA_INCR_EXPIRE = """
     local current = redis.call('INCR', KEYS[1])
     if current == 1 then
@@ -114,18 +88,6 @@ class RedisRateLimitStorage:
     end
     return current
     """
-
-    def __init__(self, client) -> None:
-        self._client = client
-
-    def incr_with_ttl(self, key: str, ttl_seconds: int) -> int:
-        ttl = max(int(ttl_seconds), 1)
-        value = self._client.eval(self._LUA_INCR_EXPIRE, 1, key, ttl)
-        return int(value)
-
-
-class RedisRateLimitStore:
-    """Redis backend with atomic increment + TTL assignment per fixed window key."""
 
     def __init__(self, client) -> None:
         self._client = client
@@ -141,10 +103,8 @@ class RedisRateLimitStore:
         ttl_seconds: int,
     ) -> int:
         key = self._key(user_id=user_id, endpoint=endpoint, window=window)
-        pipe = self._client.pipeline()
-        pipe.incr(key)
-        pipe.expire(key, max(int(ttl_seconds), 1), nx=True)
-        count, _ = pipe.execute()
+        ttl = max(int(ttl_seconds), 1)
+        count = self._client.eval(self._LUA_INCR_EXPIRE, 1, key, ttl)
         return int(count)
 
 
@@ -175,8 +135,6 @@ class DetailedRateLimitMetrics:
 
 _detailed_metrics = DetailedRateLimitMetrics()
 _simple_metrics: defaultdict[str, int] = defaultdict(int)
-_memory_fallback_storage = MemoryRateLimitStorage()
-_default_storage: RateLimitStorage | None = None
 _store: RateLimitStore | None = None
 
 
@@ -228,14 +186,6 @@ def _seconds_to_next_day(now: float | None = None) -> int:
     return max(1, int(((int(now) // 86400) + 1) * 86400 - now))
 
 
-def _hour_storage_key(user_id: str, hour_window: str) -> str:
-    return f"rl:hour:{hour_window}:{user_id}"
-
-
-def _day_storage_key(user_id: str, endpoint: str, day_window: str) -> str:
-    return f"rl:day:{day_window}:{user_id}:{endpoint}"
-
-
 def _create_redis_store_from_env() -> RateLimitStore | None:
     redis_url = os.getenv("REDIS_URL")
     if not redis_url:
@@ -249,37 +199,6 @@ def _create_redis_store_from_env() -> RateLimitStore | None:
     except Exception as exc:  # noqa: BLE001
         logger.warning("Rate-limit Redis indisponível, usando fallback em memória: %s", exc)
         return None
-
-
-def _build_redis_storage() -> RateLimitStorage | None:
-    redis_url = os.getenv("REDIS_URL")
-    if not redis_url:
-        return None
-
-    try:
-        redis_module = __import__("redis")
-        client = redis_module.Redis.from_url(redis_url, decode_responses=False)
-        client.ping()
-        return RedisRateLimitStorage(client)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Rate-limit Redis indisponível, usando fallback em memória: %s", exc)
-        return None
-
-
-def _get_default_storage() -> RateLimitStorage:
-    global _default_storage
-    if _default_storage is not None:
-        return _default_storage
-
-    backend = os.getenv("RATE_LIMIT_BACKEND", "redis").lower()
-    if backend == "redis":
-        redis_storage = _build_redis_storage()
-        if redis_storage is not None:
-            _default_storage = redis_storage
-            return _default_storage
-
-    _default_storage = _memory_fallback_storage
-    return _default_storage
 
 
 def configure_rate_limit_store(store: RateLimitStore) -> None:
@@ -347,33 +266,43 @@ def check_and_inc(
     plan: str,
     *,
     now: datetime | None = None,
-    storage: RateLimitStorage | None = None,
+    store: RateLimitStore | None = None,
 ) -> tuple[bool, str]:
-    if now is not None or storage is not None:
+    global _store
+    if now is not None or store is not None:
         current_time = now or datetime.now(timezone.utc)
         hour_ttl, day_ttl, hour_window, day_window = _window_boundaries(current_time)
-        active_storage = storage or _get_default_storage()
+        active_store = store or _store or InMemoryRateLimitStore()
 
-        hourly_count = active_storage.incr_with_ttl(_hour_storage_key(user_id, hour_window), hour_ttl)
-        if hourly_count > HOURLY_LIMIT:
+        hour_count = active_store.incr_with_window(
+            user_id=user_id,
+            endpoint="*",
+            window=f"hour:{hour_window}",
+            ttl_seconds=hour_ttl,
+        )
+        if hour_count > HOURLY_LIMIT:
             _detailed_metrics.record_exceeded(plan, endpoint, "hour")
+            _inc_metric("blocked_hour")
             return (
                 False,
                 "Você alcançou o limite horário de 100 requisições. Respire e tente novamente em instantes.",
             )
 
         daily_limit = _daily_limit_for_plan(plan=plan, endpoint=endpoint)
-        daily_count = active_storage.incr_with_ttl(
-            _day_storage_key(user_id, endpoint, day_window),
-            day_ttl,
+        day_count = active_store.incr_with_window(
+            user_id=user_id,
+            endpoint=endpoint,
+            window=f"day:{day_window}",
+            ttl_seconds=day_ttl,
         )
-        if daily_count > daily_limit:
+        if day_count > daily_limit:
             _detailed_metrics.record_exceeded(plan, endpoint, "day")
+            _inc_metric("blocked_day")
             return False, f"Limite diário atingido para este recurso ({daily_limit}/dia)."
 
+        _inc_metric("allowed")
         return True, ""
 
-    global _store
     if _store is None:
         _store = _create_redis_store_from_env() or InMemoryRateLimitStore()
 

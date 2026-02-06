@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from core.limits import (
     HOURLY_LIMIT,
-    MemoryRateLimitStorage,
+    InMemoryRateLimitStore,
     check_and_inc,
     get_rate_limit_metrics_snapshot,
     reset_rate_limit_metrics,
@@ -11,7 +11,7 @@ from core.limits import (
 
 
 def test_daily_limit_by_plan_and_endpoint() -> None:
-    storage = MemoryRateLimitStorage()
+    store = InMemoryRateLimitStore()
     now = datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc)
 
     for _ in range(5):
@@ -20,7 +20,7 @@ def test_daily_limit_by_plan_and_endpoint() -> None:
             "/v1/ai/cosmic-chat",
             "free",
             now=now,
-            storage=storage,
+            store=store,
         )
         assert ok is True
         assert msg == ""
@@ -30,14 +30,14 @@ def test_daily_limit_by_plan_and_endpoint() -> None:
         "/v1/ai/cosmic-chat",
         "free",
         now=now,
-        storage=storage,
+        store=store,
     )
     assert ok is False
     assert "Limite diário atingido" in msg
 
 
 def test_hourly_window_resets_after_boundary() -> None:
-    storage = MemoryRateLimitStorage()
+    store = InMemoryRateLimitStore()
     first_window = datetime(2025, 1, 1, 12, 59, 55, tzinfo=timezone.utc)
 
     for _ in range(HOURLY_LIMIT):
@@ -46,7 +46,7 @@ def test_hourly_window_resets_after_boundary() -> None:
             "/v1/cosmic-weather",
             "trial",
             now=first_window,
-            storage=storage,
+            store=store,
         )
         assert ok is True
 
@@ -55,7 +55,7 @@ def test_hourly_window_resets_after_boundary() -> None:
         "/v1/cosmic-weather",
         "trial",
         now=first_window,
-        storage=storage,
+        store=store,
     )
     assert blocked is False
     assert "limite horário" in msg.lower()
@@ -66,7 +66,7 @@ def test_hourly_window_resets_after_boundary() -> None:
         "/v1/cosmic-weather",
         "trial",
         now=next_window,
-        storage=storage,
+        store=store,
     )
     assert ok is True
     assert msg == ""
@@ -74,7 +74,7 @@ def test_hourly_window_resets_after_boundary() -> None:
 
 def test_metrics_are_recorded_per_plan_endpoint_and_window() -> None:
     reset_rate_limit_metrics()
-    storage = MemoryRateLimitStorage()
+    store = InMemoryRateLimitStore()
     now = datetime(2025, 1, 2, 8, 0, tzinfo=timezone.utc)
 
     for _ in range(6):
@@ -83,7 +83,7 @@ def test_metrics_are_recorded_per_plan_endpoint_and_window() -> None:
             "/v1/ai/cosmic-chat",
             "free",
             now=now,
-            storage=storage,
+            store=store,
         )
 
     metrics = get_rate_limit_metrics_snapshot()
@@ -91,7 +91,7 @@ def test_metrics_are_recorded_per_plan_endpoint_and_window() -> None:
 
 
 def test_concurrent_requests_remain_atomic_on_same_key() -> None:
-    storage = MemoryRateLimitStorage()
+    store = InMemoryRateLimitStore()
     now = datetime(2025, 1, 3, 11, 0, tzinfo=timezone.utc)
 
     def invoke_once() -> bool:
@@ -100,7 +100,7 @@ def test_concurrent_requests_remain_atomic_on_same_key() -> None:
             "/v1/ai/cosmic-chat",
             "free",
             now=now,
-            storage=storage,
+            store=store,
         )
         return ok
 
