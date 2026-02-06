@@ -2,14 +2,17 @@ from __future__ import annotations
 import logging
 import re
 import warnings
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any, NamedTuple
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from fastapi import HTTPException
 
 from core.timezone_utils import (
     TimezoneResolutionError,
     localize_with_zoneinfo as core_localize_with_zoneinfo,
+    parse_date_yyyy_mm_dd as core_parse_date_yyyy_mm_dd,
+    parse_local_datetime_components as core_parse_local_datetime_components,
+    parse_time_hh_mm_ss as core_parse_time_hh_mm_ss,
+    resolve_fold_for as core_resolve_fold_for,
     resolve_timezone_offset,
     to_utc as core_to_utc,
 )
@@ -33,30 +36,35 @@ def parse_local_datetime(
     datetime_local: Optional[datetime] = None,
 ) -> datetime:
     """Cria um objeto datetime a partir de componentes ou de um objeto datetime/string (naive)."""
-    if datetime_local is not None:
-        if isinstance(datetime_local, str):
-            return datetime.fromisoformat(datetime_local.replace("Z", "+00:00")).replace(
-                tzinfo=None
-            )
-        return datetime_local.replace(tzinfo=None)
-
-    if year is None or month is None or day is None:
-        raise ValueError("year, month, and day are required if datetime_local is not provided")
-
-    return datetime(year, month, day, hour, minute, second)
+    warnings.warn(
+        "services.time_utils.parse_local_datetime está deprecated; use core.timezone_utils.parse_local_datetime_components.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    try:
+        return core_parse_local_datetime_components(
+            year=year,
+            month=month,
+            day=day,
+            hour=hour,
+            minute=minute,
+            second=second,
+            datetime_local=datetime_local,
+        )
+    except TimezoneResolutionError as exc:
+        raise HTTPException(status_code=400, detail=exc.detail) from exc
 
 def parse_date_yyyy_mm_dd(s: str) -> tuple[int, int, int]:
     """Analisa uma string no formato YYYY-MM-DD e retorna (ano, mês, dia)."""
+    warnings.warn(
+        "services.time_utils.parse_date_yyyy_mm_dd está deprecated; use core.timezone_utils.parse_date_yyyy_mm_dd.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     try:
-        parsed = datetime.strptime(s, "%Y-%m-%d")
-        return parsed.year, parsed.month, parsed.day
-    except ValueError:
-        # Tenta outros formatos comuns para robustez
-        try:
-            parsed = datetime.strptime(s, "%d/%m/%Y")
-            return parsed.year, parsed.month, parsed.day
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Formato inválido de data. Use YYYY-MM-DD.")
+        return core_parse_date_yyyy_mm_dd(s)
+    except TimezoneResolutionError as exc:
+        raise HTTPException(status_code=400, detail=exc.detail) from exc
 
 def parse_local_datetime_ptbr(
     date_str: str, time_str: Optional[str]
@@ -106,7 +114,7 @@ def parse_local_datetime_ptbr(
     if time_str:
         try:
             h, m, s = parse_time_hh_mm_ss(time_str)
-        except Exception:
+        except HTTPException:
             raise HTTPException(status_code=422, detail="Hora natal inválida. Use HH:MM:SS.")
     else:
         h, m, s = (12, 0, 0)
@@ -120,22 +128,18 @@ def parse_local_datetime_ptbr(
 
 def parse_time_hh_mm_ss(s: str) -> tuple[int, int, int]:
     """Analisa uma string no formato HH:MM ou HH:MM:SS e retorna (hora, minuto, segundo)."""
-    if not s:
-        raise HTTPException(
-            status_code=400,
-            detail={"error": "HORA_INVALIDA", "message": "Hora inválida. Use HH:MM ou HH:MM:SS."},
-        )
+    warnings.warn(
+        "services.time_utils.parse_time_hh_mm_ss está deprecated; use core.timezone_utils.parse_time_hh_mm_ss.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     try:
-        if len(s) == 5:
-            parsed = datetime.strptime(s, "%H:%M")
-            return parsed.hour, parsed.minute, 0
-        parsed = datetime.strptime(s, "%H:%M:%S")
-        return parsed.hour, parsed.minute, parsed.second
-    except ValueError:
+        return core_parse_time_hh_mm_ss(s)
+    except TimezoneResolutionError as exc:
         raise HTTPException(
             status_code=400,
-            detail={"error": "HORA_INVALIDA", "message": "Hora inválida. Use HH:MM ou HH:MM:SS."},
-        )
+            detail={"error": "HORA_INVALIDA", "message": str(exc)},
+        ) from exc
 
 def resolve_birth_datetime_payload(data: Dict[str, Any]) -> tuple[Optional[datetime], Optional[bool], List[str]]:
     """Resolve a data e hora de nascimento a partir de diferentes formatos de entrada."""
@@ -211,21 +215,12 @@ def resolve_fold_for(
     tz_offset_minutes: Optional[int],
 ) -> Optional[int]:
     """Identifica qual 'fold' do horário de verão corresponde a um offset específico."""
-    if date_time is None or not timezone_name or tz_offset_minutes is None:
-        return None
-
-    try:
-        tzinfo = ZoneInfo(timezone_name)
-    except ZoneInfoNotFoundError:
-        return None
-
-    target_offset = timedelta(minutes=tz_offset_minutes)
-    offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
-    offset_fold1 = date_time.replace(tzinfo=tzinfo, fold=1).utcoffset()
-
-    if offset_fold0 == target_offset: return 0
-    if offset_fold1 == target_offset: return 1
-    return None
+    warnings.warn(
+        "services.time_utils.resolve_fold_for está deprecated; use core.timezone_utils.resolve_fold_for.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return core_resolve_fold_for(date_time, timezone_name, tz_offset_minutes)
 
 def build_time_metadata(
     timezone_name: Optional[str],

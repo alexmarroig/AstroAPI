@@ -26,6 +26,60 @@ def parse_local_datetime(date_str: str, time_str: str | None) -> tuple[datetime,
     return datetime.combine(parsed_date, parsed_time), warnings
 
 
+def parse_local_datetime_components(
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    day: Optional[int] = None,
+    hour: int = 0,
+    minute: int = 0,
+    second: int = 0,
+    datetime_local: Optional[datetime | str] = None,
+) -> datetime:
+    """Parse local datetime from components or a naive datetime/string."""
+    if datetime_local is not None:
+        if isinstance(datetime_local, str):
+            return datetime.fromisoformat(datetime_local.replace("Z", "+00:00")).replace(
+                tzinfo=None
+            )
+        return datetime_local.replace(tzinfo=None)
+
+    if year is None or month is None or day is None:
+        raise TimezoneResolutionError(
+            "year, month e day são obrigatórios quando datetime_local não é fornecido."
+        )
+
+    return datetime(year, month, day, hour, minute, second)
+
+
+def parse_date_yyyy_mm_dd(date_str: str) -> tuple[int, int, int]:
+    """Parse date strings in YYYY-MM-DD or DD/MM/YYYY formats."""
+    try:
+        parsed = datetime.strptime(date_str, "%Y-%m-%d")
+        return parsed.year, parsed.month, parsed.day
+    except ValueError:
+        try:
+            parsed = datetime.strptime(date_str, "%d/%m/%Y")
+            return parsed.year, parsed.month, parsed.day
+        except ValueError as exc:
+            raise TimezoneResolutionError(
+                "Formato inválido de data. Use YYYY-MM-DD."
+            ) from exc
+
+
+def parse_time_hh_mm_ss(time_str: str) -> tuple[int, int, int]:
+    """Parse time strings in HH:MM or HH:MM:SS formats."""
+    if not time_str:
+        raise TimezoneResolutionError("Hora inválida. Use HH:MM ou HH:MM:SS.")
+    try:
+        if len(time_str) == 5:
+            parsed = datetime.strptime(time_str, "%H:%M")
+            return parsed.hour, parsed.minute, 0
+        parsed = datetime.strptime(time_str, "%H:%M:%S")
+        return parsed.hour, parsed.minute, parsed.second
+    except ValueError as exc:
+        raise TimezoneResolutionError("Hora inválida. Use HH:MM ou HH:MM:SS.") from exc
+
+
 def _valid_folds(dt_naive: datetime, tz: ZoneInfo) -> list[int]:
     valid_folds: list[int] = []
     for fold in (0, 1):
@@ -135,6 +189,141 @@ class TimezoneResolutionError(ValueError):
     def __init__(self, message: str, detail: Optional[dict | str] = None) -> None:
         super().__init__(message)
         self.detail = detail if detail is not None else message
+
+
+@dataclass(frozen=True)
+class LocalDatetimeResolution:
+    datetime_local_used: datetime
+    datetime_utc_used: datetime
+    fold_used: Optional[int]
+    warnings: list[str]
+
+
+@dataclass(frozen=True)
+class LocalDatetimeValidation:
+    input_datetime: datetime
+    resolved_datetime: datetime
+    timezone: str
+    tz_offset_minutes: int
+    utc_datetime: datetime
+    fold: int
+    warning: Optional[dict]
+    adjustment_minutes: int = 0
+
+
+def resolve_local_datetime(
+    date_time: datetime, timezone_name: str, strict: bool = True
+) -> LocalDatetimeResolution:
+    if not timezone_name:
+        raise TimezoneResolutionError("Timezone é obrigatório.")
+
+    localized, info = localize_with_zoneinfo(
+        date_time,
+        timezone_name,
+        strict=strict,
+        prefer_fold=0,
+    )
+
+    return LocalDatetimeResolution(
+        datetime_local_used=localized.replace(tzinfo=None),
+        datetime_utc_used=localized.astimezone(timezone.utc).replace(tzinfo=None),
+        fold_used=info.get("fold_used") if info.get("fold_used") in (0, 1) else None,
+        warnings=list(info.get("warnings", [])),
+    )
+
+
+def validate_local_datetime(
+    local_datetime: datetime,
+    timezone_name: str,
+    strict: bool = False,
+) -> LocalDatetimeValidation:
+    naive_local = local_datetime.replace(tzinfo=None)
+
+    classification: Optional[str] = None
+    if strict:
+        localize_with_zoneinfo(
+            naive_local,
+            timezone_name,
+            strict=True,
+            prefer_fold=0,
+        )
+    else:
+        try:
+            localize_with_zoneinfo(
+                naive_local,
+                timezone_name,
+                strict=True,
+                prefer_fold=0,
+            )
+        except TimezoneResolutionError as exc:
+            msg = str(exc)
+            if "ambíguo" in msg:
+                classification = "ambiguous"
+            elif "inexistente" in msg:
+                classification = "nonexistent"
+
+    localized, info = localize_with_zoneinfo(
+        naive_local,
+        timezone_name,
+        strict=False,
+        prefer_fold=0,
+    )
+
+    resolved_local = localized.replace(tzinfo=None)
+    utc_dt = localized.astimezone(timezone.utc)
+    fold_used = info.get("fold_used") if info.get("fold_used") in (0, 1) else 0
+    tz_offset_minutes = int(localized.utcoffset().total_seconds() // 60)
+    adjustment_minutes = int(info.get("adjusted_minutes", 0) or 0)
+    warning = None
+
+    if classification == "nonexistent" or adjustment_minutes:
+        warning = {
+            "code": "nonexistent_local_time",
+            "message": "Horário inexistente na transição de horário de verão.",
+            "adjustment_minutes": adjustment_minutes,
+        }
+    elif classification == "ambiguous":
+        warning = {
+            "code": "ambiguous_local_time",
+            "message": "Horário ambíguo na transição de horário de verão.",
+            "fold": fold_used,
+        }
+
+    return LocalDatetimeValidation(
+        input_datetime=naive_local,
+        resolved_datetime=resolved_local,
+        timezone=timezone_name,
+        tz_offset_minutes=tz_offset_minutes,
+        utc_datetime=utc_dt,
+        fold=fold_used,
+        warning=warning,
+        adjustment_minutes=adjustment_minutes,
+    )
+
+
+def resolve_fold_for(
+    date_time: Optional[datetime],
+    timezone_name: Optional[str],
+    tz_offset_minutes: Optional[int],
+) -> Optional[int]:
+    """Identify which fold matches a specific offset for a given timezone."""
+    if date_time is None or not timezone_name or tz_offset_minutes is None:
+        return None
+
+    try:
+        tzinfo = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError:
+        return None
+
+    target_offset = timedelta(minutes=tz_offset_minutes)
+    offset_fold0 = date_time.replace(tzinfo=tzinfo, fold=0).utcoffset()
+    offset_fold1 = date_time.replace(tzinfo=tzinfo, fold=1).utcoffset()
+
+    if offset_fold0 == target_offset:
+        return 0
+    if offset_fold1 == target_offset:
+        return 1
+    return None
 
 
 def resolve_timezone_offset(
