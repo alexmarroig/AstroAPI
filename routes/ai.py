@@ -16,7 +16,6 @@ from openai import (
     AsyncOpenAI,
     AuthenticationError,
     InternalServerError,
-    OpenAI,
     RateLimitError,
 )
 
@@ -50,7 +49,7 @@ def initialize_openai_client(app) -> None:
         return
 
     timeout_s = float(os.getenv("OPENAI_TIMEOUT_S", "35"))
-    app.state.openai_client = AsyncOpenAI(api_key=api_key, timeout=timeout_s)
+    app.state.openai_client = AsyncOpenAI(api_key=api_key, timeout=timeout_s, max_retries=0)
 
 
 async def shutdown_openai_client(app) -> None:
@@ -86,7 +85,8 @@ async def _create_completion_with_retry(client, *, model: str, messages: list[di
         except asyncio.TimeoutError as exc:
             last_error = exc
             logger.warning("cosmic_chat_timeout", extra={"attempt": attempt, "max_retries": max_retries}, exc_info=True)
-        except transient_errors:
+        except transient_errors as exc:
+            last_error = exc
             logger.warning(
                 "cosmic_chat_transient_error",
                 extra={"attempt": attempt, "max_retries": max_retries},
@@ -106,10 +106,10 @@ async def _create_completion_with_retry(client, *, model: str, messages: list[di
 async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(get_auth)):
     request_id = getattr(request.state, "request_id", None) or str(uuid4())
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
+    async_client = getattr(request.app.state, "openai_client", None)
+    if async_client is None:
         logger.error("cosmic_chat_not_configured", extra={"request_id": request_id})
-        raise HTTPException(status_code=500, detail="Serviço de IA temporariamente indisponível.")
+        return _build_ai_error_response(503, "Serviço de IA temporariamente indisponível.", request_id=request_id, retryable=True)
 
     messages = build_cosmic_chat_messages(
         user_question=body.user_question,
@@ -122,26 +122,13 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
     )
 
     try:
-        async_client = getattr(request.app.state, "openai_client", None)
-        if async_client is not None:
-            response = await _create_completion_with_retry(
-                async_client,
-                model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=0.7,
-            )
-        else:
-            client = OpenAI(api_key=api_key)
-            timeout_seconds = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "20"))
-            response = await asyncio.to_thread(
-                client.chat.completions.create,
-                model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=0.7,
-                timeout=timeout_seconds,
-            )
+        response = await _create_completion_with_retry(
+            async_client,
+            model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=0.7,
+        )
 
         return {
             "response": response.choices[0].message.content,
@@ -159,7 +146,7 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
             request_id=request_id,
             retryable=True,
         )
-    except APITimeoutError:
+    except (APITimeoutError, asyncio.TimeoutError):
         logger.exception("cosmic_chat_timeout", extra={"request_id": request_id})
         return _build_ai_error_response(504, "Tempo limite da IA excedido. Tente novamente.", request_id=request_id, retryable=True)
     except (APIConnectionError, APIStatusError):
@@ -169,4 +156,9 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
         raise
     except (APIError, Exception):
         logger.exception("cosmic_chat_unhandled_error", extra={"request_id": request_id})
-        return _build_ai_error_response(500, "Serviço de IA temporariamente indisponível.", request_id=request_id, retryable=True)
+        return _build_ai_error_response(
+            500,
+            "Erro interno ao processar solicitação de IA.",
+            request_id=request_id,
+            retryable=True,
+        )

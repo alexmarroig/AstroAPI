@@ -69,7 +69,7 @@ def test_cosmic_chat_timeout_returns_gateway_timeout(monkeypatch):
         resp = client.post("/v1/ai/cosmic-chat", headers=_Headers.build("timeout-user"), json=_payload())
 
     assert resp.status_code == 504
-    assert "temporariamente indisponível" in resp.json()["detail"].lower()
+    assert "tempo limite" in resp.json()["detail"].lower()
 
 
 def test_cosmic_chat_generic_error_is_sanitized(monkeypatch):
