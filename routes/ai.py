@@ -86,8 +86,7 @@ async def _create_completion_with_retry(client, *, model: str, messages: list[di
         except asyncio.TimeoutError as exc:
             last_error = exc
             logger.warning("cosmic_chat_timeout", extra={"attempt": attempt, "max_retries": max_retries}, exc_info=True)
-        except transient_errors as exc:
-            last_error = exc
+        except transient_errors:
             logger.warning(
                 "cosmic_chat_transient_error",
                 extra={"attempt": attempt, "max_retries": max_retries},
@@ -122,17 +121,9 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
         os.getenv("OPENAI_MAX_TOKENS_FREE", "600")
     )
 
-    use_sync_client = False
-
     try:
         async_client = getattr(request.app.state, "openai_client", None)
-
-        if async_client is None and getattr(OpenAI, "__module__", "") != "openai":
-            use_sync_client = True
-        elif async_client is None:
-            async_client = AsyncOpenAI(api_key=api_key)
-
-        if not use_sync_client:
+        if async_client is not None:
             response = await _create_completion_with_retry(
                 async_client,
                 model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
@@ -170,17 +161,10 @@ async def cosmic_chat(body: CosmicChatRequest, request: Request, auth=Depends(ge
         )
     except APITimeoutError:
         logger.exception("cosmic_chat_timeout", extra={"request_id": request_id})
-        message = "Serviço de IA temporariamente indisponível." if use_sync_client else "Tempo limite da IA excedido. Tente novamente."
-        return _build_ai_error_response(504, message, request_id=request_id, retryable=True)
+        return _build_ai_error_response(504, "Tempo limite da IA excedido. Tente novamente.", request_id=request_id, retryable=True)
     except (APIConnectionError, APIStatusError):
         logger.exception("cosmic_chat_external_api_error", extra={"request_id": request_id})
         return _build_ai_error_response(502, "Serviço de IA temporariamente indisponível.", request_id=request_id, retryable=True)
-    except asyncio.TimeoutError:
-        logger.exception("cosmic_chat_timeout", extra={"request_id": request_id})
-        return _build_ai_error_response(504, "Serviço de IA temporariamente indisponível. Tente novamente.", request_id=request_id, retryable=True)
-    except ValueError:
-        logger.exception("cosmic_chat_unhandled_error", extra={"request_id": request_id})
-        raise HTTPException(status_code=500, detail="Erro interno ao processar solicitação de IA.")
     except HTTPException:
         raise
     except (APIError, Exception):
