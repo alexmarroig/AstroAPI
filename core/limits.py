@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from threading import Lock
 from typing import Protocol
 
+logger = logging.getLogger(__name__)
 
 FREE_LIMITS = {
     "/v1/ai/cosmic-chat": 5,
@@ -40,6 +41,17 @@ class RateLimitStorage(Protocol):
         """Atomically increment key and apply expiry when key is created."""
 
 
+class RateLimitStore(Protocol):
+    def incr_with_window(
+        self,
+        user_id: str,
+        endpoint: str,
+        window: str,
+        ttl_seconds: int,
+    ) -> int:
+        """Increment and return usage count for the provided window."""
+
+
 class MemoryRateLimitStorage:
     """Optional fallback backend when Redis is not available."""
 
@@ -63,38 +75,6 @@ class MemoryRateLimitStorage:
             return next_value
 
 
-class RedisRateLimitStorage:
-    _LUA_INCR_EXPIRE = """
-    local current = redis.call('INCR', KEYS[1])
-    if current == 1 then
-      redis.call('EXPIRE', KEYS[1], ARGV[1])
-    end
-    return current
-    """
-from threading import Lock
-from typing import Protocol
-
-logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class RateLimitResult:
-    allowed: bool
-    status: str
-    message: str = ""
-
-
-class RateLimitStore(Protocol):
-    def incr_with_window(
-        self,
-        user_id: str,
-        endpoint: str,
-        window: str,
-        ttl_seconds: int,
-    ) -> int:
-        """Increment and return usage count for the provided window."""
-
-
 class InMemoryRateLimitStore:
     """Thread-safe in-memory backend used as fallback and default for tests."""
 
@@ -114,20 +94,26 @@ class InMemoryRateLimitStore:
         now = time.time()
 
         with self._lock:
-            exp = self._expirations.get(key)
-            if exp is not None and exp <= now:
+            expiration = self._expirations.get(key)
+            if expiration is not None and expiration <= now:
                 self._counts.pop(key, None)
                 self._expirations.pop(key, None)
 
             self._counts[key] += 1
             if key not in self._expirations:
-                self._expirations[key] = now + ttl_seconds
+                self._expirations[key] = now + max(ttl_seconds, 1)
 
             return self._counts[key]
 
 
-class RedisRateLimitStore:
-    """Redis backend with atomic increment + TTL assignment per fixed window key."""
+class RedisRateLimitStorage:
+    _LUA_INCR_EXPIRE = """
+    local current = redis.call('INCR', KEYS[1])
+    if current == 1 then
+      redis.call('EXPIRE', KEYS[1], ARGV[1])
+    end
+    return current
+    """
 
     def __init__(self, client) -> None:
         self._client = client
@@ -138,8 +124,39 @@ class RedisRateLimitStore:
         return int(value)
 
 
+class RedisRateLimitStore:
+    """Redis backend with atomic increment + TTL assignment per fixed window key."""
+
+    def __init__(self, client) -> None:
+        self._client = client
+
+    def _key(self, user_id: str, endpoint: str, window: str) -> str:
+        return f"ratelimit:{window}:{user_id}:{endpoint}"
+
+    def incr_with_window(
+        self,
+        user_id: str,
+        endpoint: str,
+        window: str,
+        ttl_seconds: int,
+    ) -> int:
+        key = self._key(user_id=user_id, endpoint=endpoint, window=window)
+        pipe = self._client.pipeline()
+        pipe.incr(key)
+        pipe.expire(key, max(int(ttl_seconds), 1), nx=True)
+        count, _ = pipe.execute()
+        return int(count)
+
+
+@dataclass(frozen=True)
+class RateLimitResult:
+    allowed: bool
+    status: str
+    message: str = ""
+
+
 @dataclass
-class RateLimitMetrics:
+class DetailedRateLimitMetrics:
     exceeded: defaultdict[tuple[str, str, str], int]
     _lock: Lock
 
@@ -156,9 +173,11 @@ class RateLimitMetrics:
             return dict(self.exceeded)
 
 
-_metrics = RateLimitMetrics()
+_detailed_metrics = DetailedRateLimitMetrics()
+_simple_metrics: defaultdict[str, int] = defaultdict(int)
 _memory_fallback_storage = MemoryRateLimitStorage()
 _default_storage: RateLimitStorage | None = None
+_store: RateLimitStore | None = None
 
 
 def _resolve_limits(plan: str) -> tuple[dict[str, int], int]:
@@ -169,11 +188,16 @@ def _resolve_limits(plan: str) -> tuple[dict[str, int], int]:
     return PREMIUM_LIMITS, 200
 
 
+def _daily_limit_for_plan(plan: str, endpoint: str) -> int:
+    limits, default_limit = _resolve_limits(plan)
+    return limits.get(endpoint, default_limit)
+
+
 def _window_boundaries(now: datetime) -> tuple[int, int, str, str]:
     now_utc = now.astimezone(timezone.utc)
 
-    next_hour = (now_utc.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
-    next_day = (now_utc.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1))
+    next_hour = now_utc.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    next_day = now_utc.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
 
     hour_ttl = int((next_hour - now_utc).total_seconds())
     day_ttl = int((next_day - now_utc).total_seconds())
@@ -182,77 +206,6 @@ def _window_boundaries(now: datetime) -> tuple[int, int, str, str]:
     day_window = now_utc.strftime("%Y%m%d")
 
     return max(hour_ttl, 1), max(day_ttl, 1), hour_window, day_window
-
-
-def _hour_storage_key(user_id: str, hour_window: str) -> str:
-    return f"rl:hour:{hour_window}:{user_id}"
-
-
-def _day_storage_key(user_id: str, endpoint: str, day_window: str) -> str:
-    return f"rl:day:{day_window}:{user_id}:{endpoint}"
-
-
-def _build_redis_storage() -> RateLimitStorage | None:
-    def _key(self, user_id: str, endpoint: str, window: str) -> str:
-        return f"ratelimit:{window}:{user_id}:{endpoint}"
-
-    def incr_with_window(
-        self,
-        user_id: str,
-        endpoint: str,
-        window: str,
-        ttl_seconds: int,
-    ) -> int:
-        key = self._key(user_id=user_id, endpoint=endpoint, window=window)
-        pipe = self._client.pipeline()
-        pipe.incr(key)
-        pipe.expire(key, ttl_seconds, nx=True)
-        count, _ = pipe.execute()
-        return int(count)
-
-
-_metrics: dict[str, int] = defaultdict(int)
-
-
-def get_rate_limit_metrics() -> dict[str, int]:
-    return dict(_metrics)
-
-
-def reset_rate_limit_metrics() -> None:
-    _metrics.clear()
-
-
-def _inc_metric(status: str) -> None:
-    _metrics[status] += 1
-
-
-def _daily_limit_for_plan(plan: str, endpoint: str) -> int:
-    if plan == "free":
-        limits = {
-            "/v1/ai/cosmic-chat": 5,
-            "/v1/chart/transits": 30,
-            "/v1/cosmic-weather": 60,
-            "/v1/chart/natal": 20,
-            "/v1/chart/render-data": 60,
-        }
-    elif plan == "trial":
-        limits = {
-            "/v1/ai/cosmic-chat": 100,
-            "/v1/chart/transits": 500,
-            "/v1/cosmic-weather": 500,
-            "/v1/chart/natal": 200,
-            "/v1/chart/render-data": 500,
-        }
-    else:  # premium
-        limits = {
-            "/v1/ai/cosmic-chat": 1000,
-            "/v1/chart/transits": 5000,
-            "/v1/cosmic-weather": 5000,
-            "/v1/chart/natal": 2000,
-            "/v1/chart/render-data": 5000,
-        }
-
-    return limits.get(endpoint, 200 if plan != "free" else 50)
 
 
 def _day_key() -> str:
@@ -275,20 +228,41 @@ def _seconds_to_next_day(now: float | None = None) -> int:
     return max(1, int(((int(now) // 86400) + 1) * 86400 - now))
 
 
+def _hour_storage_key(user_id: str, hour_window: str) -> str:
+    return f"rl:hour:{hour_window}:{user_id}"
+
+
+def _day_storage_key(user_id: str, endpoint: str, day_window: str) -> str:
+    return f"rl:day:{day_window}:{user_id}:{endpoint}"
+
+
 def _create_redis_store_from_env() -> RateLimitStore | None:
     redis_url = os.getenv("REDIS_URL")
     if not redis_url:
         return None
 
     try:
-        import redis  # type: ignore
-    except Exception:
+        redis_module = __import__("redis")
+        client = redis_module.Redis.from_url(redis_url, decode_responses=True)
+        client.ping()
+        return RedisRateLimitStore(client)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Rate-limit Redis indisponível, usando fallback em memória: %s", exc)
+        return None
+
+
+def _build_redis_storage() -> RateLimitStorage | None:
+    redis_url = os.getenv("REDIS_URL")
+    if not redis_url:
         return None
 
     try:
-        client = redis.Redis.from_url(redis_url, decode_responses=False)
+        redis_module = __import__("redis")
+        client = redis_module.Redis.from_url(redis_url, decode_responses=False)
+        client.ping()
         return RedisRateLimitStorage(client)
-    except Exception:
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Rate-limit Redis indisponível, usando fallback em memória: %s", exc)
         return None
 
 
@@ -308,63 +282,6 @@ def _get_default_storage() -> RateLimitStorage:
     return _default_storage
 
 
-def check_and_inc(
-    user_id: str,
-    endpoint: str,
-    plan: str,
-    *,
-    now: datetime | None = None,
-    storage: RateLimitStorage | None = None,
-) -> tuple[bool, str]:
-    current_time = now or datetime.now(timezone.utc)
-    hour_ttl, day_ttl, hour_window, day_window = _window_boundaries(current_time)
-
-    active_storage = storage or _get_default_storage()
-
-    hourly_count = active_storage.incr_with_ttl(
-        _hour_storage_key(user_id, hour_window),
-        hour_ttl,
-    )
-    if hourly_count > HOURLY_LIMIT:
-        _metrics.record_exceeded(plan, endpoint, "hour")
-        return (
-            False,
-            "Você alcançou o limite horário de 100 requisições. Respire e tente novamente em instantes.",
-        )
-
-    limits, default_limit = _resolve_limits(plan)
-    daily_limit = limits.get(endpoint, default_limit)
-
-    daily_count = active_storage.incr_with_ttl(
-        _day_storage_key(user_id, endpoint, day_window),
-        day_ttl,
-    )
-    if daily_count > daily_limit:
-        _metrics.record_exceeded(plan, endpoint, "day")
-        return False, f"Limite diário atingido para este recurso ({daily_limit}/dia)."
-
-    return True, ""
-
-
-def get_rate_limit_metrics_snapshot() -> dict[tuple[str, str, str], int]:
-    return _metrics.snapshot()
-
-
-def reset_rate_limit_metrics() -> None:
-    global _metrics
-    _metrics = RateLimitMetrics()
-
-        client = redis.Redis.from_url(redis_url, decode_responses=True)
-        client.ping()
-        return RedisRateLimitStore(client)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Rate-limit Redis indisponível, usando fallback em memória: %s", exc)
-        return None
-
-
-_store: RateLimitStore = _create_redis_store_from_env() or InMemoryRateLimitStore()
-
-
 def configure_rate_limit_store(store: RateLimitStore) -> None:
     global _store
     _store = store
@@ -382,8 +299,7 @@ def _evaluate_limits(store: RateLimitStore, user_id: str, endpoint: str, plan: s
         window=f"hour:{_hour_key()}",
         ttl_seconds=_seconds_to_next_hour(),
     )
-    hourly_limit = 100
-    if hour_count > hourly_limit:
+    if hour_count > HOURLY_LIMIT:
         return RateLimitResult(
             allowed=False,
             status="blocked_hour",
@@ -407,8 +323,59 @@ def _evaluate_limits(store: RateLimitStore, user_id: str, endpoint: str, plan: s
     return RateLimitResult(allowed=True, status="allowed")
 
 
-def check_and_inc(user_id: str, endpoint: str, plan: str) -> tuple[bool, str]:
+def _inc_metric(status: str) -> None:
+    _simple_metrics[status] += 1
+
+
+def get_rate_limit_metrics() -> dict[str, int]:
+    return dict(_simple_metrics)
+
+
+def get_rate_limit_metrics_snapshot() -> dict[tuple[str, str, str], int]:
+    return _detailed_metrics.snapshot()
+
+
+def reset_rate_limit_metrics() -> None:
+    global _detailed_metrics
+    _detailed_metrics = DetailedRateLimitMetrics()
+    _simple_metrics.clear()
+
+
+def check_and_inc(
+    user_id: str,
+    endpoint: str,
+    plan: str,
+    *,
+    now: datetime | None = None,
+    storage: RateLimitStorage | None = None,
+) -> tuple[bool, str]:
+    if now is not None or storage is not None:
+        current_time = now or datetime.now(timezone.utc)
+        hour_ttl, day_ttl, hour_window, day_window = _window_boundaries(current_time)
+        active_storage = storage or _get_default_storage()
+
+        hourly_count = active_storage.incr_with_ttl(_hour_storage_key(user_id, hour_window), hour_ttl)
+        if hourly_count > HOURLY_LIMIT:
+            _detailed_metrics.record_exceeded(plan, endpoint, "hour")
+            return (
+                False,
+                "Você alcançou o limite horário de 100 requisições. Respire e tente novamente em instantes.",
+            )
+
+        daily_limit = _daily_limit_for_plan(plan=plan, endpoint=endpoint)
+        daily_count = active_storage.incr_with_ttl(
+            _day_storage_key(user_id, endpoint, day_window),
+            day_ttl,
+        )
+        if daily_count > daily_limit:
+            _detailed_metrics.record_exceeded(plan, endpoint, "day")
+            return False, f"Limite diário atingido para este recurso ({daily_limit}/dia)."
+
+        return True, ""
+
     global _store
+    if _store is None:
+        _store = _create_redis_store_from_env() or InMemoryRateLimitStore()
 
     try:
         result = _evaluate_limits(_store, user_id=user_id, endpoint=endpoint, plan=plan)
@@ -419,4 +386,9 @@ def check_and_inc(user_id: str, endpoint: str, plan: str) -> tuple[bool, str]:
         result = _evaluate_limits(fallback, user_id=user_id, endpoint=endpoint, plan=plan)
 
     _inc_metric(result.status)
+    if result.status == "blocked_hour":
+        _detailed_metrics.record_exceeded(plan, endpoint, "hour")
+    elif result.status == "blocked_day":
+        _detailed_metrics.record_exceeded(plan, endpoint, "day")
+
     return result.allowed, result.message
