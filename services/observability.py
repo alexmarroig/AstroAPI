@@ -12,6 +12,7 @@ class OperationalEvent:
     latency_ms: float
     request_id: str
     user_plan: str = "unknown"
+    event_type: str = "request"
     error: Optional[str] = None
     status_code: int = 200
     ts: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -33,6 +34,7 @@ class StructuredOperationalLogger:
             "endpoint": event.endpoint,
             "user_plan": event.user_plan,
             "request_id": event.request_id,
+            "event_type": event.event_type,
             "status_code": event.status_code,
             "ts": event.ts.isoformat(),
         }
@@ -168,6 +170,12 @@ class FeedbackLoop:
             return 0.0
         return len(self.rejected_alerts) / total
 
+    def stats(self) -> Dict[str, int]:
+        return {
+            "confirmed": len(self.confirmed_alerts),
+            "rejected": len(self.rejected_alerts),
+        }
+
 
 class ModelRegistry:
     """Versiona modelos e acompanha avaliação contínua com impacto em MTTR."""
@@ -188,7 +196,7 @@ class ModelRegistry:
 
 
 class ObservabilityOrchestrator:
-    def __init__(self) -> None:
+    def __init__(self, training_min_samples: int = 20) -> None:
         self.logger = StructuredOperationalLogger()
         self.ingestion = TimeSeriesIngestionPipeline()
         self.detector = BaselineAnomalyDetector()
@@ -196,10 +204,13 @@ class ObservabilityOrchestrator:
         self.rca = RootCauseAnalyzer()
         self.feedback = FeedbackLoop()
         self.registry = ModelRegistry()
+        self.training_min_samples = training_min_samples
+        self.last_trained_count = 0
 
     def process_event(self, event: OperationalEvent) -> Dict[str, Any]:
         payload = self.logger.build_payload(event)
         self.ingestion.ingest(payload)
+        self._train_if_ready()
 
         metric = self.ingestion.metrics[-1]
         scores = self.detector.score(metric)
@@ -209,6 +220,30 @@ class ObservabilityOrchestrator:
 
         alert["root_cause"] = self.rca.analyze(alert, self.ingestion.logs)
         return {"payload": payload, "alert": alert}
+
+    def _train_if_ready(self) -> None:
+        sample_count = len(self.ingestion.metrics)
+        if sample_count < self.training_min_samples:
+            return
+
+        if sample_count - self.last_trained_count < self.training_min_samples and self.detector.model:
+            return
+
+        self.detector.train(self.ingestion.metrics)
+        self.last_trained_count = sample_count
+
+        feedback_stats = self.feedback.stats()
+        total_feedback = feedback_stats["confirmed"] + feedback_stats["rejected"]
+        precision = feedback_stats["confirmed"] / total_feedback if total_feedback else 0.0
+
+        self.registry.register(
+            version=f"baseline-{sample_count}",
+            metrics={
+                "precision": round(precision, 2),
+                "recall": 0.0,
+                "mttr_impact_minutes": 0.0,
+            },
+        )
 
 
 observability_orchestrator = ObservabilityOrchestrator()

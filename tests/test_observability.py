@@ -10,7 +10,7 @@ from services.observability import (
 
 
 def test_baseline_detector_and_alert_pipeline():
-    orchestrator = ObservabilityOrchestrator()
+    orchestrator = ObservabilityOrchestrator(training_min_samples=5)
 
     base_ts = datetime(2025, 1, 1, 10, 0, tzinfo=timezone.utc)
     for latency in [90, 95, 100, 105, 110]:
@@ -24,7 +24,7 @@ def test_baseline_detector_and_alert_pipeline():
         )
         orchestrator.process_event(event)
 
-    orchestrator.detector.train(orchestrator.ingestion.metrics)
+    assert orchestrator.registry.versions
 
     anomaly = OperationalEvent(
         endpoint="/v1/chart/natal",
