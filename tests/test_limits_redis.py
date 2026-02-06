@@ -1,32 +1,13 @@
 from core.limits import RedisRateLimitStore
 
 
-class FakePipeline:
-    def __init__(self, db):
-        self.db = db
-        self.ops = []
-
-    def incr(self, key):
-        self.ops.append(("incr", key))
-        return self
-
-    def expire(self, key, ttl, nx=False):
-        self.ops.append(("expire", key, ttl, nx))
-        return self
-
-    def execute(self):
-        incr_key = [op[1] for op in self.ops if op[0] == "incr"][0]
-        self.db[incr_key] = self.db.get(incr_key, 0) + 1
-        incr_result = self.db[incr_key]
-        return [incr_result, True]
-
-
 class FakeRedisClient:
     def __init__(self):
         self.db = {}
 
-    def pipeline(self):
-        return FakePipeline(self.db)
+    def eval(self, script, keys, key, ttl):
+        self.db[key] = self.db.get(key, 0) + 1
+        return self.db[key]
 
 
 def test_redis_store_uses_atomic_pipeline_and_window_key():
