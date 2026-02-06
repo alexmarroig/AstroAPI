@@ -1,8 +1,8 @@
 from __future__ import annotations
 import logging
 import swisseph as swe
-from datetime import timedelta
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from .common import get_auth
 from schemas.diagnostics import EphemerisCheckRequest
 from services.time_utils import get_tz_offset_minutes, to_utc
@@ -15,6 +15,7 @@ logger = logging.getLogger("astro-api")
 @router.post("/v1/diagnostics/ephemeris-check")
 async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=Depends(get_auth)):
     """Verifica a precisão dos cálculos da efeméride em comparação com o Swiss Ephemeris direto."""
+    request_id = getattr(request.state, "request_id", None)
     try:
         tz_offset = get_tz_offset_minutes(body.datetime_local, body.timezone, None, request_id=request.state.request_id)
         utc_dt = to_utc(body.datetime_local, tz_offset)
@@ -37,14 +38,36 @@ async def ephemeris_check(body: EphemerisCheckRequest, request: Request, auth=De
             "tz_offset_minutes": tz_offset,
             "items": items
         }
+    except HTTPException as exc:
+        error_code = "ephemeris_check_invalid_input"
+        logger.warning(
+            "ephemeris_check_validation_error",
+            extra={"request_id": request_id, "error_code": error_code},
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "ok": False,
+                "data": None,
+                "message": str(exc.detail),
+                "request_id": request_id,
+                "error_code": error_code,
+            },
+        )
     except Exception:
         error_code = "ephemeris_check_failed"
         logger.error(
             "ephemeris_check_error",
             exc_info=True,
-            extra={"request_id": request.state.request_id, "error_code": error_code},
+            extra={"request_id": request_id, "error_code": error_code},
         )
-        return {
-            "success": False,
-            "message": "Não foi possível validar a efeméride neste momento",
-        }
+        return JSONResponse(
+            status_code=500,
+            content={
+                "ok": False,
+                "data": None,
+                "message": "Não foi possível validar a efeméride neste momento",
+                "request_id": request_id,
+                "error_code": error_code,
+            },
+        )
