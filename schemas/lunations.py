@@ -2,13 +2,19 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, AliasChoices, ConfigDict
 
 
 class LunationCalculateRequest(BaseModel):
-    date: str = Field(..., description="YYYY-MM-DD")
+    model_config = ConfigDict(populate_by_name=True)
+
+    date: str = Field(..., description="YYYY-MM-DD", validation_alias=AliasChoices("date", "targetDate"))
     tz_offset_minutes: Optional[int] = Field(
-        None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
+        None,
+        ge=-840,
+        le=840,
+        description="Minutos de offset para o fuso. Se vazio, usa timezone.",
+        validation_alias=AliasChoices("tz_offset_minutes", "tzOffsetMinutes"),
     )
     timezone: Optional[str] = Field(
         None,
@@ -17,6 +23,7 @@ class LunationCalculateRequest(BaseModel):
     strict_timezone: bool = Field(
         default=False,
         description="Quando true, rejeita horários ambíguos em transições de DST.",
+        validation_alias=AliasChoices("strict_timezone", "strictTimezone"),
     )
 
 
