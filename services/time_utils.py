@@ -144,9 +144,9 @@ def parse_time_hh_mm_ss(s: str) -> tuple[int, int, int]:
 def resolve_birth_datetime_payload(data: Dict[str, Any]) -> tuple[Optional[datetime], Optional[bool], List[str]]:
     """Resolve a data e hora de nascimento a partir de diferentes formatos de entrada."""
     warnings: List[str] = []
-    birth_datetime = data.get("birth_datetime")
-    birth_date = data.get("birth_date")
-    birth_time = data.get("birth_time")
+    birth_datetime = data.get("birth_datetime") or data.get("birthDateTime") or data.get("birthDatetime")
+    birth_date = data.get("birth_date") or data.get("birthDate")
+    birth_time = data.get("birth_time") or data.get("birthTime")
 
     if birth_datetime:
         birth_datetime = str(birth_datetime).strip()
