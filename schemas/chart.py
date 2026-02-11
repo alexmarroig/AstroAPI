@@ -75,8 +75,8 @@ class NatalChartRequest(BaseModel):
         validation_alias=AliasChoices("second", "natal_second"),
         description="Segundo de nascimento (aceita alias natal_second).",
     )
-    lat: float = Field(..., ge=-89.9999, le=89.9999)
-    lng: float = Field(..., ge=-180, le=180)
+    lat: float = Field(..., ge=-89.9999, le=89.9999, validation_alias=AliasChoices("lat", "latitude"))
+    lng: float = Field(..., ge=-180, le=180, validation_alias=AliasChoices("lng", "longitude"))
     tz_offset_minutes: Optional[int] = Field(
         None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
     )
@@ -101,8 +101,14 @@ class NatalChartRequest(BaseModel):
         if not isinstance(data, dict):
             return data
 
-        from services.time_utils import resolve_birth_datetime_payload
-        dt, precise, _ = resolve_birth_datetime_payload(data)
+        from services.time_utils import normalize_birth_payload
+        normalized = normalize_birth_payload(data)
+        dt, precise = normalized.datetime_local, normalized.birth_time_precise
+
+        if normalized.lat is not None and "lat" not in data and "latitude" in data:
+            data["lat"] = normalized.lat
+        if normalized.lng is not None and "lng" not in data and "longitude" in data:
+            data["lng"] = normalized.lng
 
         if dt is None:
             if "birth_time_precise" not in data and "birthTimePrecise" not in data:
@@ -133,14 +139,15 @@ class NatalChartRequest(BaseModel):
 
 class RenderDataRequest(BaseModel):
     """Modelo para requisição de dados de renderização do mapa."""
+    model_config = ConfigDict(populate_by_name=True)
     year: int
     month: int
     day: int
     hour: int
     minute: int = 0
     second: int = 0
-    lat: float = Field(..., ge=-89.9999, le=89.9999)
-    lng: float = Field(..., ge=-180, le=180)
+    lat: float = Field(..., ge=-89.9999, le=89.9999, validation_alias=AliasChoices("lat", "latitude"))
+    lng: float = Field(..., ge=-180, le=180, validation_alias=AliasChoices("lng", "longitude"))
     tz_offset_minutes: Optional[int] = Field(
         None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
     )
