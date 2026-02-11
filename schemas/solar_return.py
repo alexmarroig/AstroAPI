@@ -1,25 +1,28 @@
 from __future__ import annotations
 from typing import Optional, List, Dict, Literal, Any
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, AliasChoices, ConfigDict
 from .common import HouseSystem, ZodiacType
 
 class SolarReturnLocal(BaseModel):
     """Modelo para localização em revolução solar."""
+    model_config = ConfigDict(populate_by_name=True)
     nome: Optional[str] = None
-    lat: float = Field(..., ge=-89.9999, le=89.9999)
-    lon: float = Field(..., ge=-180, le=180)
+    lat: float = Field(..., ge=-89.9999, le=89.9999, validation_alias=AliasChoices("lat", "latitude"))
+    lon: float = Field(..., ge=-180, le=180, validation_alias=AliasChoices("lon", "lng", "longitude"))
     alt_m: Optional[float] = None
 
 class SolarReturnNatal(BaseModel):
     """Modelo para dados natais em revolução solar."""
-    data: str = Field(..., description="Data natal no formato YYYY-MM-DD")
-    hora: Optional[str] = Field(None, description="Hora natal no formato HH:MM:SS")
+    model_config = ConfigDict(populate_by_name=True)
+    data: str = Field(..., description="Data natal no formato YYYY-MM-DD", validation_alias=AliasChoices("data", "birthDate", "birth_date"))
+    hora: Optional[str] = Field(None, description="Hora natal no formato HH:MM:SS", validation_alias=AliasChoices("hora", "birthTime", "birth_time"))
     timezone: str = Field(..., description="Timezone IANA (ex.: America/Sao_Paulo)")
     local: SolarReturnLocal
 
 class SolarReturnTarget(BaseModel):
     """Modelo para o alvo da revolução solar (ano e local)."""
-    ano: int = Field(..., ge=1800, le=2200)
+    model_config = ConfigDict(populate_by_name=True)
+    ano: int = Field(..., ge=1800, le=2200, validation_alias=AliasChoices("ano", "year"))
     local: SolarReturnLocal
     timezone: Optional[str] = Field(
         None, description="Timezone IANA do local alvo (ex.: America/Sao_Paulo)."
@@ -79,8 +82,9 @@ class SolarReturnOverlayRequest(BaseModel):
 
 class SolarReturnTimelineRequest(BaseModel):
     """Modelo para requisição de timeline de revolução solar."""
+    model_config = ConfigDict(populate_by_name=True)
     natal: SolarReturnNatal
-    year: int = Field(..., ge=1800, le=2200)
+    year: int = Field(..., ge=1800, le=2200, validation_alias=AliasChoices("year", "ano"))
     preferencias: Optional[SolarReturnPreferencias] = None
 
 class SolarReturnResponse(BaseModel):

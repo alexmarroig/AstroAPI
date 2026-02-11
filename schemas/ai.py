@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, AliasChoices, ConfigDict
 
 MAX_USER_QUESTION_LENGTH = 1_200
 MAX_ASTRO_PAYLOAD_DEPTH = 8
@@ -47,8 +47,15 @@ def _count_payload_nodes(value: Any, depth: int = 0) -> int:
 class CosmicChatRequest(BaseModel):
     """Modelo para requisição de chat cósmico (IA)."""
 
-    user_question: str = Field(..., min_length=1, max_length=MAX_USER_QUESTION_LENGTH)
-    astro_payload: Dict[str, Any] = Field(...)
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_question: str = Field(
+        ...,
+        min_length=1,
+        max_length=MAX_USER_QUESTION_LENGTH,
+        validation_alias=AliasChoices("user_question", "userQuestion"),
+    )
+    astro_payload: Dict[str, Any] = Field(..., validation_alias=AliasChoices("astro_payload", "astroPayload"))
     tone: Optional[str] = Field(default=None, max_length=120)
     language: str = Field(default="pt-BR", max_length=32)
 

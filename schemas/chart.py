@@ -1,10 +1,12 @@
 from __future__ import annotations
 from typing import Optional, Any
-from pydantic import BaseModel, Field, AliasChoices, model_validator
+from pydantic import BaseModel, Field, AliasChoices, model_validator, ConfigDict
 from .common import HouseSystem, ZodiacType
 
 class NatalChartRequest(BaseModel):
     """Modelo para requisição de mapa natal."""
+    model_config = ConfigDict(populate_by_name=True)
+
     natal_year: int = Field(..., ge=1800, le=2100)
     natal_month: int = Field(..., ge=1, le=12)
     natal_day: int = Field(..., ge=1, le=31)
@@ -13,18 +15,22 @@ class NatalChartRequest(BaseModel):
     natal_second: int = Field(0, ge=0, le=59)
     birth_date: Optional[str] = Field(
         default=None,
+        validation_alias=AliasChoices("birth_date", "birthDate"),
         description="Data de nascimento em YYYY-MM-DD (alternativo aos campos natal_*).",
     )
     birth_time: Optional[str] = Field(
         default=None,
+        validation_alias=AliasChoices("birth_time", "birthTime"),
         description="Hora de nascimento em HH:MM ou HH:MM:SS. Pode ser null se não souber a hora exata.",
     )
     birth_datetime: Optional[str] = Field(
         default=None,
+        validation_alias=AliasChoices("birth_datetime", "birthDateTime", "birthDatetime"),
         description="Data/hora de nascimento em ISO (ex.: 2026-01-01T20:54:00).",
     )
     birth_time_precise: Optional[bool] = Field(
         default=None,
+        validation_alias=AliasChoices("birth_time_precise", "birthTimePrecise"),
         description="Indica se o horário de nascimento foi informado com precisão.",
     )
     year: int = Field(
@@ -69,8 +75,8 @@ class NatalChartRequest(BaseModel):
         validation_alias=AliasChoices("second", "natal_second"),
         description="Segundo de nascimento (aceita alias natal_second).",
     )
-    lat: float = Field(..., ge=-89.9999, le=89.9999)
-    lng: float = Field(..., ge=-180, le=180)
+    lat: float = Field(..., ge=-89.9999, le=89.9999, validation_alias=AliasChoices("lat", "latitude"))
+    lng: float = Field(..., ge=-180, le=180, validation_alias=AliasChoices("lng", "longitude"))
     tz_offset_minutes: Optional[int] = Field(
         None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
     )
@@ -95,11 +101,17 @@ class NatalChartRequest(BaseModel):
         if not isinstance(data, dict):
             return data
 
-        from services.time_utils import resolve_birth_datetime_payload
-        dt, precise, _ = resolve_birth_datetime_payload(data)
+        from services.time_utils import normalize_birth_payload
+        normalized = normalize_birth_payload(data)
+        dt, precise = normalized.datetime_local, normalized.birth_time_precise
+
+        if normalized.lat is not None and "lat" not in data and "latitude" in data:
+            data["lat"] = normalized.lat
+        if normalized.lng is not None and "lng" not in data and "longitude" in data:
+            data["lng"] = normalized.lng
 
         if dt is None:
-            if "birth_time_precise" not in data:
+            if "birth_time_precise" not in data and "birthTimePrecise" not in data:
                 data["birth_time_precise"] = True
             return data
 
@@ -127,14 +139,15 @@ class NatalChartRequest(BaseModel):
 
 class RenderDataRequest(BaseModel):
     """Modelo para requisição de dados de renderização do mapa."""
+    model_config = ConfigDict(populate_by_name=True)
     year: int
     month: int
     day: int
     hour: int
     minute: int = 0
     second: int = 0
-    lat: float = Field(..., ge=-89.9999, le=89.9999)
-    lng: float = Field(..., ge=-180, le=180)
+    lat: float = Field(..., ge=-89.9999, le=89.9999, validation_alias=AliasChoices("lat", "latitude"))
+    lng: float = Field(..., ge=-180, le=180, validation_alias=AliasChoices("lng", "longitude"))
     tz_offset_minutes: Optional[int] = Field(
         None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
     )

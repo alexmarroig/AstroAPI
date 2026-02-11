@@ -4,6 +4,8 @@ import re
 import warnings
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any, NamedTuple
+from dataclasses import dataclass
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from fastapi import HTTPException
 
 from core.timezone_utils import (
@@ -18,6 +20,17 @@ from core.timezone_utils import (
 )
 
 logger = logging.getLogger("astro-api")
+
+
+@dataclass
+class NormalizedBirthData:
+    datetime_local: Optional[datetime]
+    birth_time_precise: Optional[bool]
+    tz_offset_minutes: Optional[int]
+    timezone: Optional[str]
+    lat: Optional[float]
+    lng: Optional[float]
+    warnings: List[str]
 
 class LocalizedDateTime(NamedTuple):
     datetime_local: datetime
@@ -142,11 +155,37 @@ def parse_time_hh_mm_ss(s: str) -> tuple[int, int, int]:
         ) from exc
 
 def resolve_birth_datetime_payload(data: Dict[str, Any]) -> tuple[Optional[datetime], Optional[bool], List[str]]:
-    """Resolve a data e hora de nascimento a partir de diferentes formatos de entrada."""
+    """Resolve a data/hora natal a partir de formatos ISO, birth_* e componentes year/natal_year."""
+    normalized = normalize_birth_payload(data)
+    return normalized.datetime_local, normalized.birth_time_precise, normalized.warnings
+
+
+def normalize_birth_payload(data: Dict[str, Any]) -> NormalizedBirthData:
+    """Normaliza payload de nascimento aceitando camelCase/snake_case e componentes numéricos."""
     warnings: List[str] = []
-    birth_datetime = data.get("birth_datetime")
-    birth_date = data.get("birth_date")
-    birth_time = data.get("birth_time")
+    birth_datetime = data.get("birth_datetime") or data.get("birthDateTime") or data.get("birthDatetime")
+    birth_date = data.get("birth_date") or data.get("birthDate")
+    birth_time = data.get("birth_time") or data.get("birthTime")
+    tz_offset_minutes = data.get("tz_offset_minutes", data.get("tzOffsetMinutes"))
+    timezone_name = data.get("timezone")
+    lat_raw = data.get("lat", data.get("latitude"))
+    lng_raw = data.get("lng", data.get("longitude"))
+
+    lat = float(lat_raw) if lat_raw is not None else None
+    lng = float(lng_raw) if lng_raw is not None else None
+
+    if timezone_name:
+        try:
+            ZoneInfo(str(timezone_name))
+        except ZoneInfoNotFoundError:
+            raise HTTPException(status_code=422, detail="Invalid timezone. Use an IANA timezone like America/Sao_Paulo.")
+
+    tz_offset_int = None
+    if tz_offset_minutes is not None:
+        try:
+            tz_offset_int = int(tz_offset_minutes)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail={"error": "TZ_OFFSET_INVALIDO", "message": "tz_offset_minutes inválido."})
 
     if birth_datetime:
         birth_datetime = str(birth_datetime).strip()
@@ -166,8 +205,8 @@ def resolve_birth_datetime_payload(data: Dict[str, Any]) -> tuple[Optional[datet
         if not time_included:
             parsed = parsed.replace(hour=12, minute=0, second=0)
             warnings.append("Hora não informada; usando 12:00 como referência.")
-            return parsed, False, warnings
-        return parsed, True, warnings
+            return NormalizedBirthData(parsed, False, tz_offset_int, timezone_name, lat, lng, warnings)
+        return NormalizedBirthData(parsed, True, tz_offset_int, timezone_name, lat, lng, warnings)
 
     if birth_date:
         birth_date = str(birth_date).strip()
@@ -180,11 +219,62 @@ def resolve_birth_datetime_payload(data: Dict[str, Any]) -> tuple[Optional[datet
             )
         if birth_time:
             h, minute, second = parse_time_hh_mm_ss(str(birth_time).strip())
-            return datetime(year=y, month=m, day=d, hour=h, minute=minute, second=second), True, warnings
+            return NormalizedBirthData(
+                datetime(year=y, month=m, day=d, hour=h, minute=minute, second=second),
+                True,
+                tz_offset_int,
+                timezone_name,
+                lat,
+                lng,
+                warnings,
+            )
         warnings.append("Hora não informada; usando 12:00 como referência.")
-        return datetime(year=y, month=m, day=d, hour=12, minute=0, second=0), False, warnings
+        return NormalizedBirthData(
+            datetime(year=y, month=m, day=d, hour=12, minute=0, second=0),
+            False,
+            tz_offset_int,
+            timezone_name,
+            lat,
+            lng,
+            warnings,
+        )
 
-    return None, None, warnings
+    # Fallback para componentes já normalizados no front/proxy ou enviados diretamente.
+    year = data.get("natal_year", data.get("year"))
+    month = data.get("natal_month", data.get("month"))
+    day = data.get("natal_day", data.get("day"))
+    hour = data.get("natal_hour", data.get("hour"))
+    minute = data.get("natal_minute", data.get("minute", 0))
+    second = data.get("natal_second", data.get("second", 0))
+
+    has_date_components = year is not None and month is not None and day is not None
+    has_time_components = hour is not None
+
+    if has_date_components and has_time_components:
+        try:
+            return NormalizedBirthData(
+                datetime(
+                    year=int(year),
+                    month=int(month),
+                    day=int(day),
+                    hour=int(hour),
+                    minute=int(minute or 0),
+                    second=int(second or 0),
+                ),
+                True,
+                tz_offset_int,
+                timezone_name,
+                lat,
+                lng,
+                warnings,
+            )
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "DATA_INVALIDA", "message": "Componentes de data/hora inválidos."},
+            )
+
+    return NormalizedBirthData(None, None, tz_offset_int, timezone_name, lat, lng, warnings)
 
 def get_tz_offset_minutes(
     date_time: datetime,
