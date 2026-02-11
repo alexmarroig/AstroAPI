@@ -20,7 +20,7 @@ def require_api_key_and_user(
         raise HTTPException(status_code=401, detail="API_KEY inválida.")
 
     if not x_user_id:
-        raise HTTPException(status_code=400, detail="Cabeçalho X-User-Id é obrigatório.")
+        raise HTTPException(status_code=401, detail="X-User-Id ausente ou inválido.")
 
     plan_obj = get_user_plan(x_user_id)
     endpoint = request_path or ""
