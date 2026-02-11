@@ -65,10 +65,16 @@ class TimezoneResolveRequest(BaseModel):
 
 class ValidateLocalDatetimeRequest(BaseModel):
     """Modelo para validação de data/hora local."""
-    datetime_local: datetime = Field(..., description="Data/hora local, ex.: 2024-11-03T01:30:00")
+    model_config = ConfigDict(populate_by_name=True)
+    datetime_local: datetime = Field(
+        ...,
+        validation_alias=AliasChoices("datetime_local", "datetimeLocal"),
+        description="Data/hora local, ex.: 2024-11-03T01:30:00",
+    )
     timezone: str = Field(..., description="Timezone IANA, ex.: America/New_York")
     strict: bool = Field(
         default=True,
+        validation_alias=AliasChoices("strict", "strictMode"),
         description="Quando true, rejeita horário ambíguo/inexistente nas transições de DST.",
     )
     prefer_fold: int = Field(

@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import os
 import sys
+from dataclasses import dataclass
+from pathlib import Path
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Any
@@ -46,6 +48,13 @@ def normalize_render_data_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def simulate_proxy_to_backend(
+    client: TestClient,
+    envelope: Envelope,
+    *,
+    authorization: str = "Bearer test-api-key",
+    x_user_id: str | None = "contract-test-user",
+):
 def simulate_proxy_to_backend(client: TestClient, envelope: Envelope):
     path = envelope.path
     if not any(path.startswith(prefix) for prefix in ALLOWED_PREFIXES):
@@ -55,6 +64,12 @@ def simulate_proxy_to_backend(client: TestClient, envelope: Envelope):
     if path == "/v1/chart/render-data":
         body = normalize_render_data_payload(body)
 
+    headers: dict[str, str] = {
+        "Authorization": authorization,
+        "Content-Type": "application/json",
+    }
+    if x_user_id is not None:
+        headers["X-User-Id"] = x_user_id
     headers = {
         "Authorization": "Bearer test-api-key",
         "X-User-Id": "contract-test-user",
@@ -76,6 +91,11 @@ def assert_has_keys(payload: dict[str, Any], keys: list[str], endpoint: str) -> 
         raise AssertionError(f"{endpoint} sem campos essenciais: {missing}; payload={json.dumps(payload)[:500]}")
 
 
+def run_contract_cases(client: TestClient) -> None:
+    test_cases = [
+        # timezone camelCase
+        Envelope("/v1/time/resolve-tz", "POST", {"datetimeLocal": "1990-09-15T10:30:00", "timezone": "America/Sao_Paulo", "strictBirth": False, "preferFold": 0}),
+        # render-data with natal_* (proxy normalization)
 def main() -> None:
     client = TestClient(app)
 
@@ -91,6 +111,7 @@ def main() -> None:
             "lng": -46.6333,
             "timezone": "America/Sao_Paulo",
         }),
+        # interpretation with camelCase birth
         Envelope("/v1/interpretation/natal", "POST", {
             "birthDate": "1990-09-15",
             "birthTime": "10:30",
@@ -98,9 +119,33 @@ def main() -> None:
             "lng": -46.6333,
             "timezone": "America/Sao_Paulo",
         }),
+        # interpretation with snake_case birth
+        Envelope("/v1/interpretation/natal", "POST", {
+            "birth_date": "1990-09-15",
+            "birth_time": "10:30:00",
+            "lat": -23.5505,
+            "lng": -46.6333,
+            "timezone": "America/Sao_Paulo",
+        }),
+        # interpretation with numeric components only
+        Envelope("/v1/interpretation/natal", "POST", {
+            "year": 1990,
+            "month": 9,
+            "day": 15,
+            "hour": 10,
+            "minute": 30,
+            "lat": -23.5505,
+            "lng": -46.6333,
+            "timezone": "America/Sao_Paulo",
+        }),
         Envelope("/v1/ai/cosmic-chat", "POST", {
             "userQuestion": "Me dá um resumo curto do momento atual.",
             "astroPayload": {"sun": "Virgo", "moon": "Aries"},
+            "language": "pt-BR",
+        }),
+        Envelope("/v1/ai/cosmic-chat", "POST", {
+            "user_question": "Resumo objetivo por favor.",
+            "astro_payload": {"sun": "Virgo", "moon": "Aries"},
             "language": "pt-BR",
         }),
         Envelope("/v1/solar-return/calculate", "POST", {
@@ -158,6 +203,32 @@ def main() -> None:
         elif case.path == "/v1/cosmic-weather/range":
             assert_has_keys(payload, ["from", "to", "items"], endpoint_label)
 
+
+def run_auth_cases(client: TestClient) -> None:
+    protected = Envelope("/v1/chart/render-data", "POST", {
+        "year": 1990,
+        "month": 9,
+        "day": 15,
+        "hour": 10,
+        "minute": 30,
+        "lat": -23.5505,
+        "lng": -46.6333,
+        "timezone": "America/Sao_Paulo",
+    })
+
+    invalid_token = simulate_proxy_to_backend(client, protected, authorization="Bearer wrong")
+    if invalid_token.status_code != 401:
+        raise AssertionError(f"Auth inválida deveria retornar 401, veio {invalid_token.status_code}: {invalid_token.text}")
+
+    missing_user = simulate_proxy_to_backend(client, protected, x_user_id=None)
+    if missing_user.status_code not in (401, 403):
+        raise AssertionError(f"X-User-Id ausente deveria retornar 401/403, veio {missing_user.status_code}: {missing_user.text}")
+
+
+def main() -> None:
+    client = TestClient(app)
+    run_contract_cases(client)
+    run_auth_cases(client)
     print("Contract tests passed.")
 
 
