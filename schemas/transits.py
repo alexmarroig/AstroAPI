@@ -1,10 +1,11 @@
 from __future__ import annotations
 from typing import Optional, Any, List, Dict, Literal
-from pydantic import BaseModel, Field, AliasChoices, model_validator
+from pydantic import BaseModel, Field, AliasChoices, model_validator, ConfigDict
 from .common import HouseSystem, ZodiacType, PreferenciasPerfil
 
 class TransitsRequest(BaseModel):
     """Modelo para requisição de trânsitos."""
+    model_config = ConfigDict(populate_by_name=True)
     natal_year: int = Field(
         ...,
         ge=1800,
@@ -49,18 +50,22 @@ class TransitsRequest(BaseModel):
     )
     birth_date: Optional[str] = Field(
         default=None,
+        validation_alias=AliasChoices("birth_date", "birthDate"),
         description="Data de nascimento em YYYY-MM-DD (alternativo aos campos natal_*).",
     )
     birth_time: Optional[str] = Field(
         default=None,
+        validation_alias=AliasChoices("birth_time", "birthTime"),
         description="Hora de nascimento em HH:MM ou HH:MM:SS. Pode ser null se não souber a hora exata.",
     )
     birth_datetime: Optional[str] = Field(
         default=None,
+        validation_alias=AliasChoices("birth_datetime", "birthDateTime", "birthDatetime"),
         description="Data/hora de nascimento em ISO (ex.: 2026-01-01T20:54:00).",
     )
     birth_time_precise: Optional[bool] = Field(
         default=None,
+        validation_alias=AliasChoices("birth_time_precise", "birthTimePrecise"),
         description="Indica se o horário de nascimento foi informado com precisão.",
     )
     lat: float = Field(..., ge=-89.9999, le=89.9999)
@@ -103,7 +108,7 @@ class TransitsRequest(BaseModel):
         dt, precise, _ = resolve_birth_datetime_payload(data)
 
         if dt is None:
-            if "birth_time_precise" not in data:
+            if "birth_time_precise" not in data and "birthTimePrecise" not in data:
                 data["birth_time_precise"] = True
             return data
 

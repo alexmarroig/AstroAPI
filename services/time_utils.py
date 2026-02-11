@@ -142,11 +142,11 @@ def parse_time_hh_mm_ss(s: str) -> tuple[int, int, int]:
         ) from exc
 
 def resolve_birth_datetime_payload(data: Dict[str, Any]) -> tuple[Optional[datetime], Optional[bool], List[str]]:
-    """Resolve a data e hora de nascimento a partir de diferentes formatos de entrada."""
+    """Resolve a data/hora natal a partir de formatos ISO, birth_* e componentes year/natal_year."""
     warnings: List[str] = []
-    birth_datetime = data.get("birth_datetime")
-    birth_date = data.get("birth_date")
-    birth_time = data.get("birth_time")
+    birth_datetime = data.get("birth_datetime") or data.get("birthDateTime") or data.get("birthDatetime")
+    birth_date = data.get("birth_date") or data.get("birthDate")
+    birth_time = data.get("birth_time") or data.get("birthTime")
 
     if birth_datetime:
         birth_datetime = str(birth_datetime).strip()
@@ -183,6 +183,37 @@ def resolve_birth_datetime_payload(data: Dict[str, Any]) -> tuple[Optional[datet
             return datetime(year=y, month=m, day=d, hour=h, minute=minute, second=second), True, warnings
         warnings.append("Hora não informada; usando 12:00 como referência.")
         return datetime(year=y, month=m, day=d, hour=12, minute=0, second=0), False, warnings
+
+    # Fallback para componentes já normalizados no front/proxy ou enviados diretamente.
+    year = data.get("natal_year", data.get("year"))
+    month = data.get("natal_month", data.get("month"))
+    day = data.get("natal_day", data.get("day"))
+    hour = data.get("natal_hour", data.get("hour"))
+    minute = data.get("natal_minute", data.get("minute", 0))
+    second = data.get("natal_second", data.get("second", 0))
+
+    has_date_components = year is not None and month is not None and day is not None
+    has_time_components = hour is not None
+
+    if has_date_components and has_time_components:
+        try:
+            return (
+                datetime(
+                    year=int(year),
+                    month=int(month),
+                    day=int(day),
+                    hour=int(hour),
+                    minute=int(minute or 0),
+                    second=int(second or 0),
+                ),
+                True,
+                warnings,
+            )
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "DATA_INVALIDA", "message": "Componentes de data/hora inválidos."},
+            )
 
     return None, None, warnings
 
