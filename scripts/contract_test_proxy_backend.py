@@ -6,6 +6,8 @@ import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from pathlib import Path
+from dataclasses import dataclass
 from typing import Any
 
 from fastapi.testclient import TestClient
@@ -53,6 +55,7 @@ def simulate_proxy_to_backend(
     authorization: str = "Bearer test-api-key",
     x_user_id: str | None = "contract-test-user",
 ):
+def simulate_proxy_to_backend(client: TestClient, envelope: Envelope):
     path = envelope.path
     if not any(path.startswith(prefix) for prefix in ALLOWED_PREFIXES):
         raise AssertionError(f"Path bloqueado pelo proxy: {path}")
@@ -67,6 +70,11 @@ def simulate_proxy_to_backend(
     }
     if x_user_id is not None:
         headers["X-User-Id"] = x_user_id
+    headers = {
+        "Authorization": "Bearer test-api-key",
+        "X-User-Id": "contract-test-user",
+        "Content-Type": "application/json",
+    }
 
     return client.request(
         envelope.method.upper(),
@@ -88,6 +96,11 @@ def run_contract_cases(client: TestClient) -> None:
         # timezone camelCase
         Envelope("/v1/time/resolve-tz", "POST", {"datetimeLocal": "1990-09-15T10:30:00", "timezone": "America/Sao_Paulo", "strictBirth": False, "preferFold": 0}),
         # render-data with natal_* (proxy normalization)
+def main() -> None:
+    client = TestClient(app)
+
+    test_cases = [
+        Envelope("/v1/time/resolve-tz", "POST", {"year": 1990, "month": 9, "day": 15, "hour": 10, "minute": 30, "timezone": "America/Sao_Paulo"}),
         Envelope("/v1/chart/render-data", "POST", {
             "natal_year": 1990,
             "natal_month": 9,
