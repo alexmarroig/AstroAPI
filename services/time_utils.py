@@ -275,6 +275,38 @@ def normalize_birth_payload(data: Dict[str, Any]) -> NormalizedBirthData:
             )
 
     return NormalizedBirthData(None, None, tz_offset_int, timezone_name, lat, lng, warnings)
+    # Fallback para componentes já normalizados no front/proxy ou enviados diretamente.
+    year = data.get("natal_year", data.get("year"))
+    month = data.get("natal_month", data.get("month"))
+    day = data.get("natal_day", data.get("day"))
+    hour = data.get("natal_hour", data.get("hour"))
+    minute = data.get("natal_minute", data.get("minute", 0))
+    second = data.get("natal_second", data.get("second", 0))
+
+    has_date_components = year is not None and month is not None and day is not None
+    has_time_components = hour is not None
+
+    if has_date_components and has_time_components:
+        try:
+            return (
+                datetime(
+                    year=int(year),
+                    month=int(month),
+                    day=int(day),
+                    hour=int(hour),
+                    minute=int(minute or 0),
+                    second=int(second or 0),
+                ),
+                True,
+                warnings,
+            )
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "DATA_INVALIDA", "message": "Componentes de data/hora inválidos."},
+            )
+
+    return None, None, warnings
 
 def get_tz_offset_minutes(
     date_time: datetime,

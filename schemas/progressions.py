@@ -35,6 +35,8 @@ class SecondaryProgressionCalculateRequest(BaseModel):
     )
     lat: float = Field(..., ge=-89.9999, le=89.9999, validation_alias=AliasChoices("lat", "latitude"))
     lng: float = Field(..., ge=-180, le=180, validation_alias=AliasChoices("lng", "longitude"))
+    lat: float = Field(..., ge=-89.9999, le=89.9999)
+    lng: float = Field(..., ge=-180, le=180)
     tz_offset_minutes: Optional[int] = Field(
         None,
         ge=-840,
@@ -75,6 +77,12 @@ class SecondaryProgressionCalculateRequest(BaseModel):
             data["lat"] = normalized.lat
         if normalized.lng is not None and "lng" not in data and "longitude" in data:
             data["lng"] = normalized.lng
+
+        from services.time_utils import resolve_birth_datetime_payload
+
+        dt, _, _ = resolve_birth_datetime_payload(data)
+        if dt is None:
+            return data
 
         data.setdefault("natal_year", dt.year)
         data.setdefault("natal_month", dt.month)
