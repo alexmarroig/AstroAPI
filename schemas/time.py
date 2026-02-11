@@ -1,12 +1,15 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Optional, Any
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, AliasChoices, ConfigDict
 
 class TimezoneResolveRequest(BaseModel):
     """Modelo para requisição de resolução de timezone."""
+    model_config = ConfigDict(populate_by_name=True)
     datetime_local: Optional[datetime] = Field(
-        None, description="Compatibilidade: data/hora local ISO (ex.: 2025-12-19T14:30:00)"
+        None,
+        validation_alias=AliasChoices("datetime_local", "datetimeLocal"),
+        description="Compatibilidade: data/hora local ISO (ex.: 2025-12-19T14:30:00)",
     )
     year: int = Field(..., ge=1800, le=2100)
     month: int = Field(..., ge=1, le=12)
@@ -17,10 +20,12 @@ class TimezoneResolveRequest(BaseModel):
     timezone: str = Field(..., description="Timezone IANA, ex.: America/Sao_Paulo")
     strict_birth: bool = Field(
         default=False,
+        validation_alias=AliasChoices("strict_birth", "strictBirth"),
         description="Quando true, acusa horários ambíguos em transições de DST para dados de nascimento.",
     )
     prefer_fold: int = Field(
         default=0,
+        validation_alias=AliasChoices("prefer_fold", "preferFold"),
         ge=0,
         le=1,
         description="Preferência de fold (0 ou 1) para horários ambíguos.",
@@ -42,10 +47,11 @@ class TimezoneResolveRequest(BaseModel):
     def coerce_datetime_local(cls, data: Any):
         if not isinstance(data, dict):
             return data
-        if data.get("datetime_local") and not all(
+        datetime_local = data.get("datetime_local") or data.get("datetimeLocal")
+        if datetime_local and not all(
             key in data for key in ("year", "month", "day", "hour")
         ):
-            dt = data["datetime_local"]
+            dt = datetime_local
             if isinstance(dt, str):
                 dt = datetime.fromisoformat(dt)
             data = {**data}
@@ -59,14 +65,21 @@ class TimezoneResolveRequest(BaseModel):
 
 class ValidateLocalDatetimeRequest(BaseModel):
     """Modelo para validação de data/hora local."""
-    datetime_local: datetime = Field(..., description="Data/hora local, ex.: 2024-11-03T01:30:00")
+    model_config = ConfigDict(populate_by_name=True)
+    datetime_local: datetime = Field(
+        ...,
+        validation_alias=AliasChoices("datetime_local", "datetimeLocal"),
+        description="Data/hora local, ex.: 2024-11-03T01:30:00",
+    )
     timezone: str = Field(..., description="Timezone IANA, ex.: America/New_York")
     strict: bool = Field(
         default=True,
+        validation_alias=AliasChoices("strict", "strictMode"),
         description="Quando true, rejeita horário ambíguo/inexistente nas transições de DST.",
     )
     prefer_fold: int = Field(
         default=0,
+        validation_alias=AliasChoices("prefer_fold", "preferFold"),
         ge=0,
         le=1,
         description="Preferência de fold (0 ou 1) para horários ambíguos.",
