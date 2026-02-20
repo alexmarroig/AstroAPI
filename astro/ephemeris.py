@@ -59,6 +59,11 @@ def compute_chart(
     utc_dt = local_dt - timedelta(minutes=tz_offset_minutes)
 
     jd_ut = to_julian_day(utc_dt)
+    flags = swe.FLG_SWIEPH | swe.FLG_SPEED
+
+    if zodiac_type == "sidereal":
+        swe.set_sid_mode(AYANAMSA_MAP.get((ayanamsa or "lahiri").lower(), swe.SIDM_LAHIRI))
+        flags |= swe.FLG_SIDEREAL
 
     # casas: fallback seguro
     warning = None
@@ -66,15 +71,12 @@ def compute_chart(
     house_system_bytes = house_system_code.encode("ascii")
 
     try:
-        cusps, ascmc = swe.houses(jd_ut, lat, lng, house_system_bytes)
+        cusps, ascmc = swe.houses_ex(jd_ut, lat, lng, house_system_bytes, flags)
     except Exception:
         # fallback para Placidus
         warning = "Sistema de casas ajustado automaticamente para Placidus por segurança."
-        cusps, ascmc = swe.houses(jd_ut, lat, lng, b'P')
+        cusps, ascmc = swe.houses_ex(jd_ut, lat, lng, b'P', flags)
         house_system_code = "P"
-
-    if zodiac_type == "sidereal":
-        swe.set_sid_mode(AYANAMSA_MAP.get((ayanamsa or "lahiri").lower(), swe.SIDM_LAHIRI))
 
     houses_data = {
         "system": HOUSE_SYSTEMS.get(house_system_code, house_system_code),
@@ -85,7 +87,7 @@ def compute_chart(
 
     planets_data = {}
     for name, planet_id in PLANETS.items():
-        result, _ = swe.calc_ut(jd_ut, planet_id)
+        result, _ = swe.calc_ut(jd_ut, planet_id, flags)
         lon = result[0] % 360.0
         sign_info = deg_to_sign(lon)
         speed = result[3] if len(result) > 3 else None
