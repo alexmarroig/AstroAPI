@@ -220,12 +220,15 @@ async def render_data(
     planets = []
     planetas_ptbr = []
     for name, p in natal.get("planets", {}).items():
+        lon = float(p.get("lon") or 0.0)
+        house = get_house_for_lon(cusps, lon)
         planet_data = {
             "name": name,
             "sign": p.get("sign"),
             "sign_pt": p.get("sign_pt"),
             "deg_in_sign": p.get("deg_in_sign"),
-            "angle_deg": p.get("lon"),
+            "angle_deg": lon,
+            "house": house,
         }
         planets.append(planet_data)
 

@@ -189,6 +189,77 @@ def get_event_tags(transit_planet: str, aspect: str) -> List[str]:
             seen.add(tag)
     return result[:4]
 
+
+def _build_mechanics_copy(transitando_pt: str, aspect_key: str, alvo_pt: str, tag_base: str) -> str:
+    aspect_key_n = (aspect_key or "").lower()
+    focus = tag_base.lower() if tag_base else "prioridades"
+
+    if aspect_key_n == "trine":
+        return (
+            f"{transitando_pt} em trigono com {alvo_pt} favorece fluidez em {focus}. "
+            "A tendencia e perceber caminho mais claro para agir com menos atrito."
+        )
+    if aspect_key_n == "sextile":
+        return (
+            f"{transitando_pt} em sextil com {alvo_pt} abre oportunidades praticas em {focus}. "
+            "Pequenos movimentos consistentes podem gerar avancos concretos."
+        )
+    if aspect_key_n == "square":
+        return (
+            f"{transitando_pt} em quadratura com {alvo_pt} cria tensao produtiva em {focus}. "
+            "O dia pede ajuste de estrategia, ritmo e expectativa."
+        )
+    if aspect_key_n == "opposition":
+        return (
+            f"{transitando_pt} em oposicao com {alvo_pt} destaca polaridades em {focus}. "
+            "Pode haver contraste entre desejo imediato e necessidade real."
+        )
+    if aspect_key_n == "conjunction":
+        return (
+            f"{transitando_pt} em conjuncao com {alvo_pt} intensifica o tema de {focus}. "
+            "A energia fica concentrada e pede consciencia na direcao escolhida."
+        )
+
+    return f"Transito ativa {focus} em temas ligados a {alvo_pt}."
+
+
+def _build_use_well_copy(transit_planet: str, aspect_key: str) -> str:
+    p = (transit_planet or "").lower()
+    a = (aspect_key or "").lower()
+
+    if p == "mercury":
+        return "Organize ideias por escrito, revise mensagens importantes e priorize conversas objetivas."
+    if p == "venus":
+        return "Aproxime-se com delicadeza, explicite valores e alinhe expectativas nas relacoes."
+    if p == "mars":
+        return "Canalize impulso em tarefas concretas e evite reagir no calor do momento."
+    if p == "saturn":
+        return "Estruture rotina, defina limites e avance com disciplina em vez de pressa."
+    if p == "jupiter":
+        return "Expanda com criterio: abrace oportunidades, mas mantenha foco no que e sustentavel."
+    if p in {"uranus", "neptune", "pluto"}:
+        return "Observe padroes profundos, flexibilize controle e escolha ajustes com intencao."
+    if a in {"trine", "sextile"}:
+        return "Aproveite o fluxo para concluir pendencias e consolidar progresso."
+    return "Nomeie a prioridade do dia e execute um passo de cada vez."
+
+
+def _build_risk_copy(transit_planet: str, aspect_key: str) -> str:
+    p = (transit_planet or "").lower()
+    a = (aspect_key or "").lower()
+
+    if a in {"square", "opposition"}:
+        return "Risco de desgaste por insistir no mesmo padrao; pause antes de responder automaticamente."
+    if a == "conjunction":
+        return "Risco de intensidade sem filtro; cuide do tom e do timing das decisoes."
+    if p == "mercury":
+        return "Risco de ruido de comunicacao; confirme combinados e detalhes antes de concluir."
+    if p == "mars":
+        return "Risco de impulsividade; evite transformar urgencia em conflito."
+    if p == "jupiter":
+        return "Risco de excesso de confianca; cheque limites de tempo, energia e recursos."
+    return "Risco de dispersao; mantenha criterio para nao perder foco no essencial."
+
 def build_transit_event(aspect: Dict[str, Any], date_str: str, natal_chart: Dict[str, Any], orb_max: float) -> TransitEvent:
     """Constrói um objeto TransitEvent a partir de um aspecto calculado."""
     transit_planet = aspect["transit_planet"]
@@ -212,13 +283,12 @@ def build_transit_event(aspect: Dict[str, Any], date_str: str, natal_chart: Dict
 
     natal_cusps = natal_chart.get("houses", {}).get("cusps", [])
     natal_lon = float(natal_chart.get("planets", {}).get(natal_planet, {}).get("lon", 0.0))
-
     tag_base = tags[0] if tags else "foco"
     copy = TransitEventCopy(
         headline=f"{transitando_pt} em {aspect_pt} com {alvo_pt}",
-        mecanica=f"Trânsito enfatiza {tag_base.lower()} em temas ligados a {alvo_pt}.",
-        use_bem="Tendência a favorecer clareza e ação prática quando você organiza prioridades.",
-        risco="Pede atenção a impulsos e excesso de carga; ajuste o ritmo com consistência.",
+        mecanica=_build_mechanics_copy(transitando_pt, aspect_key, alvo_pt, tag_base),
+        use_bem=_build_use_well_copy(transit_planet, aspect_key),
+        risco=_build_risk_copy(transit_planet, aspect_key),
     )
 
     return TransitEvent(
@@ -478,3 +548,4 @@ def get_mercury_retrograde_alert(date_str: str, lat: float, lng: float, tz_offse
             technical={"mercury_speed": mercury.get("speed"), "mercury_lon": mercury.get("lon")},
         )
     return None
+

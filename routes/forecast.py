@@ -93,6 +93,8 @@ async def forecast_personal(body: PersonalForecastRequest, request: Request, aut
             "theme": e.copy.headline,
             "psychological_theme": e.copy.mecanica,
             "practical_advice": e.copy.use_bem,
+            "risk_attention": e.copy.risco,
+            "impact_score": e.impact_score,
         }
         for e in sorted_events[:3]
     ]
@@ -100,7 +102,10 @@ async def forecast_personal(body: PersonalForecastRequest, request: Request, aut
         {
             "title": e.copy.headline,
             "duration": "Ciclo em andamento",
+            "theme": e.copy.mecanica,
             "life_area": e.copy.risco,
+            "guidance": e.copy.use_bem,
+            "impact_score": e.impact_score,
         }
         for e in sorted_events[:5]
         if get_impact_score(e.transitando, e.aspecto, e.alvo, e.orb_graus, 8.0) >= 60
