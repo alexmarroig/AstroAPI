@@ -8,3 +8,4 @@ openai==2.13.0
 tzdata==2024.2
 pytest==8.3.3
 pytest-asyncio==0.24.0
+redis==5.2.1

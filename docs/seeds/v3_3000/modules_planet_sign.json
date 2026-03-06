@@ -1,0 +1,2042 @@
+[
+  {
+    "id": "planet_sign:sun_aries",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through aries style",
+    "summary": "Sun in Aries",
+    "interpretation": "This placement suggests identity and vitality expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_taurus",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through taurus style",
+    "summary": "Sun in Taurus",
+    "interpretation": "This placement suggests identity and vitality expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_gemini",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through gemini style",
+    "summary": "Sun in Gemini",
+    "interpretation": "This placement suggests identity and vitality expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_cancer",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through cancer style",
+    "summary": "Sun in Cancer",
+    "interpretation": "This placement suggests identity and vitality expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_leo",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through leo style",
+    "summary": "Sun in Leo",
+    "interpretation": "This placement suggests identity and vitality expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_virgo",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through virgo style",
+    "summary": "Sun in Virgo",
+    "interpretation": "This placement suggests identity and vitality expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_libra",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through libra style",
+    "summary": "Sun in Libra",
+    "interpretation": "This placement suggests identity and vitality expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_scorpio",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through scorpio style",
+    "summary": "Sun in Scorpio",
+    "interpretation": "This placement suggests identity and vitality expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_sagittarius",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through sagittarius style",
+    "summary": "Sun in Sagittarius",
+    "interpretation": "This placement suggests identity and vitality expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_capricorn",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through capricorn style",
+    "summary": "Sun in Capricorn",
+    "interpretation": "This placement suggests identity and vitality expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_aquarius",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through aquarius style",
+    "summary": "Sun in Aquarius",
+    "interpretation": "This placement suggests identity and vitality expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:sun_pisces",
+    "type": "planet_sign",
+    "planet": "sun",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "sun expression through pisces style",
+    "summary": "Sun in Pisces",
+    "interpretation": "This placement suggests identity and vitality expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Sun in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_aries",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through aries style",
+    "summary": "Moon in Aries",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_taurus",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through taurus style",
+    "summary": "Moon in Taurus",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_gemini",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through gemini style",
+    "summary": "Moon in Gemini",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_cancer",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through cancer style",
+    "summary": "Moon in Cancer",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_leo",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through leo style",
+    "summary": "Moon in Leo",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_virgo",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through virgo style",
+    "summary": "Moon in Virgo",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_libra",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through libra style",
+    "summary": "Moon in Libra",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_scorpio",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through scorpio style",
+    "summary": "Moon in Scorpio",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_sagittarius",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through sagittarius style",
+    "summary": "Moon in Sagittarius",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_capricorn",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through capricorn style",
+    "summary": "Moon in Capricorn",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_aquarius",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through aquarius style",
+    "summary": "Moon in Aquarius",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:moon_pisces",
+    "type": "planet_sign",
+    "planet": "moon",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "moon expression through pisces style",
+    "summary": "Moon in Pisces",
+    "interpretation": "This placement suggests emotional memory and regulation expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Moon in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_aries",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through aries style",
+    "summary": "Mercury in Aries",
+    "interpretation": "This placement suggests thinking and communication expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_taurus",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through taurus style",
+    "summary": "Mercury in Taurus",
+    "interpretation": "This placement suggests thinking and communication expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_gemini",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through gemini style",
+    "summary": "Mercury in Gemini",
+    "interpretation": "This placement suggests thinking and communication expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_cancer",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through cancer style",
+    "summary": "Mercury in Cancer",
+    "interpretation": "This placement suggests thinking and communication expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_leo",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through leo style",
+    "summary": "Mercury in Leo",
+    "interpretation": "This placement suggests thinking and communication expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_virgo",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through virgo style",
+    "summary": "Mercury in Virgo",
+    "interpretation": "This placement suggests thinking and communication expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_libra",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through libra style",
+    "summary": "Mercury in Libra",
+    "interpretation": "This placement suggests thinking and communication expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_scorpio",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through scorpio style",
+    "summary": "Mercury in Scorpio",
+    "interpretation": "This placement suggests thinking and communication expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_sagittarius",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through sagittarius style",
+    "summary": "Mercury in Sagittarius",
+    "interpretation": "This placement suggests thinking and communication expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_capricorn",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through capricorn style",
+    "summary": "Mercury in Capricorn",
+    "interpretation": "This placement suggests thinking and communication expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_aquarius",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through aquarius style",
+    "summary": "Mercury in Aquarius",
+    "interpretation": "This placement suggests thinking and communication expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mercury_pisces",
+    "type": "planet_sign",
+    "planet": "mercury",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "mercury expression through pisces style",
+    "summary": "Mercury in Pisces",
+    "interpretation": "This placement suggests thinking and communication expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mercury in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_aries",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through aries style",
+    "summary": "Venus in Aries",
+    "interpretation": "This placement suggests attachment style and values expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_taurus",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through taurus style",
+    "summary": "Venus in Taurus",
+    "interpretation": "This placement suggests attachment style and values expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_gemini",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through gemini style",
+    "summary": "Venus in Gemini",
+    "interpretation": "This placement suggests attachment style and values expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_cancer",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through cancer style",
+    "summary": "Venus in Cancer",
+    "interpretation": "This placement suggests attachment style and values expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_leo",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through leo style",
+    "summary": "Venus in Leo",
+    "interpretation": "This placement suggests attachment style and values expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_virgo",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through virgo style",
+    "summary": "Venus in Virgo",
+    "interpretation": "This placement suggests attachment style and values expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_libra",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through libra style",
+    "summary": "Venus in Libra",
+    "interpretation": "This placement suggests attachment style and values expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_scorpio",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through scorpio style",
+    "summary": "Venus in Scorpio",
+    "interpretation": "This placement suggests attachment style and values expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_sagittarius",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through sagittarius style",
+    "summary": "Venus in Sagittarius",
+    "interpretation": "This placement suggests attachment style and values expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_capricorn",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through capricorn style",
+    "summary": "Venus in Capricorn",
+    "interpretation": "This placement suggests attachment style and values expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_aquarius",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through aquarius style",
+    "summary": "Venus in Aquarius",
+    "interpretation": "This placement suggests attachment style and values expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:venus_pisces",
+    "type": "planet_sign",
+    "planet": "venus",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "venus expression through pisces style",
+    "summary": "Venus in Pisces",
+    "interpretation": "This placement suggests attachment style and values expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Venus in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_aries",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through aries style",
+    "summary": "Mars in Aries",
+    "interpretation": "This placement suggests agency and boundaries expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_taurus",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through taurus style",
+    "summary": "Mars in Taurus",
+    "interpretation": "This placement suggests agency and boundaries expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_gemini",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through gemini style",
+    "summary": "Mars in Gemini",
+    "interpretation": "This placement suggests agency and boundaries expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_cancer",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through cancer style",
+    "summary": "Mars in Cancer",
+    "interpretation": "This placement suggests agency and boundaries expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_leo",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through leo style",
+    "summary": "Mars in Leo",
+    "interpretation": "This placement suggests agency and boundaries expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_virgo",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through virgo style",
+    "summary": "Mars in Virgo",
+    "interpretation": "This placement suggests agency and boundaries expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_libra",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through libra style",
+    "summary": "Mars in Libra",
+    "interpretation": "This placement suggests agency and boundaries expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_scorpio",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through scorpio style",
+    "summary": "Mars in Scorpio",
+    "interpretation": "This placement suggests agency and boundaries expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_sagittarius",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through sagittarius style",
+    "summary": "Mars in Sagittarius",
+    "interpretation": "This placement suggests agency and boundaries expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_capricorn",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through capricorn style",
+    "summary": "Mars in Capricorn",
+    "interpretation": "This placement suggests agency and boundaries expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_aquarius",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through aquarius style",
+    "summary": "Mars in Aquarius",
+    "interpretation": "This placement suggests agency and boundaries expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:mars_pisces",
+    "type": "planet_sign",
+    "planet": "mars",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "mars expression through pisces style",
+    "summary": "Mars in Pisces",
+    "interpretation": "This placement suggests agency and boundaries expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Mars in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_aries",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through aries style",
+    "summary": "Jupiter in Aries",
+    "interpretation": "This placement suggests growth and meaning expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_taurus",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through taurus style",
+    "summary": "Jupiter in Taurus",
+    "interpretation": "This placement suggests growth and meaning expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_gemini",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through gemini style",
+    "summary": "Jupiter in Gemini",
+    "interpretation": "This placement suggests growth and meaning expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_cancer",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through cancer style",
+    "summary": "Jupiter in Cancer",
+    "interpretation": "This placement suggests growth and meaning expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_leo",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through leo style",
+    "summary": "Jupiter in Leo",
+    "interpretation": "This placement suggests growth and meaning expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_virgo",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through virgo style",
+    "summary": "Jupiter in Virgo",
+    "interpretation": "This placement suggests growth and meaning expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_libra",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through libra style",
+    "summary": "Jupiter in Libra",
+    "interpretation": "This placement suggests growth and meaning expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_scorpio",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through scorpio style",
+    "summary": "Jupiter in Scorpio",
+    "interpretation": "This placement suggests growth and meaning expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_sagittarius",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through sagittarius style",
+    "summary": "Jupiter in Sagittarius",
+    "interpretation": "This placement suggests growth and meaning expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_capricorn",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through capricorn style",
+    "summary": "Jupiter in Capricorn",
+    "interpretation": "This placement suggests growth and meaning expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_aquarius",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through aquarius style",
+    "summary": "Jupiter in Aquarius",
+    "interpretation": "This placement suggests growth and meaning expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:jupiter_pisces",
+    "type": "planet_sign",
+    "planet": "jupiter",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "jupiter expression through pisces style",
+    "summary": "Jupiter in Pisces",
+    "interpretation": "This placement suggests growth and meaning expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Jupiter in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_aries",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through aries style",
+    "summary": "Saturn in Aries",
+    "interpretation": "This placement suggests structure and responsibility expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_taurus",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through taurus style",
+    "summary": "Saturn in Taurus",
+    "interpretation": "This placement suggests structure and responsibility expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_gemini",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through gemini style",
+    "summary": "Saturn in Gemini",
+    "interpretation": "This placement suggests structure and responsibility expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_cancer",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through cancer style",
+    "summary": "Saturn in Cancer",
+    "interpretation": "This placement suggests structure and responsibility expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_leo",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through leo style",
+    "summary": "Saturn in Leo",
+    "interpretation": "This placement suggests structure and responsibility expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_virgo",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through virgo style",
+    "summary": "Saturn in Virgo",
+    "interpretation": "This placement suggests structure and responsibility expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_libra",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through libra style",
+    "summary": "Saturn in Libra",
+    "interpretation": "This placement suggests structure and responsibility expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_scorpio",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through scorpio style",
+    "summary": "Saturn in Scorpio",
+    "interpretation": "This placement suggests structure and responsibility expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_sagittarius",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through sagittarius style",
+    "summary": "Saturn in Sagittarius",
+    "interpretation": "This placement suggests structure and responsibility expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_capricorn",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through capricorn style",
+    "summary": "Saturn in Capricorn",
+    "interpretation": "This placement suggests structure and responsibility expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_aquarius",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through aquarius style",
+    "summary": "Saturn in Aquarius",
+    "interpretation": "This placement suggests structure and responsibility expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:saturn_pisces",
+    "type": "planet_sign",
+    "planet": "saturn",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "saturn expression through pisces style",
+    "summary": "Saturn in Pisces",
+    "interpretation": "This placement suggests structure and responsibility expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Saturn in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_aries",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through aries style",
+    "summary": "Uranus in Aries",
+    "interpretation": "This placement suggests individuation and disruption expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_taurus",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through taurus style",
+    "summary": "Uranus in Taurus",
+    "interpretation": "This placement suggests individuation and disruption expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_gemini",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through gemini style",
+    "summary": "Uranus in Gemini",
+    "interpretation": "This placement suggests individuation and disruption expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_cancer",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through cancer style",
+    "summary": "Uranus in Cancer",
+    "interpretation": "This placement suggests individuation and disruption expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_leo",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through leo style",
+    "summary": "Uranus in Leo",
+    "interpretation": "This placement suggests individuation and disruption expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_virgo",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through virgo style",
+    "summary": "Uranus in Virgo",
+    "interpretation": "This placement suggests individuation and disruption expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_libra",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through libra style",
+    "summary": "Uranus in Libra",
+    "interpretation": "This placement suggests individuation and disruption expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_scorpio",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through scorpio style",
+    "summary": "Uranus in Scorpio",
+    "interpretation": "This placement suggests individuation and disruption expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_sagittarius",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through sagittarius style",
+    "summary": "Uranus in Sagittarius",
+    "interpretation": "This placement suggests individuation and disruption expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_capricorn",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through capricorn style",
+    "summary": "Uranus in Capricorn",
+    "interpretation": "This placement suggests individuation and disruption expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_aquarius",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through aquarius style",
+    "summary": "Uranus in Aquarius",
+    "interpretation": "This placement suggests individuation and disruption expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:uranus_pisces",
+    "type": "planet_sign",
+    "planet": "uranus",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "uranus expression through pisces style",
+    "summary": "Uranus in Pisces",
+    "interpretation": "This placement suggests individuation and disruption expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Uranus in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_aries",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through aries style",
+    "summary": "Neptune in Aries",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_taurus",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through taurus style",
+    "summary": "Neptune in Taurus",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_gemini",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through gemini style",
+    "summary": "Neptune in Gemini",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_cancer",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through cancer style",
+    "summary": "Neptune in Cancer",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_leo",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through leo style",
+    "summary": "Neptune in Leo",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_virgo",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through virgo style",
+    "summary": "Neptune in Virgo",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_libra",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through libra style",
+    "summary": "Neptune in Libra",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_scorpio",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through scorpio style",
+    "summary": "Neptune in Scorpio",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_sagittarius",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through sagittarius style",
+    "summary": "Neptune in Sagittarius",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_capricorn",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through capricorn style",
+    "summary": "Neptune in Capricorn",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_aquarius",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through aquarius style",
+    "summary": "Neptune in Aquarius",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:neptune_pisces",
+    "type": "planet_sign",
+    "planet": "neptune",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "neptune expression through pisces style",
+    "summary": "Neptune in Pisces",
+    "interpretation": "This placement suggests sensitivity and imagination expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Neptune in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_aries",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "aries",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through aries style",
+    "summary": "Pluto in Aries",
+    "interpretation": "This placement suggests depth and transformation expressed in a direct and initiating tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Aries shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_taurus",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "taurus",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through taurus style",
+    "summary": "Pluto in Taurus",
+    "interpretation": "This placement suggests depth and transformation expressed in a grounded and stabilizing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Taurus shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_gemini",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "gemini",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through gemini style",
+    "summary": "Pluto in Gemini",
+    "interpretation": "This placement suggests depth and transformation expressed in a curious and adaptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Gemini shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_cancer",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "cancer",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through cancer style",
+    "summary": "Pluto in Cancer",
+    "interpretation": "This placement suggests depth and transformation expressed in a protective and emotionally receptive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Cancer shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_leo",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "leo",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through leo style",
+    "summary": "Pluto in Leo",
+    "interpretation": "This placement suggests depth and transformation expressed in a creative and self-expressive tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Leo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_virgo",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "virgo",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through virgo style",
+    "summary": "Pluto in Virgo",
+    "interpretation": "This placement suggests depth and transformation expressed in a analytic and integrative tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Virgo shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_libra",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "libra",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through libra style",
+    "summary": "Pluto in Libra",
+    "interpretation": "This placement suggests depth and transformation expressed in a relational and balancing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Libra shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_scorpio",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "scorpio",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through scorpio style",
+    "summary": "Pluto in Scorpio",
+    "interpretation": "This placement suggests depth and transformation expressed in a intense and psychologically probing tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Scorpio shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_sagittarius",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "sagittarius",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through sagittarius style",
+    "summary": "Pluto in Sagittarius",
+    "interpretation": "This placement suggests depth and transformation expressed in a exploratory and meaning-seeking tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Sagittarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_capricorn",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "capricorn",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through capricorn style",
+    "summary": "Pluto in Capricorn",
+    "interpretation": "This placement suggests depth and transformation expressed in a strategic and long-range tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Capricorn shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_aquarius",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "aquarius",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through aquarius style",
+    "summary": "Pluto in Aquarius",
+    "interpretation": "This placement suggests depth and transformation expressed in a conceptual and future-oriented tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Aquarius shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  },
+  {
+    "id": "planet_sign:pluto_pisces",
+    "type": "planet_sign",
+    "planet": "pluto",
+    "sign": "pisces",
+    "house": "",
+    "aspect": "",
+    "theme": "pluto expression through pisces style",
+    "summary": "Pluto in Pisces",
+    "interpretation": "This placement suggests depth and transformation expressed in a symbolic and empathic tone. It often describes a symbolic orientation rather than a fixed destiny.",
+    "shadow": "Under stress, this pattern may become rigid, defensive, or over-identified with one coping style.",
+    "integration": "Integration grows through conscious pacing, self-observation, and choices aligned with values.",
+    "questions": [
+      "When do you notice Pluto in Pisces shaping your day-to-day decisions most strongly?",
+      "What small, realistic practice could support a more integrated response this week?"
+    ]
+  }
+]

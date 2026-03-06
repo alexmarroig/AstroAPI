@@ -23,6 +23,7 @@ from services.astro_logic import (
     TARGET_WEIGHTS
 )
 from services.i18n import is_pt_br
+from services.astro_intelligence import detect_psychological_patterns
 from astro.solar_return import solar_return_datetime # Import from astro engine
 import os
 
@@ -209,3 +210,38 @@ async def solar_return_insight(body: TransitsRequest, request: Request, auth=Dep
         tz_offset_minutes_usado=tz_offset, datetime_local_usado=natal_dt.isoformat(),
         idioma="pt-BR", fonte_traducao="backend"
     )
+
+
+@router.post("/v1/insights/psychological-patterns")
+async def psychological_patterns(body: TransitsRequest, request: Request, auth=Depends(get_auth)):
+    natal_dt = datetime(body.natal_year, body.natal_month, body.natal_day, body.natal_hour, body.natal_minute, body.natal_second)
+    tz_offset = get_tz_offset_minutes(
+        natal_dt,
+        body.timezone,
+        body.tz_offset_minutes,
+        strict=body.strict_timezone,
+        request_id=getattr(request.state, "request_id", None),
+    )
+    y, m, d = parse_date_yyyy_mm_dd(body.target_date)
+    chart = compute_chart(
+        body.natal_year,
+        body.natal_month,
+        body.natal_day,
+        body.natal_hour,
+        body.natal_minute,
+        body.natal_second,
+        body.lat,
+        body.lng,
+        tz_offset,
+        body.house_system.value,
+        body.zodiac_type.value,
+        body.ayanamsa,
+    )
+    transit_chart = compute_transits(y, m, d, body.lat, body.lng, tz_offset, body.zodiac_type.value, body.ayanamsa)
+    _, aspects_config = get_aspects_profile()
+    aspects = compute_transit_aspects(transit_chart.get("planets", {}), chart.get("planets", {}), aspects_config)
+
+    from services.astro_logic import calculate_distributions
+    distributions = calculate_distributions(chart)
+    payload = detect_psychological_patterns(chart=chart, aspects=aspects, distributions=distributions)
+    return payload

@@ -37,6 +37,7 @@ from services.astro_logic import (
     PROFILE_DEFAULT_ORB_MAX
 )
 from services.i18n import is_pt_br
+from services.interpretation_engine import compose_natal_interpretation
 
 router = APIRouter()
 logger = logging.getLogger("astro-api")
@@ -363,6 +364,7 @@ async def interpretation_natal(
 
     planet_weights.sort(key=lambda x: x["peso"], reverse=True)
 
+    composed = compose_natal_interpretation(chart)
     return {
         "titulo": "Resumo Geral do Mapa",
         "sintese": sintese,
@@ -370,5 +372,6 @@ async def interpretation_natal(
         "planetas_com_maior_peso": planet_weights[:3],
         "distribuicao": distributions,
         "metadados": metadata,
-        "summary": " ".join(sintese),
+        "summary": composed.get("summary") or " ".join(sintese),
+        "sections": composed.get("sections", []),
     }

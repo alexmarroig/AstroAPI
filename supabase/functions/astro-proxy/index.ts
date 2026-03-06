@@ -108,6 +108,9 @@ const ALLOWED_EXACT_PATHS = new Set([
   "/v1/transits/live",
   "/v1/transits/next-days",
   "/v1/transits/personal-today",
+  "/chart",
+  "/interpretation",
+  "/interpretation/refine",
 ]);
 
 const ALLOWED_DYNAMIC_PREFIXES = [

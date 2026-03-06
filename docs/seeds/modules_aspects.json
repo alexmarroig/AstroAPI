@@ -1,0 +1,3602 @@
+[
+  {
+    "id": "aspect:sun_conjunction_moon",
+    "type": "aspect",
+    "planet": "sun:moon",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Sun conjunction Moon",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Sun themes and Moon themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun conjunction Moon shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_square_moon",
+    "type": "aspect",
+    "planet": "sun:moon",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Sun square Moon",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Sun themes and Moon themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun square Moon shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_trine_moon",
+    "type": "aspect",
+    "planet": "sun:moon",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Sun trine Moon",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Sun themes and Moon themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun trine Moon shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_opposition_moon",
+    "type": "aspect",
+    "planet": "sun:moon",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Sun opposition Moon",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Sun themes and Moon themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun opposition Moon shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_sextile_moon",
+    "type": "aspect",
+    "planet": "sun:moon",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Sun sextile Moon",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Sun themes and Moon themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun sextile Moon shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_conjunction_mercury",
+    "type": "aspect",
+    "planet": "sun:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Sun conjunction Mercury",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Sun themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun conjunction Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_square_mercury",
+    "type": "aspect",
+    "planet": "sun:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Sun square Mercury",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Sun themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun square Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_trine_mercury",
+    "type": "aspect",
+    "planet": "sun:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Sun trine Mercury",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Sun themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun trine Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_opposition_mercury",
+    "type": "aspect",
+    "planet": "sun:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Sun opposition Mercury",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Sun themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun opposition Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_sextile_mercury",
+    "type": "aspect",
+    "planet": "sun:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Sun sextile Mercury",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Sun themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun sextile Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_conjunction_venus",
+    "type": "aspect",
+    "planet": "sun:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Sun conjunction Venus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Sun themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun conjunction Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_square_venus",
+    "type": "aspect",
+    "planet": "sun:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Sun square Venus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Sun themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun square Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_trine_venus",
+    "type": "aspect",
+    "planet": "sun:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Sun trine Venus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Sun themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun trine Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_opposition_venus",
+    "type": "aspect",
+    "planet": "sun:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Sun opposition Venus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Sun themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun opposition Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_sextile_venus",
+    "type": "aspect",
+    "planet": "sun:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Sun sextile Venus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Sun themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun sextile Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_conjunction_mars",
+    "type": "aspect",
+    "planet": "sun:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Sun conjunction Mars",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Sun themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun conjunction Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_square_mars",
+    "type": "aspect",
+    "planet": "sun:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Sun square Mars",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Sun themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun square Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_trine_mars",
+    "type": "aspect",
+    "planet": "sun:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Sun trine Mars",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Sun themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun trine Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_opposition_mars",
+    "type": "aspect",
+    "planet": "sun:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Sun opposition Mars",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Sun themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun opposition Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_sextile_mars",
+    "type": "aspect",
+    "planet": "sun:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Sun sextile Mars",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Sun themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun sextile Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_conjunction_jupiter",
+    "type": "aspect",
+    "planet": "sun:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Sun conjunction Jupiter",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Sun themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun conjunction Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_square_jupiter",
+    "type": "aspect",
+    "planet": "sun:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Sun square Jupiter",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Sun themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun square Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_trine_jupiter",
+    "type": "aspect",
+    "planet": "sun:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Sun trine Jupiter",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Sun themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun trine Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_opposition_jupiter",
+    "type": "aspect",
+    "planet": "sun:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Sun opposition Jupiter",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Sun themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun opposition Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_sextile_jupiter",
+    "type": "aspect",
+    "planet": "sun:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Sun sextile Jupiter",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Sun themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun sextile Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_conjunction_saturn",
+    "type": "aspect",
+    "planet": "sun:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Sun conjunction Saturn",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Sun themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun conjunction Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_square_saturn",
+    "type": "aspect",
+    "planet": "sun:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Sun square Saturn",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Sun themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun square Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_trine_saturn",
+    "type": "aspect",
+    "planet": "sun:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Sun trine Saturn",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Sun themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun trine Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_opposition_saturn",
+    "type": "aspect",
+    "planet": "sun:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Sun opposition Saturn",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Sun themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun opposition Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_sextile_saturn",
+    "type": "aspect",
+    "planet": "sun:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Sun sextile Saturn",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Sun themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun sextile Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_conjunction_uranus",
+    "type": "aspect",
+    "planet": "sun:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Sun conjunction Uranus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Sun themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun conjunction Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_square_uranus",
+    "type": "aspect",
+    "planet": "sun:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Sun square Uranus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Sun themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun square Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_trine_uranus",
+    "type": "aspect",
+    "planet": "sun:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Sun trine Uranus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Sun themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun trine Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_opposition_uranus",
+    "type": "aspect",
+    "planet": "sun:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Sun opposition Uranus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Sun themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun opposition Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_sextile_uranus",
+    "type": "aspect",
+    "planet": "sun:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Sun sextile Uranus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Sun themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun sextile Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_conjunction_neptune",
+    "type": "aspect",
+    "planet": "sun:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Sun conjunction Neptune",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Sun themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun conjunction Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_square_neptune",
+    "type": "aspect",
+    "planet": "sun:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Sun square Neptune",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Sun themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun square Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_trine_neptune",
+    "type": "aspect",
+    "planet": "sun:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Sun trine Neptune",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Sun themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun trine Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_opposition_neptune",
+    "type": "aspect",
+    "planet": "sun:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Sun opposition Neptune",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Sun themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun opposition Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_sextile_neptune",
+    "type": "aspect",
+    "planet": "sun:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Sun sextile Neptune",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Sun themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun sextile Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_conjunction_pluto",
+    "type": "aspect",
+    "planet": "sun:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Sun conjunction Pluto",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Sun themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun conjunction Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_square_pluto",
+    "type": "aspect",
+    "planet": "sun:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Sun square Pluto",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Sun themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun square Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_trine_pluto",
+    "type": "aspect",
+    "planet": "sun:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Sun trine Pluto",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Sun themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun trine Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_opposition_pluto",
+    "type": "aspect",
+    "planet": "sun:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Sun opposition Pluto",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Sun themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun opposition Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:sun_sextile_pluto",
+    "type": "aspect",
+    "planet": "sun:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Sun sextile Pluto",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Sun themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Sun sextile Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_conjunction_mercury",
+    "type": "aspect",
+    "planet": "moon:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Moon conjunction Mercury",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Moon themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon conjunction Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_square_mercury",
+    "type": "aspect",
+    "planet": "moon:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Moon square Mercury",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Moon themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon square Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_trine_mercury",
+    "type": "aspect",
+    "planet": "moon:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Moon trine Mercury",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Moon themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon trine Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_opposition_mercury",
+    "type": "aspect",
+    "planet": "moon:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Moon opposition Mercury",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Moon themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon opposition Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_sextile_mercury",
+    "type": "aspect",
+    "planet": "moon:mercury",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Moon sextile Mercury",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Moon themes and Mercury themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon sextile Mercury shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_conjunction_venus",
+    "type": "aspect",
+    "planet": "moon:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Moon conjunction Venus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Moon themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon conjunction Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_square_venus",
+    "type": "aspect",
+    "planet": "moon:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Moon square Venus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Moon themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon square Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_trine_venus",
+    "type": "aspect",
+    "planet": "moon:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Moon trine Venus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Moon themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon trine Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_opposition_venus",
+    "type": "aspect",
+    "planet": "moon:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Moon opposition Venus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Moon themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon opposition Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_sextile_venus",
+    "type": "aspect",
+    "planet": "moon:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Moon sextile Venus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Moon themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon sextile Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_conjunction_mars",
+    "type": "aspect",
+    "planet": "moon:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Moon conjunction Mars",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Moon themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon conjunction Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_square_mars",
+    "type": "aspect",
+    "planet": "moon:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Moon square Mars",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Moon themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon square Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_trine_mars",
+    "type": "aspect",
+    "planet": "moon:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Moon trine Mars",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Moon themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon trine Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_opposition_mars",
+    "type": "aspect",
+    "planet": "moon:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Moon opposition Mars",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Moon themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon opposition Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_sextile_mars",
+    "type": "aspect",
+    "planet": "moon:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Moon sextile Mars",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Moon themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon sextile Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_conjunction_jupiter",
+    "type": "aspect",
+    "planet": "moon:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Moon conjunction Jupiter",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Moon themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon conjunction Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_square_jupiter",
+    "type": "aspect",
+    "planet": "moon:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Moon square Jupiter",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Moon themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon square Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_trine_jupiter",
+    "type": "aspect",
+    "planet": "moon:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Moon trine Jupiter",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Moon themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon trine Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_opposition_jupiter",
+    "type": "aspect",
+    "planet": "moon:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Moon opposition Jupiter",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Moon themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon opposition Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_sextile_jupiter",
+    "type": "aspect",
+    "planet": "moon:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Moon sextile Jupiter",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Moon themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon sextile Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_conjunction_saturn",
+    "type": "aspect",
+    "planet": "moon:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Moon conjunction Saturn",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Moon themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon conjunction Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_square_saturn",
+    "type": "aspect",
+    "planet": "moon:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Moon square Saturn",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Moon themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon square Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_trine_saturn",
+    "type": "aspect",
+    "planet": "moon:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Moon trine Saturn",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Moon themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon trine Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_opposition_saturn",
+    "type": "aspect",
+    "planet": "moon:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Moon opposition Saturn",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Moon themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon opposition Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_sextile_saturn",
+    "type": "aspect",
+    "planet": "moon:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Moon sextile Saturn",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Moon themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon sextile Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_conjunction_uranus",
+    "type": "aspect",
+    "planet": "moon:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Moon conjunction Uranus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Moon themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon conjunction Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_square_uranus",
+    "type": "aspect",
+    "planet": "moon:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Moon square Uranus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Moon themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon square Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_trine_uranus",
+    "type": "aspect",
+    "planet": "moon:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Moon trine Uranus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Moon themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon trine Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_opposition_uranus",
+    "type": "aspect",
+    "planet": "moon:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Moon opposition Uranus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Moon themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon opposition Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_sextile_uranus",
+    "type": "aspect",
+    "planet": "moon:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Moon sextile Uranus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Moon themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon sextile Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_conjunction_neptune",
+    "type": "aspect",
+    "planet": "moon:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Moon conjunction Neptune",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Moon themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon conjunction Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_square_neptune",
+    "type": "aspect",
+    "planet": "moon:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Moon square Neptune",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Moon themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon square Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_trine_neptune",
+    "type": "aspect",
+    "planet": "moon:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Moon trine Neptune",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Moon themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon trine Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_opposition_neptune",
+    "type": "aspect",
+    "planet": "moon:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Moon opposition Neptune",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Moon themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon opposition Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_sextile_neptune",
+    "type": "aspect",
+    "planet": "moon:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Moon sextile Neptune",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Moon themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon sextile Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_conjunction_pluto",
+    "type": "aspect",
+    "planet": "moon:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Moon conjunction Pluto",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Moon themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon conjunction Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_square_pluto",
+    "type": "aspect",
+    "planet": "moon:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Moon square Pluto",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Moon themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon square Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_trine_pluto",
+    "type": "aspect",
+    "planet": "moon:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Moon trine Pluto",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Moon themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon trine Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_opposition_pluto",
+    "type": "aspect",
+    "planet": "moon:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Moon opposition Pluto",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Moon themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon opposition Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:moon_sextile_pluto",
+    "type": "aspect",
+    "planet": "moon:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Moon sextile Pluto",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Moon themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Moon sextile Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_conjunction_venus",
+    "type": "aspect",
+    "planet": "mercury:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mercury conjunction Venus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mercury themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury conjunction Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_square_venus",
+    "type": "aspect",
+    "planet": "mercury:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mercury square Venus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mercury themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury square Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_trine_venus",
+    "type": "aspect",
+    "planet": "mercury:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mercury trine Venus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mercury themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury trine Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_opposition_venus",
+    "type": "aspect",
+    "planet": "mercury:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mercury opposition Venus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mercury themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury opposition Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_sextile_venus",
+    "type": "aspect",
+    "planet": "mercury:venus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mercury sextile Venus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mercury themes and Venus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury sextile Venus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_conjunction_mars",
+    "type": "aspect",
+    "planet": "mercury:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mercury conjunction Mars",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mercury themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury conjunction Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_square_mars",
+    "type": "aspect",
+    "planet": "mercury:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mercury square Mars",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mercury themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury square Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_trine_mars",
+    "type": "aspect",
+    "planet": "mercury:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mercury trine Mars",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mercury themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury trine Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_opposition_mars",
+    "type": "aspect",
+    "planet": "mercury:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mercury opposition Mars",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mercury themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury opposition Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_sextile_mars",
+    "type": "aspect",
+    "planet": "mercury:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mercury sextile Mars",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mercury themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury sextile Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_conjunction_jupiter",
+    "type": "aspect",
+    "planet": "mercury:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mercury conjunction Jupiter",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mercury themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury conjunction Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_square_jupiter",
+    "type": "aspect",
+    "planet": "mercury:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mercury square Jupiter",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mercury themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury square Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_trine_jupiter",
+    "type": "aspect",
+    "planet": "mercury:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mercury trine Jupiter",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mercury themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury trine Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_opposition_jupiter",
+    "type": "aspect",
+    "planet": "mercury:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mercury opposition Jupiter",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mercury themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury opposition Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_sextile_jupiter",
+    "type": "aspect",
+    "planet": "mercury:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mercury sextile Jupiter",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mercury themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury sextile Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_conjunction_saturn",
+    "type": "aspect",
+    "planet": "mercury:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mercury conjunction Saturn",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mercury themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury conjunction Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_square_saturn",
+    "type": "aspect",
+    "planet": "mercury:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mercury square Saturn",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mercury themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury square Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_trine_saturn",
+    "type": "aspect",
+    "planet": "mercury:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mercury trine Saturn",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mercury themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury trine Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_opposition_saturn",
+    "type": "aspect",
+    "planet": "mercury:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mercury opposition Saturn",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mercury themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury opposition Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_sextile_saturn",
+    "type": "aspect",
+    "planet": "mercury:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mercury sextile Saturn",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mercury themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury sextile Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_conjunction_uranus",
+    "type": "aspect",
+    "planet": "mercury:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mercury conjunction Uranus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mercury themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury conjunction Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_square_uranus",
+    "type": "aspect",
+    "planet": "mercury:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mercury square Uranus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mercury themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury square Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_trine_uranus",
+    "type": "aspect",
+    "planet": "mercury:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mercury trine Uranus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mercury themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury trine Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_opposition_uranus",
+    "type": "aspect",
+    "planet": "mercury:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mercury opposition Uranus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mercury themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury opposition Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_sextile_uranus",
+    "type": "aspect",
+    "planet": "mercury:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mercury sextile Uranus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mercury themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury sextile Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_conjunction_neptune",
+    "type": "aspect",
+    "planet": "mercury:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mercury conjunction Neptune",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mercury themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury conjunction Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_square_neptune",
+    "type": "aspect",
+    "planet": "mercury:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mercury square Neptune",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mercury themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury square Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_trine_neptune",
+    "type": "aspect",
+    "planet": "mercury:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mercury trine Neptune",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mercury themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury trine Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_opposition_neptune",
+    "type": "aspect",
+    "planet": "mercury:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mercury opposition Neptune",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mercury themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury opposition Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_sextile_neptune",
+    "type": "aspect",
+    "planet": "mercury:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mercury sextile Neptune",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mercury themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury sextile Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_conjunction_pluto",
+    "type": "aspect",
+    "planet": "mercury:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mercury conjunction Pluto",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mercury themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury conjunction Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_square_pluto",
+    "type": "aspect",
+    "planet": "mercury:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mercury square Pluto",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mercury themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury square Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_trine_pluto",
+    "type": "aspect",
+    "planet": "mercury:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mercury trine Pluto",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mercury themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury trine Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_opposition_pluto",
+    "type": "aspect",
+    "planet": "mercury:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mercury opposition Pluto",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mercury themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury opposition Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mercury_sextile_pluto",
+    "type": "aspect",
+    "planet": "mercury:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mercury sextile Pluto",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mercury themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mercury sextile Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_conjunction_mars",
+    "type": "aspect",
+    "planet": "venus:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Venus conjunction Mars",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Venus themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus conjunction Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_square_mars",
+    "type": "aspect",
+    "planet": "venus:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Venus square Mars",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Venus themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus square Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_trine_mars",
+    "type": "aspect",
+    "planet": "venus:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Venus trine Mars",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Venus themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus trine Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_opposition_mars",
+    "type": "aspect",
+    "planet": "venus:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Venus opposition Mars",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Venus themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus opposition Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_sextile_mars",
+    "type": "aspect",
+    "planet": "venus:mars",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Venus sextile Mars",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Venus themes and Mars themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus sextile Mars shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_conjunction_jupiter",
+    "type": "aspect",
+    "planet": "venus:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Venus conjunction Jupiter",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Venus themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus conjunction Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_square_jupiter",
+    "type": "aspect",
+    "planet": "venus:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Venus square Jupiter",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Venus themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus square Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_trine_jupiter",
+    "type": "aspect",
+    "planet": "venus:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Venus trine Jupiter",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Venus themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus trine Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_opposition_jupiter",
+    "type": "aspect",
+    "planet": "venus:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Venus opposition Jupiter",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Venus themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus opposition Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_sextile_jupiter",
+    "type": "aspect",
+    "planet": "venus:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Venus sextile Jupiter",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Venus themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus sextile Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_conjunction_saturn",
+    "type": "aspect",
+    "planet": "venus:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Venus conjunction Saturn",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Venus themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus conjunction Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_square_saturn",
+    "type": "aspect",
+    "planet": "venus:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Venus square Saturn",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Venus themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus square Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_trine_saturn",
+    "type": "aspect",
+    "planet": "venus:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Venus trine Saturn",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Venus themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus trine Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_opposition_saturn",
+    "type": "aspect",
+    "planet": "venus:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Venus opposition Saturn",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Venus themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus opposition Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_sextile_saturn",
+    "type": "aspect",
+    "planet": "venus:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Venus sextile Saturn",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Venus themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus sextile Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_conjunction_uranus",
+    "type": "aspect",
+    "planet": "venus:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Venus conjunction Uranus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Venus themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus conjunction Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_square_uranus",
+    "type": "aspect",
+    "planet": "venus:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Venus square Uranus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Venus themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus square Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_trine_uranus",
+    "type": "aspect",
+    "planet": "venus:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Venus trine Uranus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Venus themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus trine Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_opposition_uranus",
+    "type": "aspect",
+    "planet": "venus:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Venus opposition Uranus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Venus themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus opposition Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_sextile_uranus",
+    "type": "aspect",
+    "planet": "venus:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Venus sextile Uranus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Venus themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus sextile Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_conjunction_neptune",
+    "type": "aspect",
+    "planet": "venus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Venus conjunction Neptune",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Venus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus conjunction Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_square_neptune",
+    "type": "aspect",
+    "planet": "venus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Venus square Neptune",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Venus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus square Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_trine_neptune",
+    "type": "aspect",
+    "planet": "venus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Venus trine Neptune",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Venus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus trine Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_opposition_neptune",
+    "type": "aspect",
+    "planet": "venus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Venus opposition Neptune",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Venus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus opposition Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_sextile_neptune",
+    "type": "aspect",
+    "planet": "venus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Venus sextile Neptune",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Venus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus sextile Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_conjunction_pluto",
+    "type": "aspect",
+    "planet": "venus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Venus conjunction Pluto",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Venus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus conjunction Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_square_pluto",
+    "type": "aspect",
+    "planet": "venus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Venus square Pluto",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Venus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus square Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_trine_pluto",
+    "type": "aspect",
+    "planet": "venus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Venus trine Pluto",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Venus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus trine Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_opposition_pluto",
+    "type": "aspect",
+    "planet": "venus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Venus opposition Pluto",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Venus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus opposition Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:venus_sextile_pluto",
+    "type": "aspect",
+    "planet": "venus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Venus sextile Pluto",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Venus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Venus sextile Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_conjunction_jupiter",
+    "type": "aspect",
+    "planet": "mars:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mars conjunction Jupiter",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mars themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars conjunction Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_square_jupiter",
+    "type": "aspect",
+    "planet": "mars:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mars square Jupiter",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mars themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars square Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_trine_jupiter",
+    "type": "aspect",
+    "planet": "mars:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mars trine Jupiter",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mars themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars trine Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_opposition_jupiter",
+    "type": "aspect",
+    "planet": "mars:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mars opposition Jupiter",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mars themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars opposition Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_sextile_jupiter",
+    "type": "aspect",
+    "planet": "mars:jupiter",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mars sextile Jupiter",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mars themes and Jupiter themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars sextile Jupiter shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_conjunction_saturn",
+    "type": "aspect",
+    "planet": "mars:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mars conjunction Saturn",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mars themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars conjunction Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_square_saturn",
+    "type": "aspect",
+    "planet": "mars:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mars square Saturn",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mars themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars square Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_trine_saturn",
+    "type": "aspect",
+    "planet": "mars:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mars trine Saturn",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mars themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars trine Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_opposition_saturn",
+    "type": "aspect",
+    "planet": "mars:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mars opposition Saturn",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mars themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars opposition Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_sextile_saturn",
+    "type": "aspect",
+    "planet": "mars:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mars sextile Saturn",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mars themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars sextile Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_conjunction_uranus",
+    "type": "aspect",
+    "planet": "mars:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mars conjunction Uranus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mars themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars conjunction Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_square_uranus",
+    "type": "aspect",
+    "planet": "mars:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mars square Uranus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mars themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars square Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_trine_uranus",
+    "type": "aspect",
+    "planet": "mars:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mars trine Uranus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mars themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars trine Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_opposition_uranus",
+    "type": "aspect",
+    "planet": "mars:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mars opposition Uranus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mars themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars opposition Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_sextile_uranus",
+    "type": "aspect",
+    "planet": "mars:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mars sextile Uranus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mars themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars sextile Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_conjunction_neptune",
+    "type": "aspect",
+    "planet": "mars:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mars conjunction Neptune",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mars themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars conjunction Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_square_neptune",
+    "type": "aspect",
+    "planet": "mars:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mars square Neptune",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mars themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars square Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_trine_neptune",
+    "type": "aspect",
+    "planet": "mars:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mars trine Neptune",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mars themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars trine Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_opposition_neptune",
+    "type": "aspect",
+    "planet": "mars:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mars opposition Neptune",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mars themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars opposition Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_sextile_neptune",
+    "type": "aspect",
+    "planet": "mars:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mars sextile Neptune",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mars themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars sextile Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_conjunction_pluto",
+    "type": "aspect",
+    "planet": "mars:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Mars conjunction Pluto",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Mars themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars conjunction Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_square_pluto",
+    "type": "aspect",
+    "planet": "mars:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Mars square Pluto",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Mars themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars square Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_trine_pluto",
+    "type": "aspect",
+    "planet": "mars:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Mars trine Pluto",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Mars themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars trine Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_opposition_pluto",
+    "type": "aspect",
+    "planet": "mars:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Mars opposition Pluto",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Mars themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars opposition Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:mars_sextile_pluto",
+    "type": "aspect",
+    "planet": "mars:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Mars sextile Pluto",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Mars themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Mars sextile Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_conjunction_saturn",
+    "type": "aspect",
+    "planet": "jupiter:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Jupiter conjunction Saturn",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Jupiter themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter conjunction Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_square_saturn",
+    "type": "aspect",
+    "planet": "jupiter:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Jupiter square Saturn",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Jupiter themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter square Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_trine_saturn",
+    "type": "aspect",
+    "planet": "jupiter:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Jupiter trine Saturn",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Jupiter themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter trine Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_opposition_saturn",
+    "type": "aspect",
+    "planet": "jupiter:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Jupiter opposition Saturn",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Jupiter themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter opposition Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_sextile_saturn",
+    "type": "aspect",
+    "planet": "jupiter:saturn",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Jupiter sextile Saturn",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Jupiter themes and Saturn themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter sextile Saturn shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_conjunction_uranus",
+    "type": "aspect",
+    "planet": "jupiter:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Jupiter conjunction Uranus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Jupiter themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter conjunction Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_square_uranus",
+    "type": "aspect",
+    "planet": "jupiter:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Jupiter square Uranus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Jupiter themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter square Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_trine_uranus",
+    "type": "aspect",
+    "planet": "jupiter:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Jupiter trine Uranus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Jupiter themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter trine Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_opposition_uranus",
+    "type": "aspect",
+    "planet": "jupiter:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Jupiter opposition Uranus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Jupiter themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter opposition Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_sextile_uranus",
+    "type": "aspect",
+    "planet": "jupiter:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Jupiter sextile Uranus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Jupiter themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter sextile Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_conjunction_neptune",
+    "type": "aspect",
+    "planet": "jupiter:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Jupiter conjunction Neptune",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Jupiter themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter conjunction Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_square_neptune",
+    "type": "aspect",
+    "planet": "jupiter:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Jupiter square Neptune",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Jupiter themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter square Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_trine_neptune",
+    "type": "aspect",
+    "planet": "jupiter:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Jupiter trine Neptune",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Jupiter themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter trine Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_opposition_neptune",
+    "type": "aspect",
+    "planet": "jupiter:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Jupiter opposition Neptune",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Jupiter themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter opposition Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_sextile_neptune",
+    "type": "aspect",
+    "planet": "jupiter:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Jupiter sextile Neptune",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Jupiter themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter sextile Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_conjunction_pluto",
+    "type": "aspect",
+    "planet": "jupiter:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Jupiter conjunction Pluto",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Jupiter themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter conjunction Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_square_pluto",
+    "type": "aspect",
+    "planet": "jupiter:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Jupiter square Pluto",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Jupiter themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter square Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_trine_pluto",
+    "type": "aspect",
+    "planet": "jupiter:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Jupiter trine Pluto",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Jupiter themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter trine Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_opposition_pluto",
+    "type": "aspect",
+    "planet": "jupiter:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Jupiter opposition Pluto",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Jupiter themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter opposition Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:jupiter_sextile_pluto",
+    "type": "aspect",
+    "planet": "jupiter:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Jupiter sextile Pluto",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Jupiter themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Jupiter sextile Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_conjunction_uranus",
+    "type": "aspect",
+    "planet": "saturn:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Saturn conjunction Uranus",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Saturn themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn conjunction Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_square_uranus",
+    "type": "aspect",
+    "planet": "saturn:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Saturn square Uranus",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Saturn themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn square Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_trine_uranus",
+    "type": "aspect",
+    "planet": "saturn:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Saturn trine Uranus",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Saturn themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn trine Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_opposition_uranus",
+    "type": "aspect",
+    "planet": "saturn:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Saturn opposition Uranus",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Saturn themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn opposition Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_sextile_uranus",
+    "type": "aspect",
+    "planet": "saturn:uranus",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Saturn sextile Uranus",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Saturn themes and Uranus themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn sextile Uranus shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_conjunction_neptune",
+    "type": "aspect",
+    "planet": "saturn:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Saturn conjunction Neptune",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Saturn themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn conjunction Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_square_neptune",
+    "type": "aspect",
+    "planet": "saturn:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Saturn square Neptune",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Saturn themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn square Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_trine_neptune",
+    "type": "aspect",
+    "planet": "saturn:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Saturn trine Neptune",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Saturn themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn trine Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_opposition_neptune",
+    "type": "aspect",
+    "planet": "saturn:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Saturn opposition Neptune",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Saturn themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn opposition Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_sextile_neptune",
+    "type": "aspect",
+    "planet": "saturn:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Saturn sextile Neptune",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Saturn themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn sextile Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_conjunction_pluto",
+    "type": "aspect",
+    "planet": "saturn:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Saturn conjunction Pluto",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Saturn themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn conjunction Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_square_pluto",
+    "type": "aspect",
+    "planet": "saturn:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Saturn square Pluto",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Saturn themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn square Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_trine_pluto",
+    "type": "aspect",
+    "planet": "saturn:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Saturn trine Pluto",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Saturn themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn trine Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_opposition_pluto",
+    "type": "aspect",
+    "planet": "saturn:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Saturn opposition Pluto",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Saturn themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn opposition Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:saturn_sextile_pluto",
+    "type": "aspect",
+    "planet": "saturn:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Saturn sextile Pluto",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Saturn themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Saturn sextile Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_conjunction_neptune",
+    "type": "aspect",
+    "planet": "uranus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Uranus conjunction Neptune",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Uranus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus conjunction Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_square_neptune",
+    "type": "aspect",
+    "planet": "uranus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Uranus square Neptune",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Uranus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus square Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_trine_neptune",
+    "type": "aspect",
+    "planet": "uranus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Uranus trine Neptune",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Uranus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus trine Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_opposition_neptune",
+    "type": "aspect",
+    "planet": "uranus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Uranus opposition Neptune",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Uranus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus opposition Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_sextile_neptune",
+    "type": "aspect",
+    "planet": "uranus:neptune",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Uranus sextile Neptune",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Uranus themes and Neptune themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus sextile Neptune shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_conjunction_pluto",
+    "type": "aspect",
+    "planet": "uranus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Uranus conjunction Pluto",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Uranus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus conjunction Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_square_pluto",
+    "type": "aspect",
+    "planet": "uranus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Uranus square Pluto",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Uranus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus square Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_trine_pluto",
+    "type": "aspect",
+    "planet": "uranus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Uranus trine Pluto",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Uranus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus trine Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_opposition_pluto",
+    "type": "aspect",
+    "planet": "uranus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Uranus opposition Pluto",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Uranus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus opposition Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:uranus_sextile_pluto",
+    "type": "aspect",
+    "planet": "uranus:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Uranus sextile Pluto",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Uranus themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Uranus sextile Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:neptune_conjunction_pluto",
+    "type": "aspect",
+    "planet": "neptune:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "conjunction",
+    "summary": "Neptune conjunction Pluto",
+    "interpretation": "This configuration suggests fusion and concentrated intensity between Neptune themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Neptune conjunction Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:neptune_square_pluto",
+    "type": "aspect",
+    "planet": "neptune:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "square",
+    "summary": "Neptune square Pluto",
+    "interpretation": "This configuration suggests dynamic tension that asks for adaptation between Neptune themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Neptune square Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:neptune_trine_pluto",
+    "type": "aspect",
+    "planet": "neptune:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "trine",
+    "summary": "Neptune trine Pluto",
+    "interpretation": "This configuration suggests natural flow and effortless resonance between Neptune themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Neptune trine Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:neptune_opposition_pluto",
+    "type": "aspect",
+    "planet": "neptune:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "opposition",
+    "summary": "Neptune opposition Pluto",
+    "interpretation": "This configuration suggests polar awareness through relational contrast between Neptune themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Neptune opposition Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  },
+  {
+    "id": "aspect:neptune_sextile_pluto",
+    "type": "aspect",
+    "planet": "neptune:pluto",
+    "sign": "",
+    "house": "",
+    "aspect": "sextile",
+    "summary": "Neptune sextile Pluto",
+    "interpretation": "This configuration suggests constructive opportunity through intentional engagement between Neptune themes and Pluto themes.",
+    "nuance": "It may alternate between ease and friction depending on maturity, communication quality, and current transits.",
+    "growth": "Integration usually improves when both poles are honored instead of idealizing one and disowning the other.",
+    "questions": [
+      "How do you notice Neptune sextile Pluto shaping internal dialogue and external behavior in your current life phase?",
+      "What small shift could help you respond with more awareness this week?"
+    ]
+  }
+]

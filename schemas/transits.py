@@ -219,3 +219,18 @@ class TransitEventsResponse(BaseModel):
     events: List[TransitEvent]
     metadados: Dict[str, Any]
     avisos: List[str]
+
+
+class DailyTransitHighlight(BaseModel):
+    title: str
+    text: str
+    impact: Literal["minor", "moderate", "major"] = "moderate"
+    area: Optional[str] = None
+
+
+class DailyAnalysisPayload(BaseModel):
+    daily_summary: str
+    transit_highlights: List[DailyTransitHighlight]
+    emotional_theme: str
+    focus_area: str
+    suggested_reflection: str

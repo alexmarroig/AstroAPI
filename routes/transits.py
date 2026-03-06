@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, date as dt_date
 from typing import Optional, List, Dict, Any, Literal
@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Request, Query, HTTPException
 from .common import get_auth
 from schemas.transits import (
     TransitsEventsRequest, TransitEventsResponse, TransitsRequest,
-    PreferenciasPerfil, TransitsLiveRequest
+    PreferenciasPerfil, TransitsLiveRequest, DailyAnalysisPayload, DailyTransitHighlight
 )
 from core.cache import cache
 from astro.ephemeris import compute_chart, compute_transits
@@ -38,6 +38,35 @@ DEFAULT_LAT = -23.5505
 DEFAULT_LNG = -46.6333
 DEFAULT_TIMEZONE = "America/Sao_Paulo"
 
+
+def _impact_bucket(score: float) -> str:
+    if score >= 75:
+        return "major"
+    if score >= 45:
+        return "moderate"
+    return "minor"
+
+
+def _build_daily_analysis_payload(events: List[Any], fallback_summary: str = "") -> DailyAnalysisPayload:
+    ordered = sorted(events, key=lambda x: x.impact_score, reverse=True)
+    top = ordered[0] if ordered else None
+    highlights = [
+        DailyTransitHighlight(
+            title=e.copy.headline,
+            text=e.copy.mecanica,
+            impact=_impact_bucket(e.impact_score),  # type: ignore[arg-type]
+            area=e.copy.risco,
+        )
+        for e in ordered[:5]
+    ]
+    return DailyAnalysisPayload(
+        daily_summary=(top.copy.headline if top else fallback_summary) or "Dia de ajustes e integracao gradual.",
+        transit_highlights=highlights,
+        emotional_theme=(top.copy.mecanica if top else "Observe suas reacoes com mais curiosidade e menos pressa."),
+        focus_area=(top.copy.risco if top else "Organizacao de prioridades."),
+        suggested_reflection=(top.copy.use_bem if top else "Qual ajuste simples pode trazer mais clareza hoje?"),
+    )
+
 def _build_transits_context(
     body: TransitsRequest,
     tz_offset_minutes: int,
@@ -45,7 +74,7 @@ def _build_transits_context(
     date_override: Optional[str] = None,
     preferencias: Optional[PreferenciasPerfil] = None,
 ) -> Dict[str, Any]:
-    """Helper para construir o contexto de trânsitos (natal, trânsitos e aspectos)."""
+    """Helper para construir o contexto de trÃ¢nsitos (natal, trÃ¢nsitos e aspectos)."""
     target_date = date_override or body.target_date
     target_y, target_m, target_d = parse_date_yyyy_mm_dd(target_date)
 
@@ -81,7 +110,7 @@ async def transits_events(
     lang: Optional[str] = Query(None, description="Idioma (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
-    """Calcula eventos de trânsito detalhados para um intervalo de até 30 dias."""
+    """Calcula eventos de trÃ¢nsito detalhados para um intervalo de atÃ© 30 dias."""
     try:
         natal_dt = datetime(body.natal_year, body.natal_month, body.natal_day, body.natal_hour, body.natal_minute, body.natal_second)
         tz_offset = get_tz_offset_minutes(natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone, request_id=request.state.request_id)
@@ -89,7 +118,7 @@ async def transits_events(
         start_date = datetime.strptime(body.range.from_, "%Y-%m-%d")
         end_date = datetime.strptime(body.range.to, "%Y-%m-%d")
         interval_days = (end_date - start_date).days + 1
-        if interval_days > 30: raise HTTPException(status_code=400, detail="Intervalo máximo de 30 dias.")
+        if interval_days > 30: raise HTTPException(status_code=400, detail="Intervalo mÃ¡ximo de 30 dias.")
 
         cache_key = f"transit-events:{auth['user_id']}:{hash(body.model_dump_json())}:{str(lang).lower()}"
         cached = cache.get(cache_key)
@@ -120,7 +149,7 @@ async def transits_events(
         return payload
     except Exception as e:
         logger.error("transits_events_error", exc_info=True, extra={"request_id": request.state.request_id})
-        raise HTTPException(status_code=500, detail="Erro interno ao calcular eventos de trânsito.")
+        raise HTTPException(status_code=500, detail="Erro interno ao calcular eventos de trÃ¢nsito.")
 
 @router.get("/v1/transits/next-days")
 async def transits_next_days(
@@ -143,7 +172,7 @@ async def transits_next_days(
     lang: Optional[str] = Query(None),
     auth=Depends(get_auth),
 ):
-    """Retorna um resumo dos próximos dias, incluindo o tom dominante de cada dia."""
+    """Retorna um resumo dos prÃ³ximos dias, incluindo o tom dominante de cada dia."""
     try:
         from routes.cosmic_weather import _get_cosmic_weather_payload
         from schemas.common import HouseSystem, ZodiacType as ZodiacTypeSchema
@@ -156,10 +185,10 @@ async def transits_next_days(
             current_date = start_date + timedelta(days=offset)
             date_str = current_date.strftime("%Y-%m-%d")
 
-            headline = "Clima com espaço para pequenos ajustes."
+            headline = "Clima com espaÃ§o para pequenos ajustes."
             tags = []
             strength = "medium"
-            icon = "✨"
+            icon = "âœ¨"
 
             if natal_year and natal_month and natal_day and lat is not None and lng is not None:
                 hour = natal_hour if natal_hour is not None else 12
@@ -189,7 +218,7 @@ async def transits_next_days(
                                                  request_id=request.state.request_id, path=request.url.path)
                 headline = cw.get("headline")
                 tags = [cw.get("moon_sign")] if cw.get("moon_sign") else []
-                icon = "🌙"
+                icon = "ðŸŒ™"
                 strength = "low"
 
             items.append({
@@ -203,7 +232,7 @@ async def transits_next_days(
         return {"days": items}
     except Exception as e:
         logger.error("transits_next_days_error", exc_info=True, extra={"request_id": request.state.request_id})
-        raise HTTPException(status_code=500, detail="Erro ao carregar próximos dias.")
+        raise HTTPException(status_code=500, detail="Erro ao carregar prÃ³ximos dias.")
 
 @router.get("/v1/transits/personal-today")
 async def transits_personal_today(
@@ -220,7 +249,7 @@ async def transits_personal_today(
     lang: Optional[str] = Query(None),
     auth=Depends(get_auth),
 ):
-    """Retorna os trânsitos pessoais detalhados para o dia de hoje."""
+    """Retorna análise diária pessoal com contrato canônico e campos legados."""
     d = date or DEFAULT_DATE
     if not d:
         d = dt_date.today().isoformat()
@@ -234,55 +263,63 @@ async def transits_personal_today(
     tz_offset = get_tz_offset_minutes(natal_dt, timezone, tz_offset_minutes, request_id=request.state.request_id)
 
     transits_body = TransitsRequest(
-        natal_year=natal_year, natal_month=natal_month, natal_day=natal_day, natal_hour=hour,
-        lat=lat, lng=lng, tz_offset_minutes=tz_offset, timezone=timezone, target_date=d
+        natal_year=natal_year,
+        natal_month=natal_month,
+        natal_day=natal_day,
+        natal_hour=hour,
+        lat=lat,
+        lng=lng,
+        tz_offset_minutes=tz_offset,
+        timezone=timezone,
+        target_date=d,
     )
 
     context = _build_transits_context(transits_body, tz_offset, is_pt, date_override=d)
-    events = []
-    for aspect in context["aspects"]:
-        events.append(build_transit_event(aspect, d, context["natal"], context["orb_max"]))
-
+    events = [build_transit_event(aspect, d, context["natal"], context["orb_max"]) for aspect in context["aspects"]]
     events.sort(key=lambda x: x.impact_score, reverse=True)
 
-    area_map = {
-        "Sun": "identidade", "Moon": "emoções", "Mercury": "comunicação",
-        "Venus": "relacionamentos", "Mars": "trabalho", "Jupiter": "expansão",
-        "Saturn": "responsabilidade", "Uranus": "mudanças", "Neptune": "sensibilidade",
-        "Pluto": "transformação",
+    personal_transits = []
+    area_map_pt = {
+        "Sol": "identidade",
+        "Lua": "emoções",
+        "Mercúrio": "comunicação",
+        "Vênus": "relacionamentos",
+        "Marte": "trabalho",
+        "Júpiter": "expansão",
+        "Saturno": "responsabilidade",
+        "Urano": "mudanças",
+        "Netuno": "sensibilidade",
+        "Plutão": "transformação",
     }
 
-    personal_transits = []
     for event in events[:8]:
-        # Tenta mapear o alvo (planeta em inglês) para a área
-        # Nota: event.alvo aqui está em PT-BR, precisamos do nome original ou mapear em PT-BR
-        # Como event.alvo é planet_key_to_ptbr(natal_planet), vamos usar um mapa em PT-BR
-        area_map_pt = {
-            "Sol": "identidade", "Lua": "emoções", "Mercúrio": "comunicação",
-            "Vênus": "relacionamentos", "Marte": "trabalho", "Júpiter": "expansão",
-            "Saturno": "responsabilidade", "Urano": "mudanças", "Netuno": "sensibilidade",
-            "Plutão": "transformação",
-        }
-
         personal_transits.append({
-            "type": event.aspecto, "transiting_planet": event.transitando,
-            "natal_point": event.alvo, "orb": event.orb_graus,
+            "type": event.aspecto,
+            "transiting_planet": event.transitando,
+            "natal_point": event.alvo,
+            "orb": event.orb_graus,
             "area": area_map_pt.get(event.alvo, "tema geral"),
             "strength": get_strength_from_score(event.impact_score),
-            "short_text": event.copy.mecanica
+            "short_text": event.copy.mecanica,
         })
 
+    canonical = _build_daily_analysis_payload(events)
     return {
-        "date": d, "personal_transits": personal_transits,
+        "daily_summary": canonical.daily_summary,
+        "transit_highlights": [item.model_dump() for item in canonical.transit_highlights],
+        "emotional_theme": canonical.emotional_theme,
+        "focus_area": canonical.focus_area,
+        "suggested_reflection": canonical.suggested_reflection,
+        "date": d,
+        "personal_transits": personal_transits,
         "metadados": {
             "birth_time_precise": natal_hour is not None,
-            **build_time_metadata(timezone, tz_offset, natal_dt)
-        }
+            **build_time_metadata(timezone, tz_offset, natal_dt),
+        },
     }
-
 @router.post("/v1/transits/live")
 async def transits_live(body: TransitsLiveRequest, request: Request, auth=Depends(get_auth)):
-    """Calcula trânsitos em tempo real para um momento específico."""
+    """Calcula trÃ¢nsitos em tempo real para um momento especÃ­fico."""
     target_dt = body.target_datetime
     if isinstance(target_dt, str):
         target_dt = datetime.fromisoformat(target_dt.replace("Z", "+00:00"))
@@ -309,12 +346,16 @@ async def daily_summary(
     date: Optional[str] = Query(DEFAULT_DATE),
     timezone: Optional[str] = Query(DEFAULT_TIMEZONE),
     tz_offset_minutes: Optional[int] = Query(None),
-    natal_year: Optional[int] = Query(None), natal_month: Optional[int] = Query(None),
-    natal_day: Optional[int] = Query(None), natal_hour: Optional[int] = Query(None),
-    lat: Optional[float] = Query(DEFAULT_LAT), lng: Optional[float] = Query(DEFAULT_LNG),
-    lang: Optional[str] = Query(None), auth=Depends(get_auth),
+    natal_year: Optional[int] = Query(None),
+    natal_month: Optional[int] = Query(None),
+    natal_day: Optional[int] = Query(None),
+    natal_hour: Optional[int] = Query(None),
+    lat: Optional[float] = Query(DEFAULT_LAT),
+    lng: Optional[float] = Query(DEFAULT_LNG),
+    lang: Optional[str] = Query(None),
+    auth=Depends(get_auth),
 ):
-    """Resumo diário completo, combinando clima cósmico e trânsitos pessoais se disponíveis."""
+    """Resumo diário consolidado no contrato canônico e campos legados."""
     d = date or DEFAULT_DATE
     if not d:
         d = dt_date.today().isoformat()
@@ -323,12 +364,11 @@ async def daily_summary(
     timezone = timezone or DEFAULT_TIMEZONE
     is_pt = is_pt_br(lang)
 
-    # Placeholder para clima cósmico
     summary = {"tom": "Dia de estabilidade.", "gatilho": "Lua em fase neutra.", "acao": "Mantenha o ritmo."}
     headline = "Clima tranquilo."
-    technical_aspects = []
     areas = []
     curated = None
+    events: List[Any] = []
 
     if natal_year and natal_month and natal_day and lat is not None and lng is not None:
         hour = natal_hour if natal_hour is not None else 12
@@ -336,21 +376,71 @@ async def daily_summary(
         tz_offset = get_tz_offset_minutes(natal_dt, timezone, tz_offset_minutes, request_id=request.state.request_id)
 
         transits_body = TransitsRequest(
-            natal_year=natal_year, natal_month=natal_month, natal_day=natal_day, natal_hour=hour,
-            lat=lat, lng=lng, tz_offset_minutes=tz_offset, timezone=timezone, target_date=d
+            natal_year=natal_year,
+            natal_month=natal_month,
+            natal_day=natal_day,
+            natal_hour=hour,
+            lat=lat,
+            lng=lng,
+            tz_offset_minutes=tz_offset,
+            timezone=timezone,
+            target_date=d,
         )
         context = _build_transits_context(transits_body, tz_offset, is_pt, date_override=d)
         events = [build_transit_event(asp, d, context["natal"], context["orb_max"]) for asp in context["aspects"]]
         curated = curate_daily_events(events)
-        if curated.get("summary"): summary = curated["summary"]
-        if curated.get("top_event"): headline = curated["top_event"].copy.headline
+        if curated.get("summary"):
+            summary = curated["summary"]
+        if curated.get("top_event"):
+            headline = curated["top_event"].copy.headline
 
         from astro.ephemeris import compute_moon_only
+
         moon = compute_moon_only(d, tz_offset_minutes=tz_offset)
         phase_key = get_moon_phase_key(moon["phase_angle_deg"])
         areas = calculate_areas_activated(context["aspects"], phase_key)
 
+    canonical = _build_daily_analysis_payload(events, fallback_summary=headline)
     return {
-        "date": d, "headline": headline, "summary": summary,
-        "curated_events": curated, "areas_activated": areas
+        "daily_summary": canonical.daily_summary,
+        "transit_highlights": [item.model_dump() for item in canonical.transit_highlights],
+        "emotional_theme": canonical.emotional_theme,
+        "focus_area": canonical.focus_area,
+        "suggested_reflection": canonical.suggested_reflection,
+        "date": d,
+        "headline": headline,
+        "summary": summary,
+        "curated_events": curated,
+        "areas_activated": areas,
     }
+
+
+@router.get("/v1/transits/daily-summary")
+async def transits_daily_summary(
+    request: Request,
+    date: Optional[str] = Query(DEFAULT_DATE),
+    timezone: Optional[str] = Query(DEFAULT_TIMEZONE),
+    tz_offset_minutes: Optional[int] = Query(None),
+    natal_year: Optional[int] = Query(None),
+    natal_month: Optional[int] = Query(None),
+    natal_day: Optional[int] = Query(None),
+    natal_hour: Optional[int] = Query(None),
+    lat: Optional[float] = Query(DEFAULT_LAT),
+    lng: Optional[float] = Query(DEFAULT_LNG),
+    lang: Optional[str] = Query(None),
+    auth=Depends(get_auth),
+):
+    return await daily_summary(
+        request=request,
+        date=date,
+        timezone=timezone,
+        tz_offset_minutes=tz_offset_minutes,
+        natal_year=natal_year,
+        natal_month=natal_month,
+        natal_day=natal_day,
+        natal_hour=natal_hour,
+        lat=lat,
+        lng=lng,
+        lang=lang,
+        auth=auth,
+    )
