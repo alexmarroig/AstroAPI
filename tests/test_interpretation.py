@@ -34,3 +34,61 @@ def test_interpretation_shape():
     assert body["titulo"] == "Resumo Geral do Mapa"
     assert len(body["sintese"]) >= 3
     assert body["planetas_com_maior_peso"]
+
+
+from services.interpretation_engine import get_interpretation
+
+
+class TestGetInterpretation:
+    def test_synastry_aspect_returns_string(self):
+        result = get_interpretation(
+            planet="moon",
+            aspect_type="conjunction",
+            other_planet="venus",
+            context="synastry",
+        )
+        assert isinstance(result, str)
+        assert len(result) > 10
+
+    def test_natal_planet_sign_returns_string(self):
+        result = get_interpretation(planet="sun", sign="scorpio")
+        assert isinstance(result, str)
+        assert len(result) > 10
+
+    def test_natal_planet_house_returns_string(self):
+        result = get_interpretation(planet="moon", house=4)
+        assert isinstance(result, str)
+        assert len(result) > 10
+
+    def test_unknown_combination_never_returns_empty(self):
+        result = get_interpretation(
+            planet="jupiter",
+            aspect_type="nonexistent_aspect",
+            other_planet="uranus",
+            context="synastry",
+        )
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_synastry_fallback_to_aspect_when_no_synastry_entry(self):
+        result = get_interpretation(
+            planet="neptune",
+            aspect_type="trine",
+            other_planet="pluto",
+            context="synastry",
+        )
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_known_synastry_key_returns_specific_content(self):
+        FALLBACK_MARKER = "ativa dinâmicas relacionais e padrões de aprendizado mútuo"
+        result = get_interpretation(
+            planet="moon",
+            aspect_type="conjunction",
+            other_planet="venus",
+            context="synastry",
+        )
+        assert isinstance(result, str)
+        assert FALLBACK_MARKER not in result, (
+            "Chave moon_conjunction_venus deveria retornar conteúdo específico do dict, não o fallback genérico"
+        )

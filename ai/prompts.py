@@ -88,37 +88,7 @@ def _format_planet_line(planet: Any, data: Any) -> str:
     return f"  - {_truncate_text(planet, max_length=20)}: {sign} ({degree_value:.1f})"
 
 
-def build_cosmic_chat_messages(
-    user_question: str,
-    astro_payload: dict,
-    tone: Optional[str] = None,
-    language: str = "English"
-) -> list:
-    normalized_tone, tone_fallback = _normalize_tone(tone)
-    normalized_language, language_fallback = _normalize_language(language)
-    tone_suffix = " (fallback applied due to invalid tone input)." if tone_fallback else "."
-    language_suffix = " (fallback applied due to invalid language input)." if language_fallback else "."
-
-    system_content = (
-        f"{SYSTEM_PROMPT}"
-        f"\n\nADDITIONAL TONE: Respond in a {normalized_tone} manner{tone_suffix}"
-        f"\n\nLANGUAGE: Respond entirely in {normalized_language}{language_suffix}"
-    )
-
-    astro_context = format_astro_payload(astro_payload)
-
-    user_content = f"""Here is the astrological context:
-
-{astro_context}
-
-User's question: {_truncate_text(user_question, max_length=320)}
-
-Please provide thoughtful cosmic guidance based on the astrological data above."""
-
-    return [
-        {"role": "system", "content": system_content},
-        {"role": "user", "content": user_content}
-    ]
+# build_cosmic_chat_messages removed - cosmic chat endpoint no longer available
 
 
 def format_astro_payload(payload: dict) -> str:
