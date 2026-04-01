@@ -15,6 +15,7 @@ from schemas.synastry import (
     SynastryHouseOverlayOut,
 )
 from services.astro_logic import get_house_for_lon
+from services.interpretation_engine import get_interpretation
 from services.relationship_cycles import detect_relationship_evolution
 from services.time_utils import get_tz_offset_minutes, parse_local_datetime_ptbr
 
@@ -75,16 +76,19 @@ def _aspect_to_out(item: Dict[str, Any]) -> SynastryAspectOut:
     p2 = str(item.get("natal_planet", ""))
     asp = str(item.get("aspect", ""))
     orb = float(item.get("orb", 0.0))
+    interpretation = get_interpretation(
+        planet=p1.lower(),
+        aspect_type=asp.lower(),
+        other_planet=p2.lower(),
+        context="synastry",
+    )
     return SynastryAspectOut(
         person1_planet=planet_key_to_ptbr(p1),
         person2_planet=planet_key_to_ptbr(p2),
         aspect_type=aspect_to_ptbr(asp),
         orb=round(abs(orb), 3),
         category=category,
-        interpretation=(
-            f"{planet_key_to_ptbr(p1)} em {aspect_to_ptbr(asp)} com {planet_key_to_ptbr(p2)} "
-            f"ativa aprendizados mútuos com intensidade de orb {round(abs(orb), 2)}°."
-        ),
+        interpretation=interpretation,
     )
 
 
@@ -139,7 +143,7 @@ def _build_compare_payload(person_a: Dict[str, Any], person_b: Dict[str, Any]) -
         strengths=strengths,
         growth_areas=growth,
         aspects=all_aspects[:20],
-        relationship_overview="Compatibilidade dinÃ¢mica com pontos de fluidez e crescimento.",
+        relationship_overview="Compatibilidade dinâmica com pontos de fluidez e crescimento.",
         key_aspects=all_aspects[:10],
         house_overlays=_house_overlays(person_a, person_b),
         person_a=person_a,

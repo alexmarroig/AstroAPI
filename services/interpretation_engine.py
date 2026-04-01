@@ -85,3 +85,59 @@ def compose_synastry_interpretation(aspect_item: Dict[str, Any]) -> str:
 def transit_theme_lookup(theme_key: str) -> str:
     return TRANSIT_INTERPRETATIONS.get(theme_key, "O céu atual sugere ajuste de ritmo e foco em escolhas conscientes.")
 
+
+def get_interpretation(
+    planet: str,
+    sign: str | None = None,
+    house: int | None = None,
+    aspect_type: str | None = None,
+    other_planet: str | None = None,
+    context: str = "natal",  # "natal" | "synastry" | "transit"
+) -> str:
+    """Lookup hierárquico de interpretações. Nunca retorna string vazia."""
+
+    # --- Nível 1: aspecto entre dois planetas (sinastria) ---
+    if context == "synastry" and aspect_type and other_planet:
+        key = _key(planet, aspect_type, other_planet)
+        text = SYNASTRY_INTERPRETATIONS.get(key)
+        if text:
+            return text
+        # Fallback para aspectos gerais
+        text = ASPECT_INTERPRETATIONS.get(key)
+        if text:
+            return text
+
+    # --- Nível 2: aspecto geral (natal/trânsito) ---
+    if aspect_type and other_planet:
+        key = _key(planet, aspect_type, other_planet)
+        text = ASPECT_INTERPRETATIONS.get(key)
+        if text:
+            return text
+
+    # --- Nível 3: planeta em signo ---
+    if sign:
+        text = PLANET_SIGN_INTERPRETATIONS.get(_key(planet, sign))
+        if text:
+            return text
+
+    # --- Nível 4: planeta em casa ---
+    if house is not None:
+        text = PLANET_HOUSE_INTERPRETATIONS.get(_key(planet, f"house_{int(house)}"))
+        if text:
+            return text
+
+    # --- Nível 5: fallback genérico (nunca vazio) ---
+    planet_display = planet.capitalize()
+    if aspect_type and other_planet:
+        aspect_display = aspect_type.replace("_", " ")
+        other_display = other_planet.capitalize()
+        return (
+            f"{planet_display} em {aspect_display} com {other_display} "
+            f"ativa dinâmicas relacionais e padrões de aprendizado mútuo."
+        )
+    if sign:
+        return f"{planet_display} em {sign.capitalize()} expressa uma qualidade própria desta função psíquica."
+    if house is not None:
+        return f"{planet_display} na Casa {house} mostra onde essa energia tende a se manifestar."
+    return f"{planet_display} contribui com sua energia característica neste contexto."
+
