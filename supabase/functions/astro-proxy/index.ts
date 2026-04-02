@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-id",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-user-id, x-signature, x-signature-ts",
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
 };
 
@@ -12,6 +12,7 @@ const tzCache = new Map<string, number>();
 
 // Dev-mode logging
 const isDev = Deno.env.get("ENVIRONMENT") !== "production";
+const proxySecret = Deno.env.get("PROXY_SHARED_SECRET") ?? "";
 
 function devLog(message: string, data?: unknown) {
   if (isDev) {
@@ -21,6 +22,26 @@ function devLog(message: string, data?: unknown) {
 
 function toTodayIso(): string {
   return new Date().toISOString().split("T")[0];
+}
+
+function base64UrlEncode(bytes: ArrayBuffer): string {
+  const bin = String.fromCharCode(...new Uint8Array(bytes));
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function signUser(userId: string, ts: string): Promise<string> {
+  const keyData = new TextEncoder().encode(proxySecret);
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  const data = new TextEncoder().encode(`${userId}:${ts}`);
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, data);
+  return base64UrlEncode(sig);
 }
 
 function sanitizeBaseUrl(raw: string): string {
@@ -119,6 +140,8 @@ async function proxyFetch(
 ): Promise<Response> {
   const url = `${baseUrl.replace(/\/+$/, "")}${path}`;
   const timeout = needsExtendedTimeout(path) ? 45000 : 15000;
+  const ts = new Date().toISOString();
+  const signature = proxySecret ? await signUser(userId, ts) : null;
 
   devLog(`${method} ${url} (timeout: ${timeout}ms)`);
   devLog(`User: ${userId}`);
@@ -135,6 +158,7 @@ async function proxyFetch(
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "X-User-Id": userId,
+        ...(signature ? { "X-Signature": signature, "X-Signature-Ts": ts } : {}),
         "Content-Type": "application/json",
       },
       body: method === "GET" ? undefined : JSON.stringify(body ?? {}),

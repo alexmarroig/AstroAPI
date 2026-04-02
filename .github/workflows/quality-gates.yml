@@ -39,6 +39,9 @@ jobs:
       - name: Run unit and integration tests
         run: pytest -q tests
 
+      - name: Generate test health report
+        run: python scripts/report_test_health.py
+
       - name: Start API server
         run: |
           mkdir -p tests/load/artifacts

@@ -1,0 +1,775 @@
+{
+  "areas_ativadas": [
+    {
+      "area": "Finanças/valores",
+      "level": "high",
+      "metodo": "heuristico",
+      "reason": "Sol em destaque na casa 2.",
+      "score": 78
+    },
+    {
+      "area": "Rotina e saúde",
+      "level": "medium",
+      "metodo": "heuristico",
+      "reason": "Lua ativando a casa 6.",
+      "score": 65
+    },
+    {
+      "area": "Direção",
+      "level": "medium",
+      "metodo": "heuristico",
+      "reason": "Ângulos ASC/MC em 13°33' Sagitário e 29°42' Leão.",
+      "score": 62
+    },
+    {
+      "area": "Relacionamentos",
+      "level": "high",
+      "metodo": "heuristico",
+      "reason": "Sol Conjunção Sol.",
+      "score": 72
+    },
+    {
+      "area": "Rotina",
+      "level": "medium",
+      "metodo": "heuristico",
+      "reason": "Equilíbrio entre demandas pessoais e objetivos anuais.",
+      "score": 58
+    }
+  ],
+  "destaques": [
+    {
+      "descricao": "Sol em Capricórnio favorece foco em identidade e visibilidade.",
+      "metodo": "heuristico",
+      "titulo": "Tema solar do ano"
+    },
+    {
+      "descricao": "Lua em Gêmeos indica sensibilidade e ajustes afetivos.",
+      "metodo": "heuristico",
+      "titulo": "Clima emocional"
+    },
+    {
+      "descricao": "Sol Conjunção Sol.",
+      "metodo": "heuristico",
+      "titulo": "Aspecto dominante"
+    }
+  ],
+  "interpretacao": {
+    "fonte": "regras_internas",
+    "tipo": "heuristica"
+  },
+  "mapa_revolucao": {
+    "aspectos": [
+      {
+        "actual_angle": 0.009,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Sun",
+        "orb": 0.009,
+        "transit_planet": "Sun"
+      },
+      {
+        "actual_angle": 60.5165,
+        "aspect": "sextile",
+        "exact_angle": 60,
+        "influence": "supportive",
+        "natal_planet": "Mercury",
+        "orb": 0.5165,
+        "transit_planet": "Saturn"
+      },
+      {
+        "actual_angle": 179.2347,
+        "aspect": "opposition",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Mars",
+        "orb": 0.7653,
+        "transit_planet": "Moon"
+      },
+      {
+        "actual_angle": 0.8568,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Neptune",
+        "orb": 0.8568,
+        "transit_planet": "Mars"
+      },
+      {
+        "actual_angle": 1.1944,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Neptune",
+        "orb": 1.1944,
+        "transit_planet": "Sun"
+      },
+      {
+        "actual_angle": 1.2882,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Sun",
+        "orb": 1.2882,
+        "transit_planet": "Venus"
+      },
+      {
+        "actual_angle": 2.0602,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Sun",
+        "orb": 2.0602,
+        "transit_planet": "Mars"
+      },
+      {
+        "actual_angle": 122.2752,
+        "aspect": "trine",
+        "exact_angle": 120,
+        "influence": "supportive",
+        "natal_planet": "Mercury",
+        "orb": 2.2752,
+        "transit_planet": "Uranus"
+      },
+      {
+        "actual_angle": 2.4916,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Neptune",
+        "orb": 2.4916,
+        "transit_planet": "Venus"
+      },
+      {
+        "actual_angle": 2.7642,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Saturn",
+        "orb": 2.7642,
+        "transit_planet": "Mars"
+      },
+      {
+        "actual_angle": 3.4924,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Venus",
+        "orb": 3.4924,
+        "transit_planet": "Pluto"
+      },
+      {
+        "actual_angle": 3.7606,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Uranus",
+        "orb": 3.7606,
+        "transit_planet": "Venus"
+      },
+      {
+        "actual_angle": 63.8435,
+        "aspect": "sextile",
+        "exact_angle": 60,
+        "influence": "supportive",
+        "natal_planet": "Mercury",
+        "orb": 3.8435,
+        "transit_planet": "Neptune"
+      },
+      {
+        "actual_angle": 115.7715,
+        "aspect": "trine",
+        "exact_angle": 120,
+        "influence": "supportive",
+        "natal_planet": "Pluto",
+        "orb": 4.2285,
+        "transit_planet": "Jupiter"
+      },
+      {
+        "actual_angle": 175.6557,
+        "aspect": "opposition",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Mercury",
+        "orb": 4.3443,
+        "transit_planet": "Jupiter"
+      },
+      {
+        "actual_angle": 175.5986,
+        "aspect": "opposition",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Jupiter",
+        "orb": 4.4014,
+        "transit_planet": "Venus"
+      },
+      {
+        "actual_angle": 124.5609,
+        "aspect": "trine",
+        "exact_angle": 120,
+        "influence": "supportive",
+        "natal_planet": "Venus",
+        "orb": 4.5609,
+        "transit_planet": "Moon"
+      },
+      {
+        "actual_angle": 4.8155,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Saturn",
+        "orb": 4.8155,
+        "transit_planet": "Sun"
+      },
+      {
+        "actual_angle": 5.0578,
+        "aspect": "conjunction",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Uranus",
+        "orb": 5.0578,
+        "transit_planet": "Sun"
+      },
+      {
+        "actual_angle": 174.3377,
+        "aspect": "opposition",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Saturn",
+        "orb": 5.6623,
+        "transit_planet": "Jupiter"
+      },
+      {
+        "actual_angle": 174.3014,
+        "aspect": "opposition",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Jupiter",
+        "orb": 5.6986,
+        "transit_planet": "Sun"
+      }
+    ],
+    "aspectos_ptbr": [
+      {
+        "actual_angle": 0.009,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Sol",
+        "corpo2_ptbr": "Sol",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Sun",
+        "orb": 0.009,
+        "orb_formatado_ptbr": "0°01'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Sun"
+      },
+      {
+        "actual_angle": 60.5165,
+        "aspect": "sextile",
+        "corpo1_ptbr": "Saturno",
+        "corpo2_ptbr": "Mercúrio",
+        "exact_angle": 60,
+        "influence": "supportive",
+        "natal_planet": "Mercury",
+        "orb": 0.5165,
+        "orb_formatado_ptbr": "0°31'",
+        "tipo_ptbr": "Sextil",
+        "transit_planet": "Saturn"
+      },
+      {
+        "actual_angle": 179.2347,
+        "aspect": "opposition",
+        "corpo1_ptbr": "Lua",
+        "corpo2_ptbr": "Marte",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Mars",
+        "orb": 0.7653,
+        "orb_formatado_ptbr": "0°46'",
+        "tipo_ptbr": "Oposição",
+        "transit_planet": "Moon"
+      },
+      {
+        "actual_angle": 0.8568,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Marte",
+        "corpo2_ptbr": "Netuno",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Neptune",
+        "orb": 0.8568,
+        "orb_formatado_ptbr": "0°51'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Mars"
+      },
+      {
+        "actual_angle": 1.1944,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Sol",
+        "corpo2_ptbr": "Netuno",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Neptune",
+        "orb": 1.1944,
+        "orb_formatado_ptbr": "1°12'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Sun"
+      },
+      {
+        "actual_angle": 1.2882,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Vênus",
+        "corpo2_ptbr": "Sol",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Sun",
+        "orb": 1.2882,
+        "orb_formatado_ptbr": "1°17'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Venus"
+      },
+      {
+        "actual_angle": 2.0602,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Marte",
+        "corpo2_ptbr": "Sol",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Sun",
+        "orb": 2.0602,
+        "orb_formatado_ptbr": "2°04'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Mars"
+      },
+      {
+        "actual_angle": 122.2752,
+        "aspect": "trine",
+        "corpo1_ptbr": "Urano",
+        "corpo2_ptbr": "Mercúrio",
+        "exact_angle": 120,
+        "influence": "supportive",
+        "natal_planet": "Mercury",
+        "orb": 2.2752,
+        "orb_formatado_ptbr": "2°17'",
+        "tipo_ptbr": "Trígono",
+        "transit_planet": "Uranus"
+      },
+      {
+        "actual_angle": 2.4916,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Vênus",
+        "corpo2_ptbr": "Netuno",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Neptune",
+        "orb": 2.4916,
+        "orb_formatado_ptbr": "2°29'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Venus"
+      },
+      {
+        "actual_angle": 2.7642,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Marte",
+        "corpo2_ptbr": "Saturno",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Saturn",
+        "orb": 2.7642,
+        "orb_formatado_ptbr": "2°46'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Mars"
+      },
+      {
+        "actual_angle": 3.4924,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Plutão",
+        "corpo2_ptbr": "Vênus",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Venus",
+        "orb": 3.4924,
+        "orb_formatado_ptbr": "3°30'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Pluto"
+      },
+      {
+        "actual_angle": 3.7606,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Vênus",
+        "corpo2_ptbr": "Urano",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Uranus",
+        "orb": 3.7606,
+        "orb_formatado_ptbr": "3°46'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Venus"
+      },
+      {
+        "actual_angle": 63.8435,
+        "aspect": "sextile",
+        "corpo1_ptbr": "Netuno",
+        "corpo2_ptbr": "Mercúrio",
+        "exact_angle": 60,
+        "influence": "supportive",
+        "natal_planet": "Mercury",
+        "orb": 3.8435,
+        "orb_formatado_ptbr": "3°51'",
+        "tipo_ptbr": "Sextil",
+        "transit_planet": "Neptune"
+      },
+      {
+        "actual_angle": 115.7715,
+        "aspect": "trine",
+        "corpo1_ptbr": "Júpiter",
+        "corpo2_ptbr": "Plutão",
+        "exact_angle": 120,
+        "influence": "supportive",
+        "natal_planet": "Pluto",
+        "orb": 4.2285,
+        "orb_formatado_ptbr": "4°14'",
+        "tipo_ptbr": "Trígono",
+        "transit_planet": "Jupiter"
+      },
+      {
+        "actual_angle": 175.6557,
+        "aspect": "opposition",
+        "corpo1_ptbr": "Júpiter",
+        "corpo2_ptbr": "Mercúrio",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Mercury",
+        "orb": 4.3443,
+        "orb_formatado_ptbr": "4°21'",
+        "tipo_ptbr": "Oposição",
+        "transit_planet": "Jupiter"
+      },
+      {
+        "actual_angle": 175.5986,
+        "aspect": "opposition",
+        "corpo1_ptbr": "Vênus",
+        "corpo2_ptbr": "Júpiter",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Jupiter",
+        "orb": 4.4014,
+        "orb_formatado_ptbr": "4°24'",
+        "tipo_ptbr": "Oposição",
+        "transit_planet": "Venus"
+      },
+      {
+        "actual_angle": 124.5609,
+        "aspect": "trine",
+        "corpo1_ptbr": "Lua",
+        "corpo2_ptbr": "Vênus",
+        "exact_angle": 120,
+        "influence": "supportive",
+        "natal_planet": "Venus",
+        "orb": 4.5609,
+        "orb_formatado_ptbr": "4°34'",
+        "tipo_ptbr": "Trígono",
+        "transit_planet": "Moon"
+      },
+      {
+        "actual_angle": 4.8155,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Sol",
+        "corpo2_ptbr": "Saturno",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Saturn",
+        "orb": 4.8155,
+        "orb_formatado_ptbr": "4°49'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Sun"
+      },
+      {
+        "actual_angle": 5.0578,
+        "aspect": "conjunction",
+        "corpo1_ptbr": "Sol",
+        "corpo2_ptbr": "Urano",
+        "exact_angle": 0,
+        "influence": "intense",
+        "natal_planet": "Uranus",
+        "orb": 5.0578,
+        "orb_formatado_ptbr": "5°03'",
+        "tipo_ptbr": "Conjunção",
+        "transit_planet": "Sun"
+      },
+      {
+        "actual_angle": 174.3377,
+        "aspect": "opposition",
+        "corpo1_ptbr": "Júpiter",
+        "corpo2_ptbr": "Saturno",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Saturn",
+        "orb": 5.6623,
+        "orb_formatado_ptbr": "5°40'",
+        "tipo_ptbr": "Oposição",
+        "transit_planet": "Jupiter"
+      },
+      {
+        "actual_angle": 174.3014,
+        "aspect": "opposition",
+        "corpo1_ptbr": "Sol",
+        "corpo2_ptbr": "Júpiter",
+        "exact_angle": 180,
+        "influence": "challenging",
+        "natal_planet": "Jupiter",
+        "orb": 5.6986,
+        "orb_formatado_ptbr": "5°42'",
+        "tipo_ptbr": "Oposição",
+        "transit_planet": "Sun"
+      }
+    ],
+    "casas": {
+      "asc": 253.547387,
+      "cusps": [
+        253.547387,
+        278.2381,
+        302.497735,
+        329.693015,
+        2.088783,
+        38.428719,
+        73.547387,
+        98.2381,
+        122.497735,
+        149.693015,
+        182.088783,
+        218.428719
+      ],
+      "mc": 149.693015,
+      "system": "Placidus"
+    },
+    "casas_ptbr": {
+      "asc_ptbr": "13°33' Sagitário",
+      "cusps_ptbr": [
+        "Casa 1: 13°33' Sagitário",
+        "Casa 2: 8°14' Capricórnio",
+        "Casa 3: 2°30' Aquário",
+        "Casa 4: 29°42' Aquário",
+        "Casa 5: 2°05' Áries",
+        "Casa 6: 8°26' Touro",
+        "Casa 7: 13°33' Gêmeos",
+        "Casa 8: 8°14' Câncer",
+        "Casa 9: 2°30' Leão",
+        "Casa 10: 29°42' Leão",
+        "Casa 11: 2°05' Libra",
+        "Casa 12: 8°26' Escorpião"
+      ],
+      "mc_ptbr": "29°42' Leão",
+      "system_ptbr": "Placidus"
+    },
+    "planetas": {
+      "Jupiter": {
+        "deg_in_sign": 21.3223,
+        "lon": 111.322278,
+        "retrograde": true,
+        "sign": "Cancer",
+        "speed": -0.130796
+      },
+      "Mars": {
+        "deg_in_sign": 12.8957,
+        "lon": 282.89574,
+        "retrograde": false,
+        "sign": "Capricorn",
+        "speed": 0.766544
+      },
+      "Mercury": {
+        "deg_in_sign": 29.065,
+        "lon": 269.064971,
+        "retrograde": false,
+        "sign": "Sagittarius",
+        "speed": 1.527021
+      },
+      "Moon": {
+        "deg_in_sign": 10.78,
+        "lon": 70.779998,
+        "retrograde": false,
+        "sign": "Gemini",
+        "speed": 15.023185
+      },
+      "Neptune": {
+        "deg_in_sign": 29.5101,
+        "lon": 359.510149,
+        "retrograde": false,
+        "sign": "Pisces",
+        "speed": 0.012596
+      },
+      "Pluto": {
+        "deg_in_sign": 2.7267,
+        "lon": 302.726692,
+        "retrograde": false,
+        "sign": "Aquarius",
+        "speed": 0.030188
+      },
+      "Saturn": {
+        "deg_in_sign": 26.1831,
+        "lon": 356.183118,
+        "retrograde": false,
+        "sign": "Pisces",
+        "speed": 0.058749
+      },
+      "Sun": {
+        "deg_in_sign": 10.8445,
+        "lon": 280.84453,
+        "retrograde": false,
+        "sign": "Capricorn",
+        "speed": 1.018866
+      },
+      "Uranus": {
+        "deg_in_sign": 27.9419,
+        "lon": 57.941859,
+        "retrograde": true,
+        "sign": "Taurus",
+        "speed": -0.027257
+      },
+      "Venus": {
+        "deg_in_sign": 9.5473,
+        "lon": 279.54728,
+        "retrograde": false,
+        "sign": "Capricorn",
+        "speed": 1.258302
+      }
+    },
+    "planetas_ptbr": {
+      "Júpiter": {
+        "deg_in_sign": 21.3223,
+        "grau_formatado_ptbr": "21°19' Câncer",
+        "lon": 111.322278,
+        "nome_ptbr": "Júpiter",
+        "retrograde": true,
+        "retrogrado_ptbr": "Retrógrado",
+        "sign": "Cancer",
+        "signo_ptbr": "Câncer",
+        "speed": -0.130796
+      },
+      "Lua": {
+        "deg_in_sign": 10.78,
+        "grau_formatado_ptbr": "10°47' Gêmeos",
+        "lon": 70.779998,
+        "nome_ptbr": "Lua",
+        "retrograde": false,
+        "retrogrado_ptbr": "Direto",
+        "sign": "Gemini",
+        "signo_ptbr": "Gêmeos",
+        "speed": 15.023185
+      },
+      "Marte": {
+        "deg_in_sign": 12.8957,
+        "grau_formatado_ptbr": "12°54' Capricórnio",
+        "lon": 282.89574,
+        "nome_ptbr": "Marte",
+        "retrograde": false,
+        "retrogrado_ptbr": "Direto",
+        "sign": "Capricorn",
+        "signo_ptbr": "Capricórnio",
+        "speed": 0.766544
+      },
+      "Mercúrio": {
+        "deg_in_sign": 29.065,
+        "grau_formatado_ptbr": "29°04' Sagitário",
+        "lon": 269.064971,
+        "nome_ptbr": "Mercúrio",
+        "retrograde": false,
+        "retrogrado_ptbr": "Direto",
+        "sign": "Sagittarius",
+        "signo_ptbr": "Sagitário",
+        "speed": 1.527021
+      },
+      "Netuno": {
+        "deg_in_sign": 29.5101,
+        "grau_formatado_ptbr": "29°31' Peixes",
+        "lon": 359.510149,
+        "nome_ptbr": "Netuno",
+        "retrograde": false,
+        "retrogrado_ptbr": "Direto",
+        "sign": "Pisces",
+        "signo_ptbr": "Peixes",
+        "speed": 0.012596
+      },
+      "Plutão": {
+        "deg_in_sign": 2.7267,
+        "grau_formatado_ptbr": "2°44' Aquário",
+        "lon": 302.726692,
+        "nome_ptbr": "Plutão",
+        "retrograde": false,
+        "retrogrado_ptbr": "Direto",
+        "sign": "Aquarius",
+        "signo_ptbr": "Aquário",
+        "speed": 0.030188
+      },
+      "Saturno": {
+        "deg_in_sign": 26.1831,
+        "grau_formatado_ptbr": "26°11' Peixes",
+        "lon": 356.183118,
+        "nome_ptbr": "Saturno",
+        "retrograde": false,
+        "retrogrado_ptbr": "Direto",
+        "sign": "Pisces",
+        "signo_ptbr": "Peixes",
+        "speed": 0.058749
+      },
+      "Sol": {
+        "deg_in_sign": 10.8445,
+        "grau_formatado_ptbr": "10°51' Capricórnio",
+        "lon": 280.84453,
+        "nome_ptbr": "Sol",
+        "retrograde": false,
+        "retrogrado_ptbr": "Direto",
+        "sign": "Capricorn",
+        "signo_ptbr": "Capricórnio",
+        "speed": 1.018866
+      },
+      "Urano": {
+        "deg_in_sign": 27.9419,
+        "grau_formatado_ptbr": "27°57' Touro",
+        "lon": 57.941859,
+        "nome_ptbr": "Urano",
+        "retrograde": true,
+        "retrogrado_ptbr": "Retrógrado",
+        "sign": "Taurus",
+        "signo_ptbr": "Touro",
+        "speed": -0.027257
+      },
+      "Vênus": {
+        "deg_in_sign": 9.5473,
+        "grau_formatado_ptbr": "9°33' Capricórnio",
+        "lon": 279.54728,
+        "nome_ptbr": "Vênus",
+        "retrograde": false,
+        "retrogrado_ptbr": "Direto",
+        "sign": "Capricorn",
+        "signo_ptbr": "Capricórnio",
+        "speed": 1.258302
+      }
+    }
+  },
+  "metadados_tecnicos": {
+    "aspectos_usados": [],
+    "avisos": [],
+    "bracket_encontrado": null,
+    "datetime_local_usado": "1990-01-01T10:30:00-02:00",
+    "datetime_utc_usado": "1990-01-01T12:30:00",
+    "delta_longitude_graus": 0.009,
+    "diferenca_longitude_graus": 0.009,
+    "engine": "v1",
+    "fold_usado": 0,
+    "fonte_traducao": "backend",
+    "idioma": "pt-BR",
+    "iteracoes": null,
+    "janela_dias": null,
+    "janela_usada_dias": null,
+    "metodo_refino": "padrao",
+    "orbes_usados": {},
+    "passo_horas": null,
+    "passo_usado_horas": null,
+    "solar_return_local": "2026-01-01T03:30:00",
+    "solar_return_utc": "2026-01-01T06:30:00",
+    "timezone_resolvida": "America/Sao_Paulo",
+    "tolerancia_graus": null,
+    "tz_offset_minutes_usado": -120
+  }
+}

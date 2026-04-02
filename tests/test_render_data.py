@@ -34,6 +34,10 @@ def test_render_data_accepts_year_payload():
     body = resp.json()
     assert body["planets"]
     assert body["planetas_ptbr"]
+    assert body["ascendant"]["sign"]
+    assert isinstance(body["ascendant"]["angle_deg"], float)
+    assert body["metadados_tecnicos"]["timezone_resolvida"] == "America/Sao_Paulo"
+    assert body["metadados_tecnicos"]["datetime_utc_usado"]
 
 
 def test_render_data_rejects_natal_payload():
@@ -53,3 +57,24 @@ def test_render_data_rejects_natal_payload():
     resp = client.post("/v1/chart/render-data", json=payload, headers=_auth_headers())
     assert resp.status_code == 422
     assert resp.json()["detail"] == "render-data expects year/month/day/hour/minute/second..."
+
+
+def test_render_data_accepts_tz_offset_without_timezone():
+    client = TestClient(main.app)
+    payload = {
+        "year": 1995,
+        "month": 11,
+        "day": 7,
+        "hour": 22,
+        "minute": 56,
+        "second": 0,
+        "lat": -23.5505,
+        "lng": -46.6333,
+        "tz_offset_minutes": -180,
+    }
+
+    resp = client.post("/v1/chart/render-data", json=payload, headers=_auth_headers())
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["ascendant"]["sign"]
+    assert body["metadados_tecnicos"]["tz_offset_minutes_usado"] == -180

@@ -25,6 +25,7 @@ class CycleEvent:
 def _theme_for(planet: str, target: str, aspect: str) -> Tuple[str, str]:
     key = f"{planet}:{target}:{aspect}".lower()
     themes: Dict[str, Tuple[str, str]] = {
+        # Saturn cycles
         "saturn:moon:conjunction": (
             "Maturidade emocional",
             "Esse ciclo pede estrutura afetiva, limites claros e responsabilidade com necessidades emocionais.",
@@ -33,26 +34,220 @@ def _theme_for(planet: str, target: str, aspect: str) -> Tuple[str, str]:
             "Reestruturação de identidade",
             "Você pode rever prioridades e compromissos, consolidando uma identidade mais realista.",
         ),
+        "saturn:sun:square": (
+            "Teste de estrutura pessoal",
+            "Esse trânsito pede revisão de compromissos e consolidação do que é essencial na sua direção de vida.",
+        ),
+        "saturn:sun:opposition": (
+            "Confronto com responsabilidade",
+            "Período de avaliação dos resultados dos últimos anos e ajuste de metas com mais realismo.",
+        ),
+        "saturn:sun:trine": (
+            "Consolidação de conquistas",
+            "Momento favorável para estruturar planos com disciplina e colher resultados de esforços anteriores.",
+        ),
+        "saturn:moon:square": (
+            "Revisão emocional",
+            "Período de amadurecimento afetivo — padrões emocionais antigos pedem revisão e novos limites.",
+        ),
+        "saturn:moon:opposition": (
+            "Amadurecimento afetivo",
+            "Tensão entre necessidades emocionais e responsabilidades externas pede equilíbrio consciente.",
+        ),
+        "saturn:venus:conjunction": (
+            "Revisão de relacionamentos",
+            "Ciclo de amadurecimento nos vínculos — tempo para definir o que é essencial nas relações.",
+        ),
+        "saturn:venus:square": (
+            "Testes nos vínculos",
+            "Relacionamentos e valores passam por avaliações práticas — compromisso genuíno é fortalecido.",
+        ),
+        "saturn:mercury:conjunction": (
+            "Pensamento estruturado",
+            "Favorece decisões baseadas em fatos, comunicação precisa e planejamento cuidadoso.",
+        ),
+        # Jupiter cycles
+        "jupiter:sun:trine": (
+            "Expansão e oportunidade",
+            "Período favorável para crescimento pessoal, reconhecimento e abertura de novos caminhos.",
+        ),
+        "jupiter:sun:conjunction": (
+            "Novo ciclo de crescimento",
+            "Aumento de vitalidade, confiança e abertura para oportunidades significativas de expansão.",
+        ),
+        "jupiter:sun:square": (
+            "Expansão com critério",
+            "Oportunidades aparecem, mas exigem discernimento — evite comprometer-se além do sustentável.",
+        ),
+        "jupiter:sun:sextile": (
+            "Fluxo de oportunidades",
+            "Momento de abertura gradual para novos projetos e conexões que ampliam seus horizontes.",
+        ),
+        "jupiter:moon:trine": (
+            "Bem-estar emocional",
+            "Período de leveza emocional, generosidade e conexão mais fácil com pessoas queridas.",
+        ),
+        "jupiter:moon:conjunction": (
+            "Expansão emocional",
+            "Aumento da sensibilidade positiva, generosidade e abertura para vínculos mais profundos.",
+        ),
+        "jupiter:venus:trine": (
+            "Harmonia nos relacionamentos",
+            "Período favorável para vínculos afetivos, prosperidade e alinhamento com o que você valoriza.",
+        ),
+        "jupiter:venus:conjunction": (
+            "Abundância afetiva",
+            "Abertura para novos relacionamentos, prazer e expressão dos seus valores mais autênticos.",
+        ),
+        "jupiter:venus:sextile": (
+            "Oportunidades nos vínculos",
+            "Favorece conexões novas, alinhamento de valores e aumento de bem-estar nas relações.",
+        ),
+        "jupiter:mercury:trine": (
+            "Clareza e expansão mental",
+            "Favorece aprendizado, comunicação inspirada e tomada de decisões com mais visão ampla.",
+        ),
+        # Uranus cycles
         "uranus:sun:opposition": (
             "Liberdade e reinvenção",
             "Esse período tende a ativar desejo de mudança e autonomia, com ajustes na direção de vida.",
         ),
+        "uranus:sun:conjunction": (
+            "Renovação radical de identidade",
+            "Período de mudanças profundas na autoimagem — novas formas de se expressar emergem.",
+        ),
+        "uranus:sun:square": (
+            "Ruptura e renovação",
+            "Tensão entre o que você era e o que está se tornando — ajustes de identidade pedem coragem.",
+        ),
+        "uranus:sun:trine": (
+            "Renovação fluida",
+            "Mudanças acontecem de forma mais natural, com abertura para experimentar novas formas de ser.",
+        ),
+        "uranus:moon:opposition": (
+            "Volatilidade emocional",
+            "Padrões emocionais estabelecidos são desafiados — período de liberação de respostas automáticas.",
+        ),
+        "uranus:moon:conjunction": (
+            "Libertação emocional",
+            "Rompimento com padrões emocionais antigos — espaço para responder de forma mais autêntica.",
+        ),
+        "uranus:moon:square": (
+            "Reorganização emocional",
+            "Tensão entre necessidades de segurança e desejo de mudança pede adaptação consciente.",
+        ),
+        "uranus:venus:trine": (
+            "Renovação nos vínculos",
+            "Abertura para novas formas de relacionar e expressar afeto de maneira mais autêntica.",
+        ),
+        "uranus:venus:opposition": (
+            "Tensão nos relacionamentos",
+            "Vínculos passam por fase de revisão — autenticidade e liberdade individual pedem espaço.",
+        ),
+        "uranus:mercury:trine": (
+            "Inovação no pensamento",
+            "Período de ideias criativas, mudanças de perspectiva e abertura para novas formas de pensar.",
+        ),
+        "uranus:uranus:trine": (
+            "Integração de mudanças",
+            "Ciclo natural de integração — mudanças dos últimos anos ganham mais coerência e sentido.",
+        ),
+        "uranus:uranus:opposition": (
+            "Ponto de virada pessoal",
+            "Confronto com a própria autenticidade — período de redefinição de liberdade e valores.",
+        ),
+        # Neptune cycles
+        "neptune:venus:trine": (
+            "Sensibilidade afetiva",
+            "Abertura para vínculos mais compassivos, artísticos e inspirados.",
+        ),
+        "neptune:sun:conjunction": (
+            "Dissolução e renovação espiritual",
+            "Período de questionamento de certezas — intuição e sensibilidade se aprofundam.",
+        ),
+        "neptune:sun:square": (
+            "Niebla existencial",
+            "Período de incertezas sobre direção de vida — foco em discernimento e clareza gradual.",
+        ),
+        "neptune:moon:conjunction": (
+            "Profundidade emocional",
+            "Aumento da empatia, sensibilidade e conexão com dimensões mais sutis da vida emocional.",
+        ),
+        "neptune:mercury:square": (
+            "Desafio à clareza mental",
+            "Período que pede atenção redobrada a informações — evite decisões precipitadas sem dados concretos.",
+        ),
+        # Pluto cycles
         "pluto:sun:square": (
             "Transformação profunda",
             "Conflitos de controle e poder podem emergir para sustentar uma mudança mais autêntica.",
         ),
-        "neptune:venus:trine": (
-            "Sensibilidade afetiva",
-            "Abertura para vínculos mais compassivos, artísticos e inspirados.",
+        "pluto:sun:conjunction": (
+            "Reinvenção total",
+            "Período de morte simbólica e renascimento — identidade passa por renovação profunda.",
+        ),
+        "pluto:sun:trine": (
+            "Transformação fluida",
+            "Mudanças profundas acontecem com menos resistência — poder pessoal se consolida.",
+        ),
+        "pluto:sun:opposition": (
+            "Confronto com poder",
+            "Dinâmicas de controle e influência vêm à tona — período de reconquistar autonomia autêntica.",
+        ),
+        "pluto:moon:square": (
+            "Transformação emocional",
+            "Padrões emocionais profundos vêm à tona para transformação — processo intenso mas necessário.",
+        ),
+        "pluto:moon:conjunction": (
+            "Renovação emocional profunda",
+            "Período de confronto com padrões emocionais mais enraizados — transformação do interior.",
+        ),
+        "pluto:venus:conjunction": (
+            "Reinvenção nos relacionamentos",
+            "Vínculos passam por transformação profunda — o que não é autêntico precisa ser renovado.",
+        ),
+        "pluto:venus:square": (
+            "Intensidade nos vínculos",
+            "Relacionamentos passam por fases de intensidade e purificação — dinâmicas de poder emergem.",
+        ),
+        "pluto:venus:sextile": (
+            "Aprofundamento dos vínculos",
+            "Oportunidade de transformar relacionamentos em direção a mais autenticidade e profundidade.",
+        ),
+        "pluto:mercury:square": (
+            "Pensamento transformador",
+            "Período de questionamento profundo de crenças e formas de comunicar — renovação mental.",
+        ),
+        "pluto:mercury:conjunction": (
+            "Mente em transformação",
+            "Aprofundamento do pensamento, insights poderosos e revisão de perspectivas fundamentais.",
         ),
     }
     if key in themes:
         return themes[key]
 
+    planet_areas = {
+        "saturn": "estrutura, responsabilidade e maturidade",
+        "uranus": "liberdade, mudança e autenticidade",
+        "neptune": "intuição, dissolução e espiritualidade",
+        "pluto": "transformação, poder pessoal e renovação",
+        "jupiter": "crescimento, expansão e oportunidades",
+    }
+    target_areas = {
+        "sun": "identidade e direção de vida",
+        "moon": "vida emocional e padrões afetivos",
+        "mercury": "comunicação e tomada de decisão",
+        "venus": "relacionamentos e valores pessoais",
+        "mars": "ação, iniciativa e energia",
+        "saturn": "estrutura e compromissos",
+        "jupiter": "expansão e crenças",
+    }
+    p_area = planet_areas.get(planet.lower(), planet.lower())
+    t_area = target_areas.get(target.lower(), target.lower())
     base_theme = f"{planet} em {aspect} com {target}"
     base_text = (
-        "Você pode notar ajustes de ritmo, visão e prioridades. "
-        "Esse trânsito favorece consciência de padrões e escolhas mais intencionais."
+        f"Esse ciclo ativa temas de {p_area} em relação à {t_area}. "
+        "Favorece consciência de padrões e escolhas mais intencionais nessa área."
     )
     return base_theme, base_text
 

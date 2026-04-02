@@ -151,8 +151,8 @@ class RenderDataRequest(BaseModel):
     tz_offset_minutes: Optional[int] = Field(
         None, ge=-840, le=840, description="Minutos de offset para o fuso. Se vazio, usa timezone."
     )
-    timezone: str = Field(
-        ..., description="Timezone IANA (ex.: America/Sao_Paulo). Obrigatório para renderização."
+    timezone: Optional[str] = Field(
+        None, description="Timezone IANA (ex.: America/Sao_Paulo). Se vazio, usa tz_offset_minutes."
     )
     house_system: HouseSystem = Field(default=HouseSystem.PLACIDUS)
     zodiac_type: ZodiacType = Field(default=ZodiacType.TROPICAL)
@@ -166,9 +166,12 @@ class RenderDataRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_tz(self):
-        if not self.timezone:
+        if self.tz_offset_minutes is None and not self.timezone:
             from fastapi import HTTPException
-            raise HTTPException(status_code=422, detail="timezone is required")
+            raise HTTPException(
+                status_code=422,
+                detail="Informe timezone IANA ou tz_offset_minutes para renderizar o mapa.",
+            )
         return self
 
     @model_validator(mode="before")
@@ -176,8 +179,6 @@ class RenderDataRequest(BaseModel):
     def reject_date_aliases(cls, data: Any):
         if isinstance(data, dict):
             from fastapi import HTTPException
-            if not data.get("timezone"):
-                raise HTTPException(status_code=422, detail="timezone is required")
             if any(key.startswith("natal_") for key in data.keys()):
                 raise HTTPException(
                     status_code=422,

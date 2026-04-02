@@ -1,0 +1,259 @@
+{
+  "casas_ptbr": {
+    "asc_ptbr": "4°16' Peixes",
+    "cusps_ptbr": [
+      "Casa 1: 4°16' Peixes",
+      "Casa 2: 1°43' Áries",
+      "Casa 3: 2°08' Touro",
+      "Casa 4: 3°46' Gêmeos",
+      "Casa 5: 4°56' Câncer",
+      "Casa 6: 5°10' Leão",
+      "Casa 7: 4°16' Virgem",
+      "Casa 8: 1°43' Libra",
+      "Casa 9: 2°08' Escorpião",
+      "Casa 10: 3°46' Sagitário",
+      "Casa 11: 4°56' Capricórnio",
+      "Casa 12: 5°10' Aquário"
+    ],
+    "mc_ptbr": "3°46' Sagitário",
+    "system_ptbr": "Placidus"
+  },
+  "houses": {
+    "asc": 334.27159,
+    "cusps": [
+      334.27159,
+      1.710102,
+      32.141603,
+      63.773992,
+      94.939983,
+      125.15946,
+      154.27159,
+      181.710102,
+      212.141603,
+      243.773992,
+      274.939983,
+      305.15946
+    ],
+    "mc": 243.773992,
+    "system": "Placidus"
+  },
+  "jd_ut": 2447893.02083333,
+  "metadados_tecnicos": {
+    "avisos": [],
+    "birth_time_precise": true,
+    "datetime_local_usado": "1990-01-01T10:30:00",
+    "datetime_utc_usado": "1990-01-01T12:30:00",
+    "fold_usado": 0,
+    "fonte_traducao": "backend",
+    "idioma": "pt-BR",
+    "timezone_resolvida": "America/Sao_Paulo",
+    "timezone_usada": "America/Sao_Paulo",
+    "tz_offset_minutes": -120,
+    "tz_offset_minutes_usado": -120
+  },
+  "planetas_ptbr": {
+    "Júpiter": {
+      "deg_in_sign": 5.1459,
+      "grau_formatado_ptbr": "5°09' Câncer",
+      "lon": 95.145924,
+      "nome_ptbr": "Júpiter",
+      "retrograde": true,
+      "retrogrado_ptbr": "Retrógrado",
+      "sign": "Cancer",
+      "sign_pt": "Câncer",
+      "signo_ptbr": "Câncer",
+      "speed": -0.134469
+    },
+    "Lua": {
+      "deg_in_sign": 3.5484,
+      "grau_formatado_ptbr": "3°33' Peixes",
+      "lon": 333.548358,
+      "nome_ptbr": "Lua",
+      "retrograde": false,
+      "retrogrado_ptbr": "Direto",
+      "sign": "Pisces",
+      "sign_pt": "Peixes",
+      "signo_ptbr": "Peixes",
+      "speed": 13.474247
+    },
+    "Marte": {
+      "deg_in_sign": 10.0147,
+      "grau_formatado_ptbr": "10°01' Sagitário",
+      "lon": 250.014748,
+      "nome_ptbr": "Marte",
+      "retrograde": false,
+      "retrogrado_ptbr": "Direto",
+      "sign": "Sagittarius",
+      "sign_pt": "Sagitário",
+      "signo_ptbr": "Sagitário",
+      "speed": 0.703768
+    },
+    "Mercúrio": {
+      "deg_in_sign": 25.6666,
+      "grau_formatado_ptbr": "25°40' Capricórnio",
+      "lon": 295.666624,
+      "nome_ptbr": "Mercúrio",
+      "retrograde": true,
+      "retrogrado_ptbr": "Retrógrado",
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "signo_ptbr": "Capricórnio",
+      "speed": -0.298696
+    },
+    "Netuno": {
+      "deg_in_sign": 12.0389,
+      "grau_formatado_ptbr": "12°02' Capricórnio",
+      "lon": 282.038909,
+      "nome_ptbr": "Netuno",
+      "retrograde": false,
+      "retrogrado_ptbr": "Direto",
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "signo_ptbr": "Capricórnio",
+      "speed": 0.037911
+    },
+    "Plutão": {
+      "deg_in_sign": 17.0937,
+      "grau_formatado_ptbr": "17°06' Escorpião",
+      "lon": 227.093736,
+      "nome_ptbr": "Plutão",
+      "retrograde": false,
+      "retrogrado_ptbr": "Direto",
+      "sign": "Scorpio",
+      "sign_pt": "Escorpião",
+      "signo_ptbr": "Escorpião",
+      "speed": 0.027314
+    },
+    "Saturno": {
+      "deg_in_sign": 15.66,
+      "grau_formatado_ptbr": "15°40' Capricórnio",
+      "lon": 285.659986,
+      "nome_ptbr": "Saturno",
+      "retrograde": false,
+      "retrogrado_ptbr": "Direto",
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "signo_ptbr": "Capricórnio",
+      "speed": 0.118273
+    },
+    "Sol": {
+      "deg_in_sign": 10.8355,
+      "grau_formatado_ptbr": "10°50' Capricórnio",
+      "lon": 280.835495,
+      "nome_ptbr": "Sol",
+      "retrograde": false,
+      "retrogrado_ptbr": "Direto",
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "signo_ptbr": "Capricórnio",
+      "speed": 1.019472
+    },
+    "Urano": {
+      "deg_in_sign": 5.7867,
+      "grau_formatado_ptbr": "5°47' Capricórnio",
+      "lon": 275.786725,
+      "nome_ptbr": "Urano",
+      "retrograde": false,
+      "retrogrado_ptbr": "Direto",
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "signo_ptbr": "Capricórnio",
+      "speed": 0.060006
+    },
+    "Vênus": {
+      "deg_in_sign": 6.2191,
+      "grau_formatado_ptbr": "6°13' Aquário",
+      "lon": 306.21911,
+      "nome_ptbr": "Vênus",
+      "retrograde": true,
+      "retrogrado_ptbr": "Retrógrado",
+      "sign": "Aquarius",
+      "sign_pt": "Aquário",
+      "signo_ptbr": "Aquário",
+      "speed": -0.131163
+    }
+  },
+  "planets": {
+    "Jupiter": {
+      "deg_in_sign": 5.1459,
+      "lon": 95.145924,
+      "retrograde": true,
+      "sign": "Cancer",
+      "sign_pt": "Câncer",
+      "speed": -0.134469
+    },
+    "Mars": {
+      "deg_in_sign": 10.0147,
+      "lon": 250.014748,
+      "retrograde": false,
+      "sign": "Sagittarius",
+      "sign_pt": "Sagitário",
+      "speed": 0.703768
+    },
+    "Mercury": {
+      "deg_in_sign": 25.6666,
+      "lon": 295.666624,
+      "retrograde": true,
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "speed": -0.298696
+    },
+    "Moon": {
+      "deg_in_sign": 3.5484,
+      "lon": 333.548358,
+      "retrograde": false,
+      "sign": "Pisces",
+      "sign_pt": "Peixes",
+      "speed": 13.474247
+    },
+    "Neptune": {
+      "deg_in_sign": 12.0389,
+      "lon": 282.038909,
+      "retrograde": false,
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "speed": 0.037911
+    },
+    "Pluto": {
+      "deg_in_sign": 17.0937,
+      "lon": 227.093736,
+      "retrograde": false,
+      "sign": "Scorpio",
+      "sign_pt": "Escorpião",
+      "speed": 0.027314
+    },
+    "Saturn": {
+      "deg_in_sign": 15.66,
+      "lon": 285.659986,
+      "retrograde": false,
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "speed": 0.118273
+    },
+    "Sun": {
+      "deg_in_sign": 10.8355,
+      "lon": 280.835495,
+      "retrograde": false,
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "speed": 1.019472
+    },
+    "Uranus": {
+      "deg_in_sign": 5.7867,
+      "lon": 275.786725,
+      "retrograde": false,
+      "sign": "Capricorn",
+      "sign_pt": "Capricórnio",
+      "speed": 0.060006
+    },
+    "Venus": {
+      "deg_in_sign": 6.2191,
+      "lon": 306.21911,
+      "retrograde": true,
+      "sign": "Aquarius",
+      "sign_pt": "Aquário",
+      "speed": -0.131163
+    }
+  },
+  "utc_datetime": "1990-01-01T12:30:00"
+}
