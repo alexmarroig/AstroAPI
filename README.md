@@ -63,6 +63,23 @@ cd Backend/AstroAPI
 python scripts/report_test_health.py
 ```
 
+## Interpretation inventory audit
+Use `scripts/check_content_inventory.py` to validate `public.modules` coverage and compare with local interpretation dictionaries.
+
+```bash
+cd Backend/AstroAPI
+python scripts/check_content_inventory.py
+```
+
+Output:
+- JSON artifact: `scripts/artifacts/content_inventory_<timestamp>.json`
+- Text summary: `scripts/artifacts/content_inventory_<timestamp>.txt`
+
+Key statuses:
+- `STATUS=OK`: table exists, minimum seed reached, no critical gaps.
+- `STATUS=WARNING`: table exists, but with non-critical inconsistencies.
+- `STATUS=CRITICAL`: DB/table unavailable or critical coverage/validation failure.
+
 ## Solar return flags
 - `SOLAR_RETURN_ENGINE=v1|v2`
   - `v1` (default): simple nearest-time search
