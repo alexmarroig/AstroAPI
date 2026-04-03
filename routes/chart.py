@@ -8,6 +8,14 @@ from .common import get_auth
 from schemas.chart import NatalChartRequest, RenderDataRequest
 from schemas.transits import TransitsRequest
 from core.cache import cache
+from services.cache_flags import CACHE_NATAL_ENABLED
+from services.cache_keys import ENGINE_VERSION, compute_input_hash, build_period
+from services.chart_store import (
+    get_user_chart_payload,
+    get_computed_chart_payload,
+    upsert_computed_chart,
+    attach_user_chart,
+)
 from core.plans import is_trial_or_premium
 from astro.ephemeris import compute_chart, compute_transits, PLANETS
 from astro.aspects import get_aspects_profile, compute_transit_aspects
@@ -20,7 +28,7 @@ from astro.i18n_ptbr import (
     format_position_ptbr,
     sign_for_longitude
 )
-from astro.utils import ZODIAC_SIGNS, ZODIAC_SIGNS_PT
+from astro.utils import ZODIAC_SIGNS, ZODIAC_SIGNS_PT, deg_to_sign
 from services.time_utils import get_tz_offset_minutes, build_time_metadata, parse_date_yyyy_mm_dd
 from services.astro_logic import (
     apply_sign_localization,
@@ -55,6 +63,39 @@ async def natal(
 ):
     """Calcula o mapa natal completo."""
     try:
+        input_hash = None
+        if CACHE_NATAL_ENABLED:
+            try:
+                input_hash = compute_input_hash(body.model_dump())
+                cached = await get_user_chart_payload(
+                    user_id=auth["user_id"],
+                    chart_type="natal",
+                    period=build_period("natal"),
+                    engine_version=ENGINE_VERSION,
+                    input_hash=input_hash,
+                )
+                if cached is not None:
+                    return cached
+
+                computed = await get_computed_chart_payload(
+                    chart_type="natal",
+                    engine_version=ENGINE_VERSION,
+                    input_hash=input_hash,
+                )
+                if computed is not None:
+                    computed_id, payload = computed
+                    await attach_user_chart(
+                        user_id=auth["user_id"],
+                        chart_type="natal",
+                        period=build_period("natal"),
+                        engine_version=ENGINE_VERSION,
+                        input_hash=input_hash,
+                        computed_chart_id=computed_id,
+                    )
+                    return payload
+            except Exception as exc:
+                logger.warning("natal_cache_read_failed", extra={"error": str(exc)})
+
         dt = datetime(body.natal_year, body.natal_month, body.natal_day,
                       body.natal_hour, body.natal_minute, body.natal_second)
         tz_offset = get_tz_offset_minutes(dt, body.timezone, body.tz_offset_minutes,
@@ -84,6 +125,27 @@ async def natal(
             **build_time_metadata(body.timezone, tz_offset, dt),
             "birth_time_precise": body.birth_time_precise
         }
+
+        if CACHE_NATAL_ENABLED:
+            try:
+                if input_hash is None:
+                    input_hash = compute_input_hash(body.model_dump())
+                computed_id = await upsert_computed_chart(
+                    chart_type="natal",
+                    engine_version=ENGINE_VERSION,
+                    input_hash=input_hash,
+                    payload_json=chart,
+                )
+                await attach_user_chart(
+                    user_id=auth["user_id"],
+                    chart_type="natal",
+                    period=build_period("natal"),
+                    engine_version=ENGINE_VERSION,
+                    input_hash=input_hash,
+                    computed_chart_id=computed_id,
+                )
+            except Exception as exc:
+                logger.warning("natal_cache_write_failed", extra={"error": str(exc)})
 
         cache.set(cache_key, chart, ttl_seconds=TTL_NATAL_SECONDS)
         return chart
@@ -242,6 +304,8 @@ async def render_data(
         })
 
     zodiac = ZODIAC_SIGNS_PT if is_pt else ZODIAC_SIGNS
+    asc_angle = float(natal.get("houses", {}).get("asc") or 0.0)
+    asc_data = deg_to_sign(asc_angle)
     casas_ptbr = [
         {
             "house": h["house"],
@@ -256,6 +320,13 @@ async def render_data(
         "planets": planets,
         "planetas_ptbr": planetas_ptbr,
         "casas_ptbr": casas_ptbr,
+        "ascendant": {
+            "angle_deg": round(asc_angle, 6),
+            "sign": asc_data["sign"].lower(),
+            "deg_in_sign": asc_data["deg_in_sign"],
+            "sign_pt": sign_to_ptbr(asc_data["sign"]),
+        },
+        "metadados_tecnicos": build_time_metadata(body.timezone, tz_offset, dt),
         "premium_aspects": [] if is_trial_or_premium(auth["plan"]) else None,
     }
 

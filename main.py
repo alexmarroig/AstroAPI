@@ -39,6 +39,12 @@ from routes import (
     transits,
 )
 from services.observability import OperationalEvent, observability_orchestrator
+from services.cache_flags import (
+    CACHE_NATAL_ENABLED,
+    CACHE_SOLAR_RETURN_ENABLED,
+    CACHE_EPHEMERIS_ENABLED,
+)
+from core.db import get_pool_or_none
 
 load_dotenv()
 
@@ -112,6 +118,14 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup_event() -> None:
     ai.initialize_openai_client(app)
+    if CACHE_NATAL_ENABLED or CACHE_SOLAR_RETURN_ENABLED or CACHE_EPHEMERIS_ENABLED:
+        pool = await get_pool_or_none()
+        if pool is None:
+            _log(
+                "warning",
+                "db_pool_unavailable_startup",
+                cache_enabled=True,
+            )
 
 
 @app.on_event("shutdown")

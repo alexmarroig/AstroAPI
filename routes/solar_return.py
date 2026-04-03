@@ -19,24 +19,32 @@ from services.time_utils import (
     parse_local_datetime_ptbr
 )
 from services.astro_logic import apply_solar_return_profile, get_house_for_lon, get_impact_score, TARGET_WEIGHTS
+from services.cache_flags import CACHE_SOLAR_RETURN_ENABLED
+from services.cache_keys import ENGINE_VERSION, compute_input_hash, build_period
+from services.chart_store import (
+    get_user_chart_payload,
+    get_computed_chart_payload,
+    upsert_computed_chart,
+    attach_user_chart,
+)
 
 router = APIRouter()
 logger = logging.getLogger("astro-api")
 
 @router.post("/v1/solar-return/calculate")
 async def solar_return_calculate(body: SolarReturnRequest, request: Request, auth=Depends(get_auth)):
-    """Calcula o instante exato da revolução solar e o mapa correspondente."""
-    # Validações de Timezone
+    """Calcula o instante exato da revolucao solar e o mapa correspondente."""
+    # Validacoes de Timezone
     try: ZoneInfo(body.natal.timezone)
-    except ZoneInfoNotFoundError: raise HTTPException(status_code=422, detail="Timezone natal inválido.")
+    except ZoneInfoNotFoundError: raise HTTPException(status_code=422, detail="Timezone natal invalido.")
 
     target_timezone = body.alvo.timezone or body.natal.timezone
     try: ZoneInfo(target_timezone)
-    except ZoneInfoNotFoundError: raise HTTPException(status_code=422, detail="Timezone alvo inválido.")
+    except ZoneInfoNotFoundError: raise HTTPException(status_code=422, detail="Timezone alvo invalido.")
 
     # Parse de Data Natal
     try: natal_dt, warnings, time_missing = parse_local_datetime_ptbr(body.natal.data, body.natal.hora)
-    except Exception: raise HTTPException(status_code=422, detail="Data natal inválida.")
+    except Exception: raise HTTPException(status_code=422, detail="Data natal invalida.")
 
     prefs = body.preferencias or SolarReturnPreferencias(perfil="padrao")
     engine = os.getenv("SOLAR_RETURN_ENGINE", "v1").lower()
@@ -55,8 +63,65 @@ async def solar_return_calculate(body: SolarReturnRequest, request: Request, aut
     )
 
     try:
+        target_year = body.alvo.ano
+        input_hash = None
+        if CACHE_SOLAR_RETURN_ENABLED:
+            try:
+                input_hash = compute_input_hash(body.model_dump())
+                cached = await get_user_chart_payload(
+                    user_id=auth["user_id"],
+                    chart_type="solar_return",
+                    period=build_period("solar_return", year=target_year),
+                    engine_version=ENGINE_VERSION,
+                    input_hash=input_hash,
+                )
+                if cached is not None:
+                    return cached
+
+                computed = await get_computed_chart_payload(
+                    chart_type="solar_return",
+                    engine_version=ENGINE_VERSION,
+                    input_hash=input_hash,
+                )
+                if computed is not None:
+                    computed_id, payload = computed
+                    await attach_user_chart(
+                        user_id=auth["user_id"],
+                        chart_type="solar_return",
+                        period=build_period("solar_return", year=target_year),
+                        engine_version=ENGINE_VERSION,
+                        input_hash=input_hash,
+                        computed_chart_id=computed_id,
+                    )
+                    return payload
+            except Exception as exc:
+                logger.warning("solar_return_cache_read_failed", extra={"error": str(exc)})
+
         payload = compute_solar_return_payload(inputs)
-        if warnings: payload["warnings"] = warnings
+        if warnings:
+            payload["warnings"] = warnings
+
+        if CACHE_SOLAR_RETURN_ENABLED:
+            try:
+                if input_hash is None:
+                    input_hash = compute_input_hash(body.model_dump())
+                computed_id = await upsert_computed_chart(
+                    chart_type="solar_return",
+                    engine_version=ENGINE_VERSION,
+                    input_hash=input_hash,
+                    payload_json=payload,
+                )
+                await attach_user_chart(
+                    user_id=auth["user_id"],
+                    chart_type="solar_return",
+                    period=build_period("solar_return", year=target_year),
+                    engine_version=ENGINE_VERSION,
+                    input_hash=input_hash,
+                    computed_chart_id=computed_id,
+                )
+            except Exception as exc:
+                logger.warning("solar_return_cache_write_failed", extra={"error": str(exc)})
+
         return payload
     except Exception as e:
         logger.error("solar_return_calculate_error", exc_info=True)
@@ -64,7 +129,7 @@ async def solar_return_calculate(body: SolarReturnRequest, request: Request, aut
 
 @router.post("/v1/solar-return/overlay")
 async def solar_return_overlay(body: SolarReturnOverlayRequest, request: Request, auth=Depends(get_auth)):
-    """Faz a sobreposição (synastry) entre o mapa natal e o mapa da revolução solar."""
+    """Faz a sobreposicao (synastry) entre o mapa natal e o mapa da revolucao solar."""
     natal_dt, warnings, time_missing = parse_local_datetime_ptbr(body.natal.data, body.natal.hora)
     localized = localize_with_zoneinfo(natal_dt, body.natal.timezone, None)
     natal_offset = localized.tz_offset_minutes
@@ -102,7 +167,7 @@ async def solar_return_overlay(body: SolarReturnOverlayRequest, request: Request
 
 @router.post("/v1/solar-return/timeline")
 async def solar_return_timeline(body: SolarReturnTimelineRequest, request: Request, auth=Depends(get_auth)):
-    """Gera uma linha do tempo anual focada nos aspectos do Sol de trânsito com pontos do mapa natal."""
+    """Gera uma linha do tempo anual focada nos aspectos do Sol de transito com pontos do mapa natal."""
     natal_dt, warnings, time_missing = parse_local_datetime_ptbr(body.natal.data, body.natal.hora)
     localized = localize_with_zoneinfo(natal_dt, body.natal.timezone, None)
     natal_offset = localized.tz_offset_minutes
@@ -120,11 +185,11 @@ async def solar_return_timeline(body: SolarReturnTimelineRequest, request: Reque
         "MC": natal_chart["houses"]["mc"],
     }
     aspect_angles = {
-        "conjunction": {"label": "Conjunção", "angle": 0},
+        "conjunction": {"label": "Conjuncao", "angle": 0},
         "sextile": {"label": "Sextil", "angle": 60},
         "square": {"label": "Quadratura", "angle": 90},
-        "trine": {"label": "Trígono", "angle": 120},
-        "opposition": {"label": "Oposição", "angle": 180},
+        "trine": {"label": "Trigono", "angle": 120},
+        "opposition": {"label": "Oposicao", "angle": 180},
     }
 
     start_date = datetime(body.year, 1, 1)
@@ -148,7 +213,7 @@ async def solar_return_timeline(body: SolarReturnTimelineRequest, request: Reque
                         "end": (current + timedelta(days=1)).strftime("%Y-%m-%d"),
                         "method": "solar_aspects",
                         "trigger": f"Sol em {aspect_info['label']} com {alvo}",
-                        "tags": ["Ano", "Direção", "Ajuste"],
+                        "tags": ["Ano", "Direcao", "Ajuste"],
                         "score": round(score, 2),
                     })
         current += timedelta(days=1)

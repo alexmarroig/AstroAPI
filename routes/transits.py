@@ -74,7 +74,7 @@ def _build_transits_context(
     date_override: Optional[str] = None,
     preferencias: Optional[PreferenciasPerfil] = None,
 ) -> Dict[str, Any]:
-    """Helper para construir o contexto de trÃ¢nsitos (natal, trÃ¢nsitos e aspectos)."""
+    """Helper para construir o contexto de transitos (natal, transitos e aspectos)."""
     target_date = date_override or body.target_date
     target_y, target_m, target_d = parse_date_yyyy_mm_dd(target_date)
 
@@ -110,7 +110,7 @@ async def transits_events(
     lang: Optional[str] = Query(None, description="Idioma (ex.: pt-BR)"),
     auth=Depends(get_auth),
 ):
-    """Calcula eventos de trÃ¢nsito detalhados para um intervalo de atÃ© 30 dias."""
+    """Calcula eventos de transito detalhados para um intervalo de ate 30 dias."""
     try:
         natal_dt = datetime(body.natal_year, body.natal_month, body.natal_day, body.natal_hour, body.natal_minute, body.natal_second)
         tz_offset = get_tz_offset_minutes(natal_dt, body.timezone, body.tz_offset_minutes, strict=body.strict_timezone, request_id=request.state.request_id)
@@ -118,7 +118,7 @@ async def transits_events(
         start_date = datetime.strptime(body.range.from_, "%Y-%m-%d")
         end_date = datetime.strptime(body.range.to, "%Y-%m-%d")
         interval_days = (end_date - start_date).days + 1
-        if interval_days > 30: raise HTTPException(status_code=400, detail="Intervalo mÃ¡ximo de 30 dias.")
+        if interval_days > 30: raise HTTPException(status_code=400, detail="Intervalo maximo de 30 dias.")
 
         cache_key = f"transit-events:{auth['user_id']}:{hash(body.model_dump_json())}:{str(lang).lower()}"
         cached = cache.get(cache_key)
@@ -149,7 +149,7 @@ async def transits_events(
         return payload
     except Exception as e:
         logger.error("transits_events_error", exc_info=True, extra={"request_id": request.state.request_id})
-        raise HTTPException(status_code=500, detail="Erro interno ao calcular eventos de trÃ¢nsito.")
+        raise HTTPException(status_code=500, detail="Erro interno ao calcular eventos de transito.")
 
 @router.get("/v1/transits/next-days")
 async def transits_next_days(
@@ -185,7 +185,7 @@ async def transits_next_days(
             current_date = start_date + timedelta(days=offset)
             date_str = current_date.strftime("%Y-%m-%d")
 
-            headline = "Clima com espaÃ§o para pequenos ajustes."
+            headline = "Clima com espaco para pequenos ajustes."
             tags = []
             strength = "medium"
             icon = "âœ¨"
